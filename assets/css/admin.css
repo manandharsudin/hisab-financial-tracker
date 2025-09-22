@@ -1,0 +1,424 @@
+/* Hisab Financial Tracker - Admin Styles */
+
+.hisab-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.hisab-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.hisab-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.hisab-card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #23282d;
+}
+
+.hisab-card-date {
+    color: #666;
+    font-size: 12px;
+}
+
+.hisab-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.hisab-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.hisab-summary-item.income .hisab-amount {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.hisab-summary-item.expense .hisab-amount {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.hisab-summary-item.net .hisab-amount.positive {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.hisab-summary-item.net .hisab-amount.negative {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.hisab-label {
+    font-weight: 500;
+    color: #555;
+}
+
+.hisab-amount {
+    font-size: 16px;
+}
+
+.hisab-stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.hisab-stat-item:last-child {
+    border-bottom: none;
+}
+
+.hisab-stat-label {
+    color: #666;
+    font-size: 14px;
+}
+
+.hisab-stat-value {
+    font-weight: bold;
+    color: #23282d;
+}
+
+.hisab-charts-section {
+    margin: 30px 0;
+}
+
+.hisab-chart-container {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.hisab-chart-container h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #23282d;
+}
+
+.hisab-recent-transactions {
+    margin: 30px 0;
+}
+
+.hisab-table-container {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.hisab-no-data {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
+}
+
+.hisab-type-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.hisab-type-badge.income {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.hisab-type-badge.expense {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.hisab-category-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+}
+
+.hisab-amount.income {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.hisab-amount.expense {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.hisab-amount.positive {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.hisab-amount.negative {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Form Styles */
+.hisab-form {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.hisab-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.hisab-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.hisab-form-group label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #23282d;
+}
+
+.hisab-form-group input,
+.hisab-form-group select,
+.hisab-form-group textarea {
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.hisab-form-group input:focus,
+.hisab-form-group select:focus,
+.hisab-form-group textarea:focus {
+    border-color: #007cba;
+    box-shadow: 0 0 0 1px #007cba;
+    outline: none;
+}
+
+.hisab-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.required {
+    color: #dc3545;
+}
+
+/* Analytics Styles */
+.hisab-analytics-section {
+    margin: 30px 0;
+}
+
+.hisab-yearly-chart {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.hisab-yearly-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.hisab-stat-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+}
+
+.hisab-stat-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.hisab-stat-card .hisab-stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #23282d;
+}
+
+.hisab-category-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.hisab-category-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.hisab-category-section h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #23282d;
+}
+
+.hisab-category-chart {
+    margin: 20px 0;
+}
+
+.hisab-category-tables {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.hisab-category-table {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.hisab-category-table h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #23282d;
+}
+
+/* Projections Styles */
+.hisab-projections-section {
+    margin: 30px 0;
+}
+
+.hisab-projections-chart {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.hisab-projections-table {
+    margin: 30px 0;
+}
+
+.hisab-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.hisab-status.positive {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.hisab-status.negative {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.hisab-savings-calculator {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 30px 0;
+}
+
+.hisab-savings-calculator h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #23282d;
+}
+
+.hisab-savings-result {
+    margin-top: 20px;
+}
+
+.hisab-projection-summary {
+    margin: 30px 0;
+}
+
+.hisab-projection-summary .hisab-summary-cards {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.hisab-projection-summary .hisab-card {
+    text-align: center;
+}
+
+.hisab-projection-summary .hisab-card h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.hisab-projection-summary .hisab-amount {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hisab-summary-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .hisab-form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .hisab-category-breakdown {
+        grid-template-columns: 1fr;
+    }
+    
+    .hisab-category-tables {
+        grid-template-columns: 1fr;
+    }
+    
+    .hisab-yearly-stats {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+}
