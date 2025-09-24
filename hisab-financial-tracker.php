@@ -36,23 +36,9 @@ class HisabFinancialTracker {
         // Initialize components
         $this->init_components();
         
-        // Add admin menu
-        add_action('admin_menu', array($this, 'add_admin_menu'));
-        
         // Enqueue scripts and styles
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
-        
-        // AJAX handlers
-        add_action('wp_ajax_hisab_save_transaction', array($this, 'ajax_save_transaction'));
-        add_action('wp_ajax_hisab_get_data', array($this, 'ajax_get_data'));
-        add_action('wp_ajax_hisab_delete_transaction', array($this, 'ajax_delete_transaction'));
-        add_action('wp_ajax_hisab_calculate_savings', array($this, 'ajax_calculate_savings'));
-        
-        // Shortcodes
-        add_shortcode('hisab_dashboard', array($this, 'shortcode_dashboard'));
-        add_shortcode('hisab_income_chart', array($this, 'shortcode_income_chart'));
-        add_shortcode('hisab_expense_chart', array($this, 'shortcode_expense_chart'));
     }
     
     private function include_files() {
@@ -61,6 +47,9 @@ class HisabFinancialTracker {
         require_once HISAB_PLUGIN_PATH . 'includes/class-frontend.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-analytics.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-projection.php';
+        require_once HISAB_PLUGIN_PATH . 'includes/class-admin-menu.php';
+        require_once HISAB_PLUGIN_PATH . 'includes/class-shortcodes.php';
+        require_once HISAB_PLUGIN_PATH . 'includes/class-ajax-handlers.php';
     }
     
     private function init_components() {
@@ -79,6 +68,15 @@ class HisabFinancialTracker {
         if (class_exists('HisabProjection')) {
             new HisabProjection();
         }
+        if (class_exists('HisabAdminMenu')) {
+            new HisabAdminMenu();
+        }
+        if (class_exists('HisabShortcodes')) {
+            new HisabShortcodes();
+        }
+        if (class_exists('HisabAjaxHandlers')) {
+            new HisabAjaxHandlers();
+        }
     }
     
     public function activate() {
@@ -96,102 +94,6 @@ class HisabFinancialTracker {
         // Clean up if needed
     }
     
-    public function add_admin_menu() {
-        add_menu_page(
-            __('Financial Tracker', 'hisab-financial-tracker'),
-            __('Financial Tracker', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-dashboard',
-            array($this, 'admin_dashboard_page'),
-            'dashicons-chart-line',
-            30
-        );
-        
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Dashboard', 'hisab-financial-tracker'),
-            __('Dashboard', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-dashboard',
-            array($this, 'admin_dashboard_page')
-        );
-        
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Add Transaction', 'hisab-financial-tracker'),
-            __('Add Transaction', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-add-transaction',
-            array($this, 'admin_add_transaction_page')
-        );
-        
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Analytics', 'hisab-financial-tracker'),
-            __('Analytics', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-analytics',
-            array($this, 'admin_analytics_page')
-        );
-        
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Projections', 'hisab-financial-tracker'),
-            __('Projections', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-projections',
-            array($this, 'admin_projections_page')
-        );
-        
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Settings', 'hisab-financial-tracker'),
-            __('Settings', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-settings',
-            array($this, 'admin_settings_page')
-        );
-    }
-    
-    public function admin_dashboard_page() {
-        if (!class_exists('HisabAdmin')) {
-            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
-            return;
-        }
-        include HISAB_PLUGIN_PATH . 'admin/dashboard.php';
-    }
-    
-    public function admin_add_transaction_page() {
-        if (!class_exists('HisabAdmin')) {
-            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
-            return;
-        }
-        include HISAB_PLUGIN_PATH . 'admin/add-transaction.php';
-    }
-    
-    public function admin_analytics_page() {
-        if (!class_exists('HisabAdmin')) {
-            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
-            return;
-        }
-        include HISAB_PLUGIN_PATH . 'admin/analytics.php';
-    }
-    
-    public function admin_projections_page() {
-        if (!class_exists('HisabAdmin')) {
-            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
-            return;
-        }
-        include HISAB_PLUGIN_PATH . 'admin/projections.php';
-    }
-    
-    public function admin_settings_page() {
-        if (!class_exists('HisabAdmin')) {
-            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
-            return;
-        }
-        include HISAB_PLUGIN_PATH . 'admin/settings.php';
-    }
     
     public function enqueue_admin_scripts($hook) {
         if (strpos($hook, 'hisab') === false) {
@@ -205,7 +107,7 @@ class HisabFinancialTracker {
         
         wp_localize_script('hisab-admin', 'hisab_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('hisab_nonce'),
+            'nonce' => wp_create_nonce('hisab_transaction'),
             'currency' => get_option('hisab_currency', 'USD')
         ));
     }
@@ -218,107 +120,11 @@ class HisabFinancialTracker {
         
         wp_localize_script('hisab-frontend', 'hisab_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('hisab_nonce'),
+            'nonce' => wp_create_nonce('hisab_transaction'),
             'currency' => get_option('hisab_currency', 'USD')
         ));
     }
     
-    // AJAX Handlers
-    public function ajax_save_transaction() {
-        check_ajax_referer('hisab_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized');
-        }
-        
-        if (!class_exists('HisabDatabase')) {
-            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
-        }
-        
-        $database = new HisabDatabase();
-        $result = $database->save_transaction($_POST);
-        
-        wp_send_json($result);
-    }
-    
-    public function ajax_get_data() {
-        check_ajax_referer('hisab_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized');
-        }
-        
-        if (!class_exists('HisabDatabase')) {
-            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
-        }
-        
-        $database = new HisabDatabase();
-        $data = $database->get_transactions($_POST);
-        
-        wp_send_json($data);
-    }
-    
-    public function ajax_delete_transaction() {
-        check_ajax_referer('hisab_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized');
-        }
-        
-        if (!class_exists('HisabDatabase')) {
-            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
-        }
-        
-        $database = new HisabDatabase();
-        $result = $database->delete_transaction($_POST['id']);
-        
-        wp_send_json($result);
-    }
-    
-    public function ajax_calculate_savings() {
-        check_ajax_referer('hisab_nonce', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized');
-        }
-        
-        if (!class_exists('HisabProjection')) {
-            wp_send_json(array('success' => false, 'message' => 'Projection class not available'));
-        }
-        
-        $target_amount = floatval($_POST['target_amount']);
-        $months_to_target = intval($_POST['months_to_target']);
-        
-        $projection = new HisabProjection();
-        $result = $projection->get_savings_projection($target_amount, $months_to_target);
-        
-        wp_send_json(array('success' => true, 'data' => $result));
-    }
-    
-    // Shortcodes
-    public function shortcode_dashboard($atts) {
-        if (!class_exists('HisabFrontend')) {
-            return '<p>Frontend class not available</p>';
-        }
-        $frontend = new HisabFrontend();
-        return $frontend->render_dashboard($atts);
-    }
-    
-    public function shortcode_income_chart($atts) {
-        if (!class_exists('HisabFrontend')) {
-            return '<p>Frontend class not available</p>';
-        }
-        $frontend = new HisabFrontend();
-        return $frontend->render_income_chart($atts);
-    }
-    
-    public function shortcode_expense_chart($atts) {
-        if (!class_exists('HisabFrontend')) {
-            return '<p>Frontend class not available</p>';
-        }
-        $frontend = new HisabFrontend();
-        return $frontend->render_expense_chart($atts);
-    }
 }
 
 // Initialize the plugin

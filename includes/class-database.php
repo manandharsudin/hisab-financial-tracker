@@ -117,6 +117,34 @@ class HisabDatabase {
         return array('success' => true, 'message' => 'Transaction saved successfully', 'id' => $wpdb->insert_id);
     }
     
+    public function update_transaction($data) {
+        global $wpdb;
+        
+        $transaction_id = intval($data['id']);
+        $transaction_data = array(
+            'type' => sanitize_text_field($data['type']),
+            'amount' => floatval($data['amount']),
+            'description' => sanitize_textarea_field($data['description']),
+            'category_id' => intval($data['category_id']),
+            'transaction_date' => sanitize_text_field($data['transaction_date']),
+            'updated_at' => current_time('mysql')
+        );
+        
+        $result = $wpdb->update(
+            $this->table_transactions,
+            $transaction_data,
+            array('id' => $transaction_id),
+            array('%s', '%f', '%s', '%d', '%s', '%s'),
+            array('%d')
+        );
+        
+        if ($result === false) {
+            return array('success' => false, 'message' => 'Failed to update transaction');
+        }
+        
+        return array('success' => true, 'message' => 'Transaction updated successfully');
+    }
+    
     public function get_transactions($filters = array()) {
         global $wpdb;
         
