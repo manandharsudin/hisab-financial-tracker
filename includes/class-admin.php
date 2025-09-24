@@ -34,12 +34,13 @@ class HisabAdmin {
     
     public function render_add_transaction() {
         $categories = $this->database->get_categories();
-        $income_categories = array_filter($categories, function($cat) {
+        $income_categories = array_values(array_filter($categories, function($cat) {
             return $cat->type === 'income';
-        });
-        $expense_categories = array_filter($categories, function($cat) {
+        }));
+        $expense_categories = array_values(array_filter($categories, function($cat) {
             return $cat->type === 'expense';
-        });
+        }));
+        
         
         include HISAB_PLUGIN_PATH . 'admin/views/add-transaction.php';
     }

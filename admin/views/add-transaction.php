@@ -78,13 +78,17 @@ jQuery(document).ready(function($) {
         categorySelect.append('<option value=""><?php _e('Select Category', 'hisab-financial-tracker'); ?></option>');
         
         if (type === 'income') {
-            incomeCategories.forEach(function(category) {
-                categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
-            });
+            if (Array.isArray(incomeCategories)) {
+                incomeCategories.forEach(function(category) {
+                    categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
+                });
+            }
         } else if (type === 'expense') {
-            expenseCategories.forEach(function(category) {
-                categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
-            });
+            if (Array.isArray(expenseCategories)) {
+                expenseCategories.forEach(function(category) {
+                    categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
+                });
+            }
         }
     });
     
