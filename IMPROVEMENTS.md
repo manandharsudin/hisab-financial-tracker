@@ -50,13 +50,31 @@ This document outlines the improvements made to the Hisab Financial Tracker plug
 
 ### 5. **Enhanced Database Class** ✅
 - **File**: `includes/class-database.php`
-- **New Method Added**:
+- **New Methods Added**:
   - `update_transaction()` - Update existing transactions
+  - `save_category()` - Create or update categories
+  - `delete_category()` - Remove categories with usage validation
+  - `get_category()` - Retrieve single category data
 - **Benefits**:
-  - Complete CRUD operations
+  - Complete CRUD operations for transactions and categories
   - Better data management
+  - Category usage validation before deletion
 
-### 6. **Refactored Main Plugin File** ✅
+### 6. **Added Category Management System** ✅
+- **Files**: 
+  - `admin/categories.php` - Category management page
+  - `admin/views/categories.php` - Category management interface
+- **Features**:
+  - Add, edit, and delete income/expense categories
+  - Color-coded category display
+  - Usage validation before deletion
+  - Real-time AJAX operations
+- **Benefits**:
+  - Complete category customization
+  - Better transaction organization
+  - User-friendly management interface
+
+### 7. **Refactored Main Plugin File** ✅
 - **File**: `hisab-financial-tracker.php`
 - **Changes**:
   - Removed admin menu methods
@@ -94,6 +112,130 @@ This document outlines the improvements made to the Hisab Financial Tracker plug
 [hisab_transaction_form redirect_url="/thank-you"]
 ```
 
+## Category Management System
+
+### Overview
+The plugin now includes a comprehensive category management system that allows users to add, edit, and delete income and expense categories with full CRUD capabilities.
+
+### Features
+
+#### ✅ **Add Categories**
+- Create new income or expense categories
+- Set custom names and colors
+- Real-time validation and feedback
+
+#### ✅ **Edit Categories**
+- Modify existing category names and colors
+- Inline editing with form pre-population
+- Cancel edit functionality
+
+#### ✅ **Delete Categories**
+- Remove unused categories
+- Safety check prevents deletion of categories in use
+- Confirmation dialog for safety
+
+#### ✅ **Visual Management**
+- Color-coded category display
+- Separate sections for income and expense categories
+- Responsive design for all devices
+
+### How to Use
+
+#### 1. **Access Category Management**
+- Go to **Financial Tracker → Categories** in WordPress admin
+- This will open the category management interface
+
+#### 2. **Add a New Category**
+1. Fill in the category form:
+   - **Name**: Enter a descriptive name (e.g., "Groceries", "Freelance Work")
+   - **Type**: Select either "Income" or "Expense"
+   - **Color**: Choose a color for visual identification
+2. Click **"Save Category"**
+3. The category will appear in the appropriate section
+
+#### 3. **Edit an Existing Category**
+1. Click the **"Edit"** button next to any category
+2. The form will populate with the current category data
+3. Make your changes
+4. Click **"Update Category"** to save changes
+5. Click **"Cancel Edit"** to discard changes
+
+#### 4. **Delete a Category**
+1. Click the **"Delete"** button next to any category
+2. Confirm the deletion in the dialog box
+3. Categories that are in use by transactions cannot be deleted
+
+### Technical Implementation
+
+#### **Database Methods**
+- `save_category()` - Create or update categories
+- `delete_category()` - Remove categories with usage validation
+- `get_category()` - Retrieve single category data
+- `get_categories()` - Get all categories with optional filtering
+
+#### **AJAX Handlers**
+- `ajax_save_category` - Handle category creation/updates
+- `ajax_delete_category` - Handle category deletion
+- `ajax_get_category` - Retrieve category data for editing
+
+#### **Security Features**
+- Nonce verification for all AJAX requests
+- Capability checks (manage_options required)
+- Input sanitization and validation
+- Usage validation before deletion
+
+#### **User Experience**
+- Real-time form validation
+- Loading states during AJAX operations
+- Success/error message feedback
+- Responsive design for mobile devices
+
+### Default Categories
+
+The plugin still includes default categories that are created during activation:
+
+#### **Income Categories**
+- Salary (#28a745)
+- Freelance (#17a2b8)
+- Investment (#6f42c1)
+- Business (#fd7e14)
+- Other Income (#20c997)
+
+#### **Expense Categories**
+- Food & Dining (#dc3545)
+- Transportation (#ffc107)
+- Housing (#6c757d)
+- Utilities (#007bff)
+- Healthcare (#e83e8c)
+- Entertainment (#fd7e14)
+- Shopping (#20c997)
+- Education (#6f42c1)
+- Other Expense (#6c757d)
+
+### Integration
+
+#### **Transaction Forms**
+- Categories automatically appear in transaction forms
+- Dynamic filtering by type (income/expense)
+- Color-coded display in dropdowns
+
+#### **Analytics**
+- Category data is used in analytics and reporting
+- Color coding maintained in charts and graphs
+- Category breakdowns in monthly summaries
+
+### Error Handling
+
+#### **Validation Errors**
+- Empty category names are rejected
+- Invalid color codes are sanitized
+- Duplicate names are allowed (but not recommended)
+
+#### **Deletion Protection**
+- Categories with associated transactions cannot be deleted
+- Clear error messages explain why deletion failed
+- Users must reassign transactions before deletion
+
 ## File Structure
 
 ```
@@ -114,6 +256,7 @@ wp-content/plugins/hisab-financial-tracker/
 │   ├── analytics.php
 │   ├── projections.php
 │   ├── settings.php
+│   ├── categories.php (Category management page) ✨ NEW
 │   └── views/ (Admin view templates)
 ├── assets/
 │   ├── css/ (Styling files)
@@ -155,6 +298,12 @@ wp-content/plugins/hisab-financial-tracker/
 3. **Add Caching** - Improve performance for large datasets
 4. **Add REST API** - Modern API endpoints
 5. **Add Import/Export** - Data portability features
+6. **Category Enhancements**:
+   - Add icon support for categories
+   - Group related categories
+   - Bulk category management
+   - Category templates
+   - Usage statistics
 
 ## Conclusion
 

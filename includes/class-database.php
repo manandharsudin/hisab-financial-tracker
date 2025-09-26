@@ -292,6 +292,83 @@ class HisabDatabase {
         return $wpdb->get_results($sql);
     }
     
+    public function save_category($data) {
+        global $wpdb;
+        
+        $category_data = array(
+            'name' => sanitize_text_field($data['name']),
+            'type' => sanitize_text_field($data['type']),
+            'color' => sanitize_hex_color($data['color'])
+        );
+        
+        if (isset($data['id']) && !empty($data['id'])) {
+            // Update existing category
+            $result = $wpdb->update(
+                $this->table_categories,
+                $category_data,
+                array('id' => intval($data['id'])),
+                array('%s', '%s', '%s'),
+                array('%d')
+            );
+            
+            if ($result === false) {
+                return array('success' => false, 'message' => 'Failed to update category');
+            }
+            
+            return array('success' => true, 'message' => 'Category updated successfully', 'id' => intval($data['id']));
+        } else {
+            // Insert new category
+            $result = $wpdb->insert(
+                $this->table_categories,
+                $category_data,
+                array('%s', '%s', '%s')
+            );
+            
+            if ($result === false) {
+                return array('success' => false, 'message' => 'Failed to save category');
+            }
+            
+            return array('success' => true, 'message' => 'Category saved successfully', 'id' => $wpdb->insert_id);
+        }
+    }
+    
+    public function delete_category($id) {
+        global $wpdb;
+        
+        // Check if category is being used by any transactions
+        $usage_check = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$this->table_transactions} WHERE category_id = %d",
+            intval($id)
+        ));
+        
+        if ($usage_check > 0) {
+            return array('success' => false, 'message' => 'Cannot delete category that is being used by transactions');
+        }
+        
+        $result = $wpdb->delete(
+            $this->table_categories,
+            array('id' => intval($id)),
+            array('%d')
+        );
+        
+        if ($result === false) {
+            return array('success' => false, 'message' => 'Failed to delete category');
+        }
+        
+        return array('success' => true, 'message' => 'Category deleted successfully');
+    }
+    
+    public function get_category($id) {
+        global $wpdb;
+        
+        $sql = $wpdb->prepare("
+            SELECT * FROM {$this->table_categories}
+            WHERE id = %d
+        ", intval($id));
+        
+        return $wpdb->get_row($sql);
+    }
+    
     public function delete_transaction($id) {
         global $wpdb;
         

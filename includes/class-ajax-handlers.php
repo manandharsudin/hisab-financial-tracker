@@ -31,6 +31,11 @@ class HisabAjaxHandlers {
         
         // Frontend AJAX handlers (for non-logged in users)
         add_action('wp_ajax_nopriv_hisab_get_public_data', array($this, 'ajax_get_public_data'));
+        
+        // Category AJAX handlers
+        add_action('wp_ajax_hisab_save_category', array($this, 'ajax_save_category'));
+        add_action('wp_ajax_hisab_delete_category', array($this, 'ajax_delete_category'));
+        add_action('wp_ajax_hisab_get_category', array($this, 'ajax_get_category'));
     }
     
     // Transaction AJAX Handlers
@@ -255,5 +260,61 @@ class HisabAjaxHandlers {
         wp_send_json(array('success' => true, 'data' => array(
             'monthly_summary' => $monthly_summary
         )));
+    }
+    
+    // Category AJAX Handlers
+    public function ajax_save_category() {
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $database = new HisabDatabase();
+        $result = $database->save_category($_POST);
+        
+        wp_send_json($result);
+    }
+    
+    public function ajax_delete_category() {
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $database = new HisabDatabase();
+        $result = $database->delete_category($_POST['id']);
+        
+        wp_send_json($result);
+    }
+    
+    public function ajax_get_category() {
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $database = new HisabDatabase();
+        $category = $database->get_category($_POST['id']);
+        
+        if ($category) {
+            wp_send_json(array('success' => true, 'data' => $category));
+        } else {
+            wp_send_json(array('success' => false, 'message' => 'Category not found'));
+        }
     }
 }
