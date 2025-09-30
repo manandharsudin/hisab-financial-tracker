@@ -261,4 +261,53 @@ jQuery(document).ready(function($) {
             </tr>
         `;
     }
+    
+    // Default Categories functionality
+    $('#insert-default-categories-btn').on('click', function() {
+        const button = $(this);
+        const originalText = button.text();
+        
+        if (!confirm('Are you sure you want to insert default categories? This will add pre-defined income and expense categories.')) {
+            return;
+        }
+        
+        button.prop('disabled', true).text('Inserting...');
+        
+        $.ajax({
+            url: hisab_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'hisab_insert_default_categories',
+                hisab_nonce: hisab_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    showMessage('#hisab-default-categories-messages', 'success', response.data.message);
+                    // Refresh the page to show new categories
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showMessage('#hisab-default-categories-messages', 'error', response.data.message || 'Failed to insert default categories');
+                }
+            },
+            error: function() {
+                showMessage('#hisab-default-categories-messages', 'error', 'An error occurred while inserting default categories');
+            },
+            complete: function() {
+                button.prop('disabled', false).text(originalText);
+            }
+        });
+    });
+    
+    function showMessage(container, type, message) {
+        const messageClass = type === 'success' ? 'notice-success' : 'notice-error';
+        const messageHtml = `<div class="notice ${messageClass} is-dismissible"><p>${message}</p></div>`;
+        $(container).html(messageHtml);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(function() {
+            $(container).find('.notice').fadeOut();
+        }, 5000);
+    }
 });

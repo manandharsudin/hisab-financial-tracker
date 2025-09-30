@@ -69,7 +69,29 @@ class HisabDatabase {
     private function insert_default_categories() {
         global $wpdb;
         
-        $default_categories = array(
+        // Check if categories already exist
+        $existing_categories = $wpdb->get_var("SELECT COUNT(*) FROM {$this->table_categories}");
+        
+        if ($existing_categories > 0) {
+            return; // Categories already exist, don't insert duplicates
+        }
+        
+        $default_categories = $this->get_default_categories();
+        
+        foreach ($default_categories as $category) {
+            $wpdb->insert(
+                $this->table_categories,
+                $category,
+                array('%s', '%s', '%s')
+            );
+        }
+    }
+    
+    /**
+     * Get default categories array
+     */
+    private function get_default_categories() {
+        return array(
             // Income categories
             array('name' => 'Salary', 'type' => 'income', 'color' => '#28a745'),
             array('name' => 'Freelance', 'type' => 'income', 'color' => '#17a2b8'),
@@ -88,14 +110,43 @@ class HisabDatabase {
             array('name' => 'Education', 'type' => 'expense', 'color' => '#6f42c1'),
             array('name' => 'Other Expense', 'type' => 'expense', 'color' => '#6c757d')
         );
+    }
+    
+    /**
+     * Manually insert default categories (for admin use)
+     */
+    public function insert_default_categories_manually() {
+        global $wpdb;
         
+        $default_categories = $this->get_default_categories();
+        
+        $inserted_count = 0;
         foreach ($default_categories as $category) {
-            $wpdb->insert(
-                $this->table_categories,
-                $category,
-                array('%s', '%s', '%s')
-            );
+            // Check if category already exists
+            $exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$this->table_categories} WHERE name = %s AND type = %s",
+                $category['name'],
+                $category['type']
+            ));
+            
+            if ($exists == 0) {
+                $result = $wpdb->insert(
+                    $this->table_categories,
+                    $category,
+                    array('%s', '%s', '%s')
+                );
+                
+                if ($result) {
+                    $inserted_count++;
+                }
+            }
         }
+        
+        return array(
+            'success' => true,
+            'message' => sprintf('Inserted %d new default categories', $inserted_count),
+            'inserted_count' => $inserted_count
+        );
     }
     
     public function save_transaction($data) {

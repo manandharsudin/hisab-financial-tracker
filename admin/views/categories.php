@@ -52,6 +52,16 @@ if (!defined('ABSPATH')) {
         <div id="hisab-category-messages"></div>
     </div>
     
+    <!-- Default Categories Section -->
+    <div class="hisab-default-categories-section">
+        <h2><?php _e('Default Categories', 'hisab-financial-tracker'); ?></h2>
+        <p><?php _e('Add pre-defined default categories for income and expenses.', 'hisab-financial-tracker'); ?></p>
+        <button type="button" class="button button-secondary" id="insert-default-categories-btn">
+            <?php _e('Insert Default Categories', 'hisab-financial-tracker'); ?>
+        </button>
+        <div id="hisab-default-categories-messages"></div>
+    </div>
+    
     <!-- Categories List -->
     <div class="hisab-categories-list">
         <h2><?php _e('Income Categories', 'hisab-financial-tracker'); ?></h2>

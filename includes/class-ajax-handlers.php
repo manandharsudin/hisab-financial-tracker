@@ -36,6 +36,7 @@ class HisabAjaxHandlers {
         add_action('wp_ajax_hisab_save_category', array($this, 'ajax_save_category'));
         add_action('wp_ajax_hisab_delete_category', array($this, 'ajax_delete_category'));
         add_action('wp_ajax_hisab_get_category', array($this, 'ajax_get_category'));
+        add_action('wp_ajax_hisab_insert_default_categories', array($this, 'ajax_insert_default_categories'));
         
         // Date conversion AJAX handlers
         add_action('wp_ajax_hisab_convert_bs_to_ad', array($this, 'ajax_convert_bs_to_ad'));
@@ -373,5 +374,22 @@ class HisabAjaxHandlers {
         } else {
             wp_send_json(array('success' => false, 'message' => 'Invalid date format'));
         }
+    }
+    
+    public function ajax_insert_default_categories() {
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $database = new HisabDatabase();
+        $result = $database->insert_default_categories_manually();
+        
+        wp_send_json($result);
     }
 }
