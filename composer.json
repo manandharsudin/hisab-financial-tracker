@@ -1,0 +1,14 @@
+{
+    "name": "hisab/financial-tracker",
+    "description": "WordPress plugin for financial tracking with Nepali date support",
+    "type": "wordpress-plugin",
+    "require": {
+        "php": ">=7.4",
+        "milantarami/nepali-calendar": "^1.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "HisabFinancialTracker\\": "includes/"
+        }
+    }
+}

@@ -50,6 +50,7 @@ class HisabFinancialTracker {
         require_once HISAB_PLUGIN_PATH . 'includes/class-admin-menu.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-shortcodes.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-ajax-handlers.php';
+        require_once HISAB_PLUGIN_PATH . 'includes/class-nepali-date.php';
     }
     
     private function init_components() {
@@ -96,7 +97,7 @@ class HisabFinancialTracker {
     
     
     public function enqueue_admin_scripts($hook) {
-        if (strpos($hook, 'hisab') === false) {
+        if (strpos($hook, 'hisab') === false && strpos($hook, 'date-converter') === false) {
             return;
         }
         

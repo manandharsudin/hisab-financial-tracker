@@ -66,6 +66,8 @@ class HisabAdmin {
     public function render_settings() {
         $currency = get_option('hisab_currency', 'USD');
         $date_format = get_option('hisab_date_format', 'Y-m-d');
+        $default_calendar = get_option('hisab_default_calendar', 'ad');
+        $show_dual_dates = get_option('hisab_show_dual_dates', 1);
         
         if (isset($_POST['save_settings'])) {
             $this->save_settings();
@@ -81,6 +83,8 @@ class HisabAdmin {
         
         update_option('hisab_currency', sanitize_text_field($_POST['currency']));
         update_option('hisab_date_format', sanitize_text_field($_POST['date_format']));
+        update_option('hisab_default_calendar', sanitize_text_field($_POST['default_calendar']));
+        update_option('hisab_show_dual_dates', isset($_POST['show_dual_dates']) ? 1 : 0);
         
         add_action('admin_notices', function() {
             echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';

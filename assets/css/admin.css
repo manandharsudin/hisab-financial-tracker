@@ -227,6 +227,191 @@
     outline: none;
 }
 
+/* BS Date Inputs */
+.bs-date-inputs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.bs-date-inputs select {
+    flex: 1;
+    min-width: 0;
+}
+
+.bs-date-inputs select:first-child {
+    flex: 1.2;
+}
+
+.bs-date-inputs select:last-child {
+    flex: 0.8;
+}
+
+/* Dual Date Display */
+.hisab-date-display {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.hisab-date-display .ad-date {
+    font-weight: 600;
+    color: #23282d;
+    font-size: 14px;
+}
+
+.hisab-date-display .bs-date {
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Date Converter Styles */
+.hisab-date-converter-container {
+    max-width: 1200px;
+}
+
+.hisab-converter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.hisab-converter-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.hisab-converter-section h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #23282d;
+    font-size: 18px;
+}
+
+.hisab-converter-form {
+    margin-bottom: 20px;
+}
+
+.hisab-converter-form .button-primary {
+    margin-top: 10px;
+}
+
+.hisab-conversion-result {
+    min-height: 50px;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.hisab-result-success {
+    color: #155724;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    padding: 10px;
+    border-radius: 3px;
+    font-size: 16px;
+}
+
+.hisab-result-warning {
+    color: #856404;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    padding: 10px;
+    border-radius: 3px;
+    font-size: 16px;
+}
+
+.hisab-result-error {
+    color: #721c24;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 3px;
+    font-size: 16px;
+}
+
+.hisab-current-date-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.hisab-current-date-display {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.current-ad-date,
+.current-bs-date {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #007cba;
+}
+
+.current-bs-date {
+    border-left-color: #28a745;
+}
+
+
+.hisab-conversion-history {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.hisab-history-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.hisab-history-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    gap: 10px;
+}
+
+.hisab-history-item:last-child {
+    border-bottom: none;
+}
+
+.hisab-history-from,
+.hisab-history-to {
+    font-weight: 500;
+}
+
+.hisab-history-arrow {
+    color: #666;
+    font-weight: bold;
+}
+
+.hisab-history-time {
+    margin-left: auto;
+    font-size: 12px;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .hisab-converter-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .hisab-current-date-display {
+        grid-template-columns: 1fr;
+    }
+}
+
 .hisab-form-actions {
     display: flex;
     gap: 10px;

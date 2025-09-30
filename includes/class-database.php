@@ -31,12 +31,16 @@ class HisabDatabase {
             description text,
             category_id int(11) DEFAULT NULL,
             transaction_date date NOT NULL,
+            bs_year int(4) DEFAULT NULL,
+            bs_month int(2) DEFAULT NULL,
+            bs_day int(2) DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             user_id int(11) DEFAULT NULL,
             PRIMARY KEY (id),
             KEY type (type),
             KEY transaction_date (transaction_date),
+            KEY bs_date (bs_year, bs_month, bs_day),
             KEY category_id (category_id),
             KEY user_id (user_id)
         ) $charset_collate;";
@@ -58,7 +62,9 @@ class HisabDatabase {
         
         // Insert default categories
         $this->insert_default_categories();
+        
     }
+    
     
     private function insert_default_categories() {
         global $wpdb;
@@ -95,6 +101,7 @@ class HisabDatabase {
     public function save_transaction($data) {
         global $wpdb;
         
+        
         $transaction_data = array(
             'type' => sanitize_text_field($data['type']),
             'amount' => floatval($data['amount']),
@@ -104,10 +111,26 @@ class HisabDatabase {
             'user_id' => get_current_user_id()
         );
         
+        // Add BS date if provided
+        if (isset($data['bs_year']) && isset($data['bs_month']) && isset($data['bs_day'])) {
+            $transaction_data['bs_year'] = intval($data['bs_year']);
+            $transaction_data['bs_month'] = intval($data['bs_month']);
+            $transaction_data['bs_day'] = intval($data['bs_day']);
+        } else {
+            // Convert AD date to BS date
+            $ad_date = explode('-', $data['transaction_date']);
+            $bs_date = HisabNepaliDate::ad_to_bs($ad_date[0], $ad_date[1], $ad_date[2]);
+            if ($bs_date) {
+                $transaction_data['bs_year'] = $bs_date['year'];
+                $transaction_data['bs_month'] = $bs_date['month'];
+                $transaction_data['bs_day'] = $bs_date['day'];
+            }
+        }
+        
         $result = $wpdb->insert(
             $this->table_transactions,
             $transaction_data,
-            array('%s', '%f', '%s', '%d', '%s', '%d')
+            array('%s', '%f', '%s', '%d', '%s', '%d', '%d', '%d', '%d')
         );
         
         if ($result === false) {

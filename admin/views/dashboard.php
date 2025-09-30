@@ -90,7 +90,18 @@ if (!defined('ABSPATH')) {
                     <?php else: ?>
                         <?php foreach ($recent_transactions as $transaction): ?>
                             <tr>
-                                <td><?php echo date('M j, Y', strtotime($transaction->transaction_date)); ?></td>
+                                <td>
+                                    <div class="hisab-date-display">
+                                        <div class="ad-date"><?php echo date('M j, Y', strtotime($transaction->transaction_date)); ?></div>
+                                        <?php 
+                                        $show_dual_dates = get_option('hisab_show_dual_dates', 1);
+                                        if ($show_dual_dates && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
+                                            $bs_month_name = HisabNepaliDate::get_bs_months($transaction->bs_month);
+                                            echo '<div class="bs-date">' . $bs_month_name . ' ' . $transaction->bs_day . ', ' . $transaction->bs_year . '</div>';
+                                        }
+                                        ?>
+                                    </div>
+                                </td>
                                 <td>
                                     <span class="hisab-type-badge <?php echo $transaction->type; ?>">
                                         <?php echo ucfirst($transaction->type); ?>

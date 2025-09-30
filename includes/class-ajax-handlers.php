@@ -36,6 +36,10 @@ class HisabAjaxHandlers {
         add_action('wp_ajax_hisab_save_category', array($this, 'ajax_save_category'));
         add_action('wp_ajax_hisab_delete_category', array($this, 'ajax_delete_category'));
         add_action('wp_ajax_hisab_get_category', array($this, 'ajax_get_category'));
+        
+        // Date conversion AJAX handlers
+        add_action('wp_ajax_hisab_convert_bs_to_ad', array($this, 'ajax_convert_bs_to_ad'));
+        add_action('wp_ajax_hisab_convert_ad_to_bs', array($this, 'ajax_convert_ad_to_bs'));
     }
     
     // Transaction AJAX Handlers
@@ -315,6 +319,59 @@ class HisabAjaxHandlers {
             wp_send_json(array('success' => true, 'data' => $category));
         } else {
             wp_send_json(array('success' => false, 'message' => 'Category not found'));
+        }
+    }
+    
+    // Date Conversion AJAX Handlers
+    public function ajax_convert_bs_to_ad() {
+        error_log('AJAX convert_bs_to_ad called');
+        
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            error_log('Unauthorized user trying to convert date');
+            wp_die('Unauthorized');
+        }
+        
+        
+        $bs_year = intval($_POST['bs_year']);
+        $bs_month = intval($_POST['bs_month']);
+        $bs_day = intval($_POST['bs_day']);
+        
+        $ad_date = HisabNepaliDate::bs_to_ad($bs_year, $bs_month, $bs_day);
+        
+        if ($ad_date) {
+            $ad_date_string = sprintf('%04d-%02d-%02d', $ad_date['year'], $ad_date['month'], $ad_date['day']);
+            wp_send_json(array('success' => true, 'data' => array('ad_date' => $ad_date_string)));
+        } else {
+            wp_send_json(array('success' => false, 'message' => 'Invalid BS date or conversion failed'));
+        }
+    }
+    
+    public function ajax_convert_ad_to_bs() {
+        error_log('AJAX convert_ad_to_bs called');
+        
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            error_log('Unauthorized user trying to convert date');
+            wp_die('Unauthorized');
+        }
+        
+        
+        $ad_date = sanitize_text_field($_POST['ad_date']);
+        $ad_parts = explode('-', $ad_date);
+        
+        if (count($ad_parts) === 3) {
+            $bs_date = HisabNepaliDate::ad_to_bs($ad_parts[0], $ad_parts[1], $ad_parts[2]);
+            
+            if ($bs_date) {
+                wp_send_json(array('success' => true, 'data' => $bs_date));
+            } else {
+                wp_send_json(array('success' => false, 'message' => 'Invalid AD date or conversion failed'));
+            }
+        } else {
+            wp_send_json(array('success' => false, 'message' => 'Invalid date format'));
         }
     }
 }
