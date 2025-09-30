@@ -23,28 +23,22 @@ if (!defined('ABSPATH')) {
                     <option value="expense"><?php _e('Expense', 'hisab-financial-tracker'); ?></option>
                 </select>
             </div>
-            
-            <div class="hisab-form-group">
-                <label for="transaction-amount"><?php _e('Amount', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
-                <input type="number" id="transaction-amount" name="amount" step="0.01" min="0" required>
-            </div>
-        </div>
-        
-        <div class="hisab-form-row">
-            <div class="hisab-form-group">
-                <label for="transaction-description"><?php _e('Description', 'hisab-financial-tracker'); ?></label>
-                <input type="text" id="transaction-description" name="description" placeholder="<?php _e('Enter transaction description', 'hisab-financial-tracker'); ?>">
-            </div>
-            
+
             <div class="hisab-form-group">
                 <label for="transaction-category"><?php _e('Category', 'hisab-financial-tracker'); ?></label>
                 <select id="transaction-category" name="category_id">
                     <option value=""><?php _e('Select Category', 'hisab-financial-tracker'); ?></option>
                 </select>
             </div>
+            
+            
         </div>
         
         <div class="hisab-form-row">
+            <div class="hisab-form-group">
+                <label for="transaction-amount"><?php _e('Amount', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
+                <input type="number" id="transaction-amount" name="amount" step="0.01" min="0" required>
+            </div>
             <div class="hisab-form-group">
                 <label for="transaction-owner"><?php _e('Owner', 'hisab-financial-tracker'); ?></label>
                 <select id="transaction-owner" name="owner_id">
@@ -55,65 +49,66 @@ if (!defined('ABSPATH')) {
         
         <div class="hisab-form-row">
             <div class="hisab-form-group">
+                <label for="transaction-description"><?php _e('Description', 'hisab-financial-tracker'); ?></label>
+                <textarea id="transaction-description" name="description" rows="3" placeholder="<?php _e('Enter transaction description', 'hisab-financial-tracker'); ?>"></textarea>
+            </div>
+        </div>
+        
+        <div class="hisab-form-row">
+            <div class="hisab-form-group">
                 <label for="date-calendar-type"><?php _e('Calendar Type', 'hisab-financial-tracker'); ?></label>
                 <select id="date-calendar-type" name="calendar_type">
-                    <?php
-                    $default_calendar = get_option('hisab_default_calendar', 'ad');
-                    ?>
+                    <?php $default_calendar = get_option('hisab_default_calendar', 'ad'); ?>
                     <option value="ad" <?php selected($default_calendar, 'ad'); ?>><?php _e('AD (Gregorian)', 'hisab-financial-tracker'); ?></option>
                     <option value="bs" <?php selected($default_calendar, 'bs'); ?>><?php _e('BS (Bikram Sambat)', 'hisab-financial-tracker'); ?></option>
                 </select>
             </div>
-        </div>
-        
-        <div class="hisab-form-row" id="ad-date-row">
-            <div class="hisab-form-group">
+
+            <div class="hisab-form-group" id="ad-date-row">
                 <label for="transaction-date"><?php _e('Transaction Date (AD)', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
                 <input type="date" id="transaction-date" name="transaction_date" value="<?php echo date('Y-m-d'); ?>" required>
             </div>
-        </div>
         
-        <div class="hisab-form-row" id="bs-date-row" style="display: none;">
-            <div class="hisab-form-group">
+            <div class="hisab-form-group" id="bs-date-row" style="display: none;">
                 <label><?php _e('Transaction Date (BS)', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
                 <div class="bs-date-inputs">
                     <select id="bs-year" name="bs_year">
                         <option value=""><?php _e('Year', 'hisab-financial-tracker'); ?></option>
                         <?php
-                        $current_bs = HisabNepaliDate::get_current_bs_date();
-                        if ($current_bs) {
-                            $bs_years = HisabNepaliDate::get_bs_year_range($current_bs['year'], 5);
-                            foreach ($bs_years as $year) {
-                                $selected = ($year == $current_bs['year']) ? 'selected' : '';
-                                echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
+                            $current_bs = HisabNepaliDate::get_current_bs_date();
+                            if ($current_bs) {
+                                $bs_years = HisabNepaliDate::get_bs_year_range($current_bs['year'], 5);
+                                foreach ($bs_years as $year) {
+                                    $selected = ($year == $current_bs['year']) ? 'selected' : '';
+                                    echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
+                                }
+                            } else {
+                                for ($year = 2075; $year <= 2085; $year++) {
+                                    $selected = ($year == 2081) ? 'selected' : '';
+                                    echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
+                                }
                             }
-                        } else {
-                            for ($year = 2075; $year <= 2085; $year++) {
-                                $selected = ($year == 2081) ? 'selected' : '';
-                                echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
-                            }
-                        }
                         ?>
                     </select>
                     <select id="bs-month" name="bs_month">
                         <option value=""><?php _e('Month', 'hisab-financial-tracker'); ?></option>
                         <?php
-                        $bs_months = HisabNepaliDate::get_bs_months();
-                        $current_bs = HisabNepaliDate::get_current_bs_date();
-                        foreach ($bs_months as $month) {
-                            $selected = ($current_bs && $month['number'] == $current_bs['month']) ? 'selected' : '';
-                            echo '<option value="' . $month['number'] . '" ' . $selected . '>' . $month['number'] . ' - ' . $month['name_en'] . '</option>';
-                        }
+                            $bs_months = HisabNepaliDate::get_bs_months();
+                            $current_bs = HisabNepaliDate::get_current_bs_date();
+                            foreach ($bs_months as $month) {
+                                $selected = ($current_bs && $month['number'] == $current_bs['month']) ? 'selected' : '';
+                                echo '<option value="' . $month['number'] . '" ' . $selected . '>' . $month['number'] . ' - ' . $month['name_en'] . '</option>';
+                            }
                         ?>
                     </select>
                     <select id="bs-day" name="bs_day">
                         <option value=""><?php _e('Day', 'hisab-financial-tracker'); ?></option>
                         <?php
-                        $current_bs = HisabNepaliDate::get_current_bs_date();
-                        for ($day = 1; $day <= 32; $day++) {
-                            $selected = ($current_bs && $day == $current_bs['day']) ? 'selected' : '';
-                            echo '<option value="' . $day . '" ' . $selected . '>' . $day . '</option>';
-                        }
+                            $current_bs = HisabNepaliDate::get_current_bs_date();
+                            for ($day = 1; $day <= 32; $day++) {
+                                $selected = ($current_bs && $day == $current_bs['day']) ? 'selected' : '';
+                                echo '<option value="' . $day . '" ' . $selected . '>' . $day . '</option>';
+                            }
                         ?>
                     </select>
                 </div>
