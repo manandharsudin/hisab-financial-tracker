@@ -75,6 +75,16 @@ class HisabAdminMenu {
             array($this, 'admin_categories_page')
         );
         
+        // Owners submenu
+        add_submenu_page(
+            'hisab-dashboard',
+            __('Owners', 'hisab-financial-tracker'),
+            __('Owners', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-owners',
+            array($this, 'admin_owners_page')
+        );
+        
         // Date Converter submenu
         add_submenu_page(
             'hisab-dashboard',
@@ -134,6 +144,14 @@ class HisabAdminMenu {
             return;
         }
         include HISAB_PLUGIN_PATH . 'admin/categories.php';
+    }
+    
+    public function admin_owners_page() {
+        if (!class_exists('HisabAdmin')) {
+            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
+            return;
+        }
+        include HISAB_PLUGIN_PATH . 'admin/owners.php';
     }
     
     public function admin_date_converter_page() {

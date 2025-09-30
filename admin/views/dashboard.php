@@ -10,6 +10,84 @@ if (!defined('ABSPATH')) {
 
 <div class="wrap">
     <h1><?php _e('Financial Dashboard', 'hisab-financial-tracker'); ?></h1>
+
+    <!-- Recent Transactions -->
+    <div class="hisab-recent-transactions">
+        <h3><?php _e('Recent Transactions', 'hisab-financial-tracker'); ?></h3>
+        <div class="hisab-table-container">
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th><?php _e('Date', 'hisab-financial-tracker'); ?></th>
+                        <th><?php _e('Type', 'hisab-financial-tracker'); ?></th>
+                        <th><?php _e('Description', 'hisab-financial-tracker'); ?></th>
+                        <th><?php _e('Category', 'hisab-financial-tracker'); ?></th>
+                        <th><?php _e('Owner', 'hisab-financial-tracker'); ?></th>
+                        <th><?php _e('Amount', 'hisab-financial-tracker'); ?></th>
+                        <th><?php _e('Actions', 'hisab-financial-tracker'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($recent_transactions)): ?>
+                        <tr>
+                            <td colspan="7" class="hisab-no-data">
+                                <?php _e('No transactions found. Add your first transaction!', 'hisab-financial-tracker'); ?>
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($recent_transactions as $transaction): ?>
+                            <tr>
+                                <td>
+                                    <div class="hisab-date-display">
+                                        <div class="ad-date"><?php echo date('M j, Y', strtotime($transaction->transaction_date)); ?></div>
+                                        <?php 
+                                        $show_dual_dates = get_option('hisab_show_dual_dates', 1);
+                                        if ($show_dual_dates && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
+                                            $bs_month_name = HisabNepaliDate::get_bs_months($transaction->bs_month);
+                                            echo '<div class="bs-date">' . $bs_month_name . ' ' . $transaction->bs_day . ', ' . $transaction->bs_year . '</div>';
+                                        }
+                                        ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="hisab-type-badge <?php echo $transaction->type; ?>">
+                                        <?php echo ucfirst($transaction->type); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo esc_html($transaction->description); ?></td>
+                                <td>
+                                    <?php if ($transaction->category_name): ?>
+                                        <span class="hisab-category-badge" style="background-color: <?php echo $transaction->category_color; ?>">
+                                            <?php echo esc_html($transaction->category_name); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="hisab-category-badge"><?php _e('Uncategorized', 'hisab-financial-tracker'); ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($transaction->owner_name): ?>
+                                        <span class="hisab-owner-badge" style="background-color: <?php echo $transaction->owner_color; ?>">
+                                            <?php echo esc_html($transaction->owner_name); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="hisab-owner-badge hisab-no-owner"><?php _e('No Owner', 'hisab-financial-tracker'); ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="hisab-amount <?php echo $transaction->type; ?>">
+                                    <?php echo number_format($transaction->amount, 2); ?>
+                                </td>
+                                <td>
+                                    <button class="button button-small hisab-delete-transaction" data-id="<?php echo $transaction->id; ?>">
+                                        <?php _e('Delete', 'hisab-financial-tracker'); ?>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
     
     <!-- Summary Cards -->
     <div class="hisab-summary-cards">
@@ -62,74 +140,6 @@ if (!defined('ABSPATH')) {
         <div class="hisab-chart-container">
             <h3><?php _e('Income vs Expense Trend (Last 6 Months)', 'hisab-financial-tracker'); ?></h3>
             <canvas id="hisab-trend-chart" width="400" height="200"></canvas>
-        </div>
-    </div>
-    
-    <!-- Recent Transactions -->
-    <div class="hisab-recent-transactions">
-        <h3><?php _e('Recent Transactions', 'hisab-financial-tracker'); ?></h3>
-        <div class="hisab-table-container">
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th><?php _e('Date', 'hisab-financial-tracker'); ?></th>
-                        <th><?php _e('Type', 'hisab-financial-tracker'); ?></th>
-                        <th><?php _e('Description', 'hisab-financial-tracker'); ?></th>
-                        <th><?php _e('Category', 'hisab-financial-tracker'); ?></th>
-                        <th><?php _e('Amount', 'hisab-financial-tracker'); ?></th>
-                        <th><?php _e('Actions', 'hisab-financial-tracker'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($recent_transactions)): ?>
-                        <tr>
-                            <td colspan="6" class="hisab-no-data">
-                                <?php _e('No transactions found. Add your first transaction!', 'hisab-financial-tracker'); ?>
-                            </td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($recent_transactions as $transaction): ?>
-                            <tr>
-                                <td>
-                                    <div class="hisab-date-display">
-                                        <div class="ad-date"><?php echo date('M j, Y', strtotime($transaction->transaction_date)); ?></div>
-                                        <?php 
-                                        $show_dual_dates = get_option('hisab_show_dual_dates', 1);
-                                        if ($show_dual_dates && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
-                                            $bs_month_name = HisabNepaliDate::get_bs_months($transaction->bs_month);
-                                            echo '<div class="bs-date">' . $bs_month_name . ' ' . $transaction->bs_day . ', ' . $transaction->bs_year . '</div>';
-                                        }
-                                        ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="hisab-type-badge <?php echo $transaction->type; ?>">
-                                        <?php echo ucfirst($transaction->type); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo esc_html($transaction->description); ?></td>
-                                <td>
-                                    <?php if ($transaction->category_name): ?>
-                                        <span class="hisab-category-badge" style="background-color: <?php echo $transaction->category_color; ?>">
-                                            <?php echo esc_html($transaction->category_name); ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="hisab-category-badge"><?php _e('Uncategorized', 'hisab-financial-tracker'); ?></span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="hisab-amount <?php echo $transaction->type; ?>">
-                                    <?php echo number_format($transaction->amount, 2); ?>
-                                </td>
-                                <td>
-                                    <button class="button button-small hisab-delete-transaction" data-id="<?php echo $transaction->id; ?>">
-                                        <?php _e('Delete', 'hisab-financial-tracker'); ?>
-                                    </button>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
         </div>
     </div>
 </div>

@@ -46,6 +46,15 @@ if (!defined('ABSPATH')) {
         
         <div class="hisab-form-row">
             <div class="hisab-form-group">
+                <label for="transaction-owner"><?php _e('Owner', 'hisab-financial-tracker'); ?></label>
+                <select id="transaction-owner" name="owner_id">
+                    <option value=""><?php _e('Select Owner (Optional)', 'hisab-financial-tracker'); ?></option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="hisab-form-row">
+            <div class="hisab-form-group">
                 <label for="date-calendar-type"><?php _e('Calendar Type', 'hisab-financial-tracker'); ?></label>
                 <select id="date-calendar-type" name="calendar_type">
                     <?php
@@ -128,6 +137,23 @@ if (!defined('ABSPATH')) {
 jQuery(document).ready(function($) {
     const incomeCategories = <?php echo json_encode($income_categories); ?>;
     const expenseCategories = <?php echo json_encode($expense_categories); ?>;
+    const owners = <?php echo json_encode($owners); ?>;
+    
+    // Populate owners dropdown
+    function populateOwners() {
+        const ownerSelect = $('#transaction-owner');
+        ownerSelect.empty();
+        ownerSelect.append('<option value=""><?php _e('Select Owner (Optional)', 'hisab-financial-tracker'); ?></option>');
+        
+        if (Array.isArray(owners)) {
+            owners.forEach(function(owner) {
+                ownerSelect.append(`<option value="${owner.id}">${owner.name}</option>`);
+            });
+        }
+    }
+    
+    // Initialize owners dropdown
+    populateOwners();
     
     // Update categories based on transaction type
     $('#transaction-type').on('change', function() {

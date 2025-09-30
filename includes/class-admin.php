@@ -41,6 +41,7 @@ class HisabAdmin {
             return $cat->type === 'expense';
         }));
         
+        $owners = $this->database->get_owners();
         
         include HISAB_PLUGIN_PATH . 'admin/views/add-transaction.php';
     }
@@ -101,5 +102,9 @@ class HisabAdmin {
         }));
         
         include HISAB_PLUGIN_PATH . 'admin/views/categories.php';
+    }
+    
+    public function render_owners() {
+        include HISAB_PLUGIN_PATH . 'admin/views/owners.php';
     }
 }

@@ -41,6 +41,10 @@ class HisabAjaxHandlers {
         // Date conversion AJAX handlers
         add_action('wp_ajax_hisab_convert_bs_to_ad', array($this, 'ajax_convert_bs_to_ad'));
         add_action('wp_ajax_hisab_convert_ad_to_bs', array($this, 'ajax_convert_ad_to_bs'));
+        
+        // Owner AJAX handlers
+        add_action('wp_ajax_hisab_save_owner', array($this, 'ajax_save_owner'));
+        add_action('wp_ajax_hisab_delete_owner', array($this, 'ajax_delete_owner'));
     }
     
     // Transaction AJAX Handlers
@@ -389,6 +393,41 @@ class HisabAjaxHandlers {
         
         $database = new HisabDatabase();
         $result = $database->insert_default_categories_manually();
+        
+        wp_send_json($result);
+    }
+    
+    // Owner AJAX Handlers
+    public function ajax_save_owner() {
+        check_ajax_referer('hisab_owner', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $database = new HisabDatabase();
+        $result = $database->save_owner($_POST);
+        
+        wp_send_json($result);
+    }
+    
+    public function ajax_delete_owner() {
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $database = new HisabDatabase();
+        $result = $database->delete_owner($_POST['owner_id']);
         
         wp_send_json($result);
     }

@@ -11,11 +11,13 @@ class HisabDatabase {
     
     private $table_transactions;
     private $table_categories;
+    private $table_owners;
     
     public function __construct() {
         global $wpdb;
         $this->table_transactions = $wpdb->prefix . 'hisab_transactions';
         $this->table_categories = $wpdb->prefix . 'hisab_categories';
+        $this->table_owners = $wpdb->prefix . 'hisab_owners';
     }
     
     public function create_tables() {
@@ -30,6 +32,7 @@ class HisabDatabase {
             amount decimal(10,2) NOT NULL,
             description text,
             category_id int(11) DEFAULT NULL,
+            owner_id int(11) DEFAULT NULL,
             transaction_date date NOT NULL,
             bs_year int(4) DEFAULT NULL,
             bs_month int(2) DEFAULT NULL,
@@ -42,6 +45,7 @@ class HisabDatabase {
             KEY transaction_date (transaction_date),
             KEY bs_date (bs_year, bs_month, bs_day),
             KEY category_id (category_id),
+            KEY owner_id (owner_id),
             KEY user_id (user_id)
         ) $charset_collate;";
         
@@ -56,15 +60,24 @@ class HisabDatabase {
             KEY type (type)
         ) $charset_collate;";
         
+        // Create owners table
+        $sql_owners = "CREATE TABLE {$this->table_owners} (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            name varchar(100) NOT NULL,
+            color varchar(7) DEFAULT '#007cba',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY unique_name (name)
+        ) $charset_collate;";
+        
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_transactions);
         dbDelta($sql_categories);
+        dbDelta($sql_owners);
         
         // Insert default categories
-        $this->insert_default_categories();
-        
-    }
-    
+        $this->insert_default_categories();        
+    }    
     
     private function insert_default_categories() {
         global $wpdb;
@@ -150,14 +163,14 @@ class HisabDatabase {
     }
     
     public function save_transaction($data) {
-        global $wpdb;
-        
+        global $wpdb;        
         
         $transaction_data = array(
             'type' => sanitize_text_field($data['type']),
             'amount' => floatval($data['amount']),
             'description' => sanitize_textarea_field($data['description']),
             'category_id' => intval($data['category_id']),
+            'owner_id' => isset($data['owner_id']) && !empty($data['owner_id']) ? intval($data['owner_id']) : null,
             'transaction_date' => sanitize_text_field($data['transaction_date']),
             'user_id' => get_current_user_id()
         );
@@ -249,17 +262,19 @@ class HisabDatabase {
         
         if (empty($where_values)) {
             $sql = "
-                SELECT t.*, c.name as category_name, c.color as category_color
+                SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color
                 FROM {$this->table_transactions} t
                 LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
+                LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id
                 WHERE {$where_clause}
                 ORDER BY t.transaction_date DESC, t.created_at DESC
             ";
         } else {
             $sql = $wpdb->prepare("
-                SELECT t.*, c.name as category_name, c.color as category_color
+                SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color
                 FROM {$this->table_transactions} t
                 LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
+                LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id
                 WHERE {$where_clause}
                 ORDER BY t.transaction_date DESC, t.created_at DESC
             ", $where_values);
@@ -488,5 +503,114 @@ class HisabDatabase {
         }
         
         return $summary;
+    }
+    
+    // Owner Management Methods
+    
+    public function get_owners() {
+        global $wpdb;
+        
+        $sql = "SELECT * FROM {$this->table_owners} ORDER BY name ASC";
+        return $wpdb->get_results($sql);
+    }
+    
+    public function save_owner($data) {
+        global $wpdb;
+        
+        $owner_data = array(
+            'name' => sanitize_text_field($data['name']),
+            'color' => sanitize_hex_color($data['color'])
+        );
+        
+        if (isset($data['id']) && !empty($data['id'])) {
+            // Update existing owner
+            $result = $wpdb->update(
+                $this->table_owners,
+                $owner_data,
+                array('id' => intval($data['id'])),
+                array('%s', '%s'),
+                array('%d')
+            );
+            
+            if ($result === false) {
+                return array('success' => false, 'message' => 'Failed to update owner');
+            }
+            
+            return array('success' => true, 'message' => 'Owner updated successfully', 'id' => intval($data['id']));
+        } else {
+            // Insert new owner
+            $result = $wpdb->insert(
+                $this->table_owners,
+                $owner_data,
+                array('%s', '%s')
+            );
+            
+            if ($result === false) {
+                return array('success' => false, 'message' => 'Failed to save owner');
+            }
+            
+            return array('success' => true, 'message' => 'Owner saved successfully', 'id' => $wpdb->insert_id);
+        }
+    }
+    
+    public function delete_owner($id) {
+        global $wpdb;
+        
+        // Check if owner is being used by any transactions
+        $usage_check = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$this->table_transactions} WHERE owner_id = %d",
+            intval($id)
+        ));
+        
+        if ($usage_check > 0) {
+            return array('success' => false, 'message' => 'Cannot delete owner that is being used by transactions');
+        }
+        
+        $result = $wpdb->delete(
+            $this->table_owners,
+            array('id' => intval($id)),
+            array('%d')
+        );
+        
+        if ($result === false) {
+            return array('success' => false, 'message' => 'Failed to delete owner');
+        }
+        
+        return array('success' => true, 'message' => 'Owner deleted successfully');
+    }
+    
+    public function get_owner($id) {
+        global $wpdb;
+        
+        $sql = $wpdb->prepare("
+            SELECT * FROM {$this->table_owners}
+            WHERE id = %d
+        ", intval($id));
+        
+        return $wpdb->get_row($sql);
+    }
+    
+    public function get_owner_summary($year, $month) {
+        global $wpdb;
+        
+        $start_date = sprintf('%04d-%02d-01', $year, $month);
+        $end_date = date('Y-m-t', strtotime($start_date));
+        
+        $sql = $wpdb->prepare("
+            SELECT 
+                o.name as owner_name,
+                o.color as owner_color,
+                SUM(t.amount) as total,
+                COUNT(t.id) as count
+            FROM {$this->table_owners} o
+            LEFT JOIN {$this->table_transactions} t ON o.id = t.owner_id 
+                AND t.transaction_date >= %s 
+                AND t.transaction_date <= %s
+            GROUP BY o.id, o.name, o.color
+            HAVING total > 0
+            ORDER BY total DESC
+        ", $start_date, $end_date);
+        
+        return $wpdb->get_results($sql);
     }
 }
