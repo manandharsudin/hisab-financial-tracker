@@ -233,7 +233,7 @@ class HisabFrontend {
         ?>
         <div class="hisab-transaction-form-frontend">
             <form id="hisab-frontend-transaction-form" class="hisab-form">
-                <?php wp_nonce_field('hisab_transaction', 'hisab_nonce'); ?>
+                <?php wp_nonce_field('hisab_transaction', 'nonce'); ?>
                 
                 <div class="hisab-form-row">
                     <div class="hisab-form-group">

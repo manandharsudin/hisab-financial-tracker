@@ -17,7 +17,7 @@ $owners = $this->database->get_owners();
     <div class="hisab-add-owner-section">
         <h2><?php _e('Add New Owner', 'hisab-financial-tracker'); ?></h2>
         <form id="hisab-owner-form" class="hisab-form">
-            <?php wp_nonce_field('hisab_owner', 'hisab_nonce'); ?>
+            <?php wp_nonce_field('hisab_transaction', 'nonce'); ?>
             <input type="hidden" id="owner-id" name="id" value="">
             
             <div class="hisab-form-row">
@@ -267,7 +267,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'hisab_delete_owner',
                 owner_id: ownerId,
-                hisab_nonce: hisab_ajax.nonce
+                nonce: hisab_ajax.nonce
             },
             success: function(response) {
                 if (response.success) {

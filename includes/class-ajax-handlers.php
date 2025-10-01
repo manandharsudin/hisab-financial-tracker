@@ -55,7 +55,7 @@ class HisabAjaxHandlers {
     
     // Transaction AJAX Handlers
     public function ajax_save_transaction() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -72,7 +72,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_get_data() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -117,7 +117,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_update_transaction() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -135,7 +135,7 @@ class HisabAjaxHandlers {
     
     // Analytics AJAX Handlers
     public function ajax_get_analytics_data() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -153,7 +153,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_get_trend_data() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -171,7 +171,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_get_category_data() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -193,7 +193,7 @@ class HisabAjaxHandlers {
     
     // Projection AJAX Handlers
     public function ajax_calculate_savings() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -213,7 +213,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_get_projections() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -233,7 +233,7 @@ class HisabAjaxHandlers {
     
     // Dashboard AJAX Handlers
     public function ajax_get_dashboard_data() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -257,7 +257,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_export_data() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -290,7 +290,7 @@ class HisabAjaxHandlers {
     
     // Category AJAX Handlers
     public function ajax_save_category() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -307,7 +307,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_delete_category() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -324,7 +324,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_get_category() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -348,7 +348,7 @@ class HisabAjaxHandlers {
     public function ajax_convert_bs_to_ad() {
         error_log('AJAX convert_bs_to_ad called');
         
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             error_log('Unauthorized user trying to convert date');
@@ -373,7 +373,7 @@ class HisabAjaxHandlers {
     public function ajax_convert_ad_to_bs() {
         error_log('AJAX convert_ad_to_bs called');
         
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             error_log('Unauthorized user trying to convert date');
@@ -398,7 +398,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_insert_default_categories() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -416,7 +416,7 @@ class HisabAjaxHandlers {
     
     // Owner AJAX Handlers
     public function ajax_save_owner() {
-        check_ajax_referer('hisab_owner', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -433,7 +433,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_delete_owner() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -451,7 +451,7 @@ class HisabAjaxHandlers {
     
     // Transaction Details AJAX Handlers
     public function ajax_get_transaction() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -473,7 +473,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_get_transaction_details() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -491,7 +491,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_save_transaction_details() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
@@ -522,7 +522,7 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_delete_transaction_details() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');

@@ -256,21 +256,46 @@ class HisabDatabase {
     public function update_transaction($data) {
         global $wpdb;
         
-        $transaction_id = intval($data['id']);
+        $transaction_id = intval($data['transaction_id']);
         $transaction_data = array(
             'type' => sanitize_text_field($data['type']),
             'amount' => floatval($data['amount']),
             'description' => sanitize_textarea_field($data['description']),
             'category_id' => intval($data['category_id']),
+            'owner_id' => !empty($data['owner_id']) ? intval($data['owner_id']) : null,
             'transaction_date' => sanitize_text_field($data['transaction_date']),
+            'payment_method' => !empty($data['payment_method']) ? sanitize_text_field($data['payment_method']) : null,
+            'bill_image_id' => !empty($data['bill_image_id']) ? intval($data['bill_image_id']) : null,
+            'transaction_tax' => !empty($data['transaction_tax']) ? floatval($data['transaction_tax']) : null,
+            'transaction_discount' => !empty($data['transaction_discount']) ? floatval($data['transaction_discount']) : null,
             'updated_at' => current_time('mysql')
         );
+        
+        // Handle BS date conversion if needed
+        if (!empty($data['bs_year']) && !empty($data['bs_month']) && !empty($data['bs_day'])) {
+            $bs_year = intval($data['bs_year']);
+            $bs_month = intval($data['bs_month']);
+            $bs_day = intval($data['bs_day']);
+            
+            $transaction_data['bs_year'] = $bs_year;
+            $transaction_data['bs_month'] = $bs_month;
+            $transaction_data['bs_day'] = $bs_day;
+        } else {
+            // Convert AD to BS
+            $nepali_date = new HisabNepaliDate();
+            $bs_date = $nepali_date->ad_to_bs($data['transaction_date']);
+            if ($bs_date) {
+                $transaction_data['bs_year'] = $bs_date['year'];
+                $transaction_data['bs_month'] = $bs_date['month'];
+                $transaction_data['bs_day'] = $bs_date['day'];
+            }
+        }
         
         $result = $wpdb->update(
             $this->table_transactions,
             $transaction_data,
             array('id' => $transaction_id),
-            array('%s', '%f', '%s', '%d', '%s', '%s'),
+            array('%s', '%f', '%s', '%d', '%d', '%s', '%s', '%d', '%f', '%f', '%s', '%d', '%d', '%d'),
             array('%d')
         );
         

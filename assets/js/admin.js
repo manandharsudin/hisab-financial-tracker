@@ -278,7 +278,7 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: {
                 action: 'hisab_insert_default_categories',
-                hisab_nonce: hisab_ajax.nonce
+                nonce: hisab_ajax.nonce
             },
             success: function(response) {
                 if (response.success) {

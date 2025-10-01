@@ -275,7 +275,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'hisab_get_transaction',
                 transaction_id: currentTransactionId,
-                hisab_nonce: hisab_ajax.nonce
+                nonce: hisab_ajax.nonce
             },
             success: function(response) {
                 if (response.success) {
@@ -334,7 +334,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'hisab_get_transaction_details',
                 transaction_id: currentTransactionId,
-                hisab_nonce: hisab_ajax.nonce
+                nonce: hisab_ajax.nonce
             },
             success: function(response) {
                 if (response.success && response.data && response.data.length > 0) {
@@ -433,7 +433,7 @@ jQuery(document).ready(function($) {
                 action: 'hisab_save_transaction_details',
                 transaction_id: currentTransactionId,
                 details: details,
-                hisab_nonce: hisab_ajax.nonce
+                nonce: hisab_ajax.nonce
             },
             success: function(response) {
                 if (response.success) {

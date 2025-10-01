@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     <div class="hisab-category-form-section">
         <h2><?php _e('Add New Category', 'hisab-financial-tracker'); ?></h2>
         <form id="hisab-category-form" class="hisab-form">
-            <?php wp_nonce_field('hisab_transaction', 'hisab_nonce'); ?>
+            <?php wp_nonce_field('hisab_transaction', 'nonce'); ?>
             <input type="hidden" id="category-id" name="id" value="">
             
             <div class="hisab-form-row">
@@ -204,7 +204,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'hisab_get_category',
                 id: categoryId,
-                hisab_nonce: hisab_ajax.nonce
+                nonce: hisab_ajax.nonce
             },
             success: function(response) {
                 if (response.success) {
@@ -244,7 +244,7 @@ jQuery(document).ready(function($) {
                 data: {
                     action: 'hisab_delete_category',
                     id: categoryId,
-                    hisab_nonce: hisab_ajax.nonce
+                    nonce: hisab_ajax.nonce
                 },
                 success: function(response) {
                     if (response.success) {

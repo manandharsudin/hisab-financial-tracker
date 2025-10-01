@@ -193,6 +193,9 @@ $owners = $database->get_owners();
                             </td>
                             <td>
                                 <div class="hisab-transaction-actions">
+                                    <a href="<?php echo admin_url('admin.php?page=hisab-add-transaction&edit=' . $transaction->id); ?>" class="button button-small">
+                                        <?php _e('Edit', 'hisab-financial-tracker'); ?>
+                                    </a>
                                     <button type="button" class="button button-small hisab-view-details" data-transaction-id="<?php echo $transaction->id; ?>">
                                         <?php _e('Details', 'hisab-financial-tracker'); ?>
                                     </button>
@@ -242,7 +245,8 @@ $owners = $database->get_owners();
     <?php endif; ?>
 </div>
 
-<!-- Transaction Details Modal (reused from dashboard) -->
+
+<!-- Transaction Details Modal -->
 <div id="transaction-details-modal" class="hisab-modal" style="display: none;">
     <div class="hisab-modal-content">
         <div class="hisab-modal-header">
@@ -292,6 +296,9 @@ $owners = $database->get_owners();
 
 <script>
 jQuery(document).ready(function($) {
+    let currentTransactionData = null;
+    
+    
     // View transaction details
     $('.hisab-view-details').on('click', function() {
         const transactionId = $(this).data('transaction-id');
@@ -314,12 +321,14 @@ jQuery(document).ready(function($) {
         }
     });
     
+    
     // Modal close
     $('.hisab-modal-close, .hisab-modal').on('click', function(e) {
         if (e.target === this) {
             $('.hisab-modal').hide();
         }
     });
+    
     
     function loadTransactionDetails(transactionId) {
         $.ajax({

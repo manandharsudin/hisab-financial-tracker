@@ -32,7 +32,7 @@ class HisabAdmin {
         include HISAB_PLUGIN_PATH . 'admin/views/dashboard.php';
     }
     
-    public function render_add_transaction() {
+    public function render_add_transaction($edit_transaction = null) {
         $categories = $this->database->get_categories();
         $income_categories = array_values(array_filter($categories, function($cat) {
             return $cat->type === 'income';

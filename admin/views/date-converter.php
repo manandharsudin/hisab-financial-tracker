@@ -134,7 +134,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'hisab_convert_ad_to_bs',
                 ad_date: adDate,
-                hisab_nonce: hisab_ajax.nonce
+                nonce: hisab_ajax.nonce
             },
             success: function(response) {
                 if (response.success) {
@@ -175,7 +175,7 @@ jQuery(document).ready(function($) {
                 bs_year: bsYear,
                 bs_month: bsMonth,
                 bs_day: bsDay,
-                hisab_nonce: hisab_ajax.nonce
+                nonce: hisab_ajax.nonce
             },
             success: function(response) {
                 if (response.success) {
