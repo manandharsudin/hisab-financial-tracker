@@ -799,3 +799,445 @@ input[type="color"] {
         gap: 15px;
     }
 }
+
+/* Transaction Details Modal Styles */
+.hisab-modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.hisab-modal-content {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-width: 900px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    animation: slideIn 0.3s ease-out;
+    border: 1px solid #e1e5e9;
+}
+
+@keyframes slideIn {
+    from { 
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.hisab-modal-header {
+    padding: 25px 30px;
+    border-bottom: 1px solid #e1e5e9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.hisab-modal-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.hisab-modal-close {
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.hisab-modal-close:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.hisab-modal-body {
+    padding: 30px;
+    background-color: #fafbfc;
+}
+
+.hisab-modal-footer {
+    padding: 25px 30px;
+    border-top: 1px solid #e1e5e9;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    background-color: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+.hisab-transaction-info {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.hisab-transaction-info h4 {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-size: 18px;
+    font-weight: 600;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.hisab-transaction-info p {
+    margin: 8px 0;
+    color: #6c757d;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hisab-transaction-info p strong {
+    color: #495057;
+    font-weight: 600;
+    min-width: 80px;
+}
+
+.hisab-details-form {
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.hisab-details-form h4 {
+    margin: 0 0 20px 0;
+    color: #495057;
+    font-size: 16px;
+    font-weight: 600;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.detail-item {
+    margin-bottom: 15px;
+    padding: 20px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.detail-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 40px;
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+}
+
+.detail-name {
+    padding: 10px 14px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+.detail-name:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    outline: none;
+}
+
+.detail-rate,
+.detail-quantity,
+.detail-total {
+    padding: 10px 14px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    text-align: right;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+.detail-rate:focus,
+.detail-quantity:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    outline: none;
+}
+
+.detail-total {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    border-color: #dee2e6;
+}
+
+.remove-detail-item {
+    width: 32px;
+    height: 32px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: bold;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    margin: 0 auto;
+}
+
+.remove-detail-item:hover {
+    background-color: #c82333;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+}
+
+.remove-detail-item:active {
+    transform: scale(0.95);
+}
+
+#add-detail-item {
+    margin-top: 15px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(40,167,69,0.3);
+}
+
+#add-detail-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40,167,69,0.4);
+}
+
+.hisab-details-summary {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 25px;
+    border: 2px solid #2196f3;
+    box-shadow: 0 2px 8px rgba(33,150,243,0.2);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0;
+    font-size: 14px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(33,150,243,0.2);
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row span:first-child {
+    color: #1565c0;
+    font-weight: 500;
+}
+
+.summary-row span:last-child {
+    color: #0d47a1;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.total-row {
+    font-weight: bold;
+    font-size: 18px;
+    border-top: 2px solid #2196f3;
+    padding-top: 12px;
+    margin-top: 15px;
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 6px;
+    margin: 15px -20px -20px -20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.total-row span:first-child {
+    color: rgba(255,255,255,0.9);
+}
+
+.total-row span:last-child {
+    color: white;
+    font-size: 20px;
+}
+
+.mismatch {
+    color: #d32f2f;
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #f44336;
+    font-weight: 600;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+#details-messages {
+    margin-top: 15px;
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 768px) {
+    .hisab-modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .detail-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .detail-row input,
+    .detail-row button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 1024px) {
+    .detail-row {
+        grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 40px;
+        gap: 8px;
+    }
+    
+    .remove-detail-item {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+}
+
+/* Payment Method Styles */
+.hisab-payment-method {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background-color: #e3f2fd;
+    color: #1976d2;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.hisab-payment-method.hisab-no-payment {
+    background-color: #f5f5f5;
+    color: #999;
+}
+
+/* Amount Details Styles */
+.hisab-amount-details {
+    margin-top: 3px;
+}
+
+.hisab-amount-details small {
+    display: block;
+    font-size: 10px;
+    color: #666;
+}
+
+.hisab-amount-details .tax {
+    color: #d32f2f;
+}
+
+.hisab-amount-details .discount {
+    color: #388e3c;
+}
+
+/* Transaction Actions */
+.hisab-transaction-actions {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.hisab-transaction-actions .button {
+    font-size: 11px;
+    padding: 4px 8px;
+    line-height: 1.2;
+}
+
+.hisab-add-details {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    color: white;
+}
+
+.hisab-add-details:hover {
+    background-color: #45a049;
+    border-color: #45a049;
+}
+
+/* Responsive adjustments for transaction table */
+@media (max-width: 768px) {
+    .hisab-transaction-actions {
+        flex-direction: column;
+    }
+    
+    .hisab-transaction-actions .button {
+        width: 100%;
+        margin-bottom: 2px;
+    }
+}

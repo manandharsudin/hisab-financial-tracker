@@ -45,6 +45,12 @@ class HisabAjaxHandlers {
         // Owner AJAX handlers
         add_action('wp_ajax_hisab_save_owner', array($this, 'ajax_save_owner'));
         add_action('wp_ajax_hisab_delete_owner', array($this, 'ajax_delete_owner'));
+        
+        // Transaction Details AJAX handlers
+        add_action('wp_ajax_hisab_get_transaction', array($this, 'ajax_get_transaction'));
+        add_action('wp_ajax_hisab_get_transaction_details', array($this, 'ajax_get_transaction_details'));
+        add_action('wp_ajax_hisab_save_transaction_details', array($this, 'ajax_save_transaction_details'));
+        add_action('wp_ajax_hisab_delete_transaction_details', array($this, 'ajax_delete_transaction_details'));
     }
     
     // Transaction AJAX Handlers
@@ -428,6 +434,96 @@ class HisabAjaxHandlers {
         
         $database = new HisabDatabase();
         $result = $database->delete_owner($_POST['owner_id']);
+        
+        wp_send_json($result);
+    }
+    
+    // Transaction Details AJAX Handlers
+    public function ajax_get_transaction() {
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $transaction_id = intval($_POST['transaction_id']);
+        $database = new HisabDatabase();
+        $transaction = $database->get_transaction($transaction_id);
+        
+        if ($transaction) {
+            wp_send_json(array('success' => true, 'data' => $transaction));
+        } else {
+            wp_send_json(array('success' => false, 'message' => 'Transaction not found'));
+        }
+    }
+    
+    public function ajax_get_transaction_details() {
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $transaction_id = intval($_POST['transaction_id']);
+        $database = new HisabDatabase();
+        $details = $database->get_transaction_details($transaction_id);
+        
+        wp_send_json(array('success' => true, 'data' => $details));
+    }
+    
+    public function ajax_save_transaction_details() {
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $transaction_id = intval($_POST['transaction_id']);
+        $details = $_POST['details'];
+        
+        // Validate details format
+        if (!is_array($details)) {
+            wp_send_json(array('success' => false, 'message' => 'Invalid details format'));
+        }
+        
+        $database = new HisabDatabase();
+        
+        // Validate details against main transaction amount
+        $validation = $database->validate_transaction_details($transaction_id, $details);
+        if (!$validation['success']) {
+            wp_send_json($validation);
+        }
+        
+        $result = $database->save_transaction_details($transaction_id, $details);
+        wp_send_json($result);
+    }
+    
+    public function ajax_delete_transaction_details() {
+        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabDatabase')) {
+            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+        }
+        
+        $transaction_id = intval($_POST['transaction_id']);
+        $database = new HisabDatabase();
+        $result = $database->delete_transaction_details($transaction_id);
         
         wp_send_json($result);
     }

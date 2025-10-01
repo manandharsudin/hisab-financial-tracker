@@ -12,12 +12,14 @@ class HisabDatabase {
     private $table_transactions;
     private $table_categories;
     private $table_owners;
+    private $table_transaction_details;
     
     public function __construct() {
         global $wpdb;
         $this->table_transactions = $wpdb->prefix . 'hisab_transactions';
         $this->table_categories = $wpdb->prefix . 'hisab_categories';
         $this->table_owners = $wpdb->prefix . 'hisab_owners';
+        $this->table_transaction_details = $wpdb->prefix . 'hisab_transaction_details';
     }
     
     public function create_tables() {
@@ -33,6 +35,10 @@ class HisabDatabase {
             description text,
             category_id int(11) DEFAULT NULL,
             owner_id int(11) DEFAULT NULL,
+            payment_method varchar(50) DEFAULT NULL,
+            bill_image_id int(11) DEFAULT NULL,
+            transaction_tax decimal(10,2) DEFAULT NULL,
+            transaction_discount decimal(10,2) DEFAULT NULL,
             transaction_date date NOT NULL,
             bs_year int(4) DEFAULT NULL,
             bs_month int(2) DEFAULT NULL,
@@ -46,6 +52,7 @@ class HisabDatabase {
             KEY bs_date (bs_year, bs_month, bs_day),
             KEY category_id (category_id),
             KEY owner_id (owner_id),
+            KEY payment_method (payment_method),
             KEY user_id (user_id)
         ) $charset_collate;";
         
@@ -70,10 +77,25 @@ class HisabDatabase {
             UNIQUE KEY unique_name (name)
         ) $charset_collate;";
         
+        // Create transaction details table
+        $sql_transaction_details = "CREATE TABLE {$this->table_transaction_details} (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            transaction_id int(11) NOT NULL,
+            item_name varchar(255) NOT NULL,
+            rate decimal(10,2) NOT NULL,
+            quantity decimal(10,2) NOT NULL,
+            item_total decimal(10,2) NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY transaction_id (transaction_id),
+            FOREIGN KEY (transaction_id) REFERENCES {$this->table_transactions}(id) ON DELETE CASCADE
+        ) $charset_collate;";
+        
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_transactions);
         dbDelta($sql_categories);
         dbDelta($sql_owners);
+        dbDelta($sql_transaction_details);
         
         // Insert default categories
         $this->insert_default_categories();        
@@ -171,9 +193,20 @@ class HisabDatabase {
             'description' => sanitize_textarea_field($data['description']),
             'category_id' => intval($data['category_id']),
             'owner_id' => isset($data['owner_id']) && !empty($data['owner_id']) ? intval($data['owner_id']) : null,
+            'payment_method' => isset($data['payment_method']) && !empty($data['payment_method']) ? sanitize_text_field($data['payment_method']) : null,
+            'transaction_tax' => isset($data['transaction_tax']) && !empty($data['transaction_tax']) ? floatval($data['transaction_tax']) : null,
+            'transaction_discount' => isset($data['transaction_discount']) && !empty($data['transaction_discount']) ? floatval($data['transaction_discount']) : null,
             'transaction_date' => sanitize_text_field($data['transaction_date']),
             'user_id' => get_current_user_id()
         );
+        
+        // Handle bill image upload
+        if (isset($_FILES['bill_image']) && $_FILES['bill_image']['error'] === UPLOAD_ERR_OK) {
+            $uploaded_file = $this->handle_bill_image_upload($_FILES['bill_image']);
+            if ($uploaded_file) {
+                $transaction_data['bill_image_id'] = $uploaded_file;
+            }
+        }
         
         // Add BS date if provided
         if (isset($data['bs_year']) && isset($data['bs_month']) && isset($data['bs_day'])) {
@@ -194,14 +227,14 @@ class HisabDatabase {
         $result = $wpdb->insert(
             $this->table_transactions,
             $transaction_data,
-            array('%s', '%f', '%s', '%d', '%s', '%d', '%d', '%d', '%d')
+            array('%s', '%f', '%s', '%d', '%d', '%s', '%d', '%f', '%f', '%s', '%d', '%d', '%d', '%d')
         );
         
         if ($result === false) {
             return array('success' => false, 'message' => 'Failed to save transaction');
         }
         
-        return array('success' => true, 'message' => 'Transaction saved successfully', 'id' => $wpdb->insert_id);
+        return array('success' => true, 'message' => 'Transaction saved successfully', 'data' => array('transaction_id' => $wpdb->insert_id));
     }
     
     public function update_transaction($data) {
@@ -262,19 +295,23 @@ class HisabDatabase {
         
         if (empty($where_values)) {
             $sql = "
-                SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color
+                SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color,
+                       bi.guid as bill_image_url, bi.post_title as bill_image_title
                 FROM {$this->table_transactions} t
                 LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
                 LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id
+                LEFT JOIN {$wpdb->posts} bi ON t.bill_image_id = bi.ID
                 WHERE {$where_clause}
                 ORDER BY t.transaction_date DESC, t.created_at DESC
             ";
         } else {
             $sql = $wpdb->prepare("
-                SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color
+                SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color,
+                       bi.guid as bill_image_url, bi.post_title as bill_image_title
                 FROM {$this->table_transactions} t
                 LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
                 LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id
+                LEFT JOIN {$wpdb->posts} bi ON t.bill_image_id = bi.ID
                 WHERE {$where_clause}
                 ORDER BY t.transaction_date DESC, t.created_at DESC
             ", $where_values);
@@ -612,5 +649,190 @@ class HisabDatabase {
         ", $start_date, $end_date);
         
         return $wpdb->get_results($sql);
+    }
+    
+    /**
+     * Handle bill image upload
+     */
+    private function handle_bill_image_upload($file) {
+        if (!function_exists('wp_handle_upload')) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+        }
+        
+        $upload_overrides = array(
+            'test_form' => false,
+            'mimes' => array(
+                'jpg|jpeg|jpe' => 'image/jpeg',
+                'gif' => 'image/gif',
+                'png' => 'image/png',
+                'pdf' => 'application/pdf'
+            )
+        );
+        
+        $uploaded_file = wp_handle_upload($file, $upload_overrides);
+        
+        if (isset($uploaded_file['error'])) {
+            error_log('Bill image upload error: ' . $uploaded_file['error']);
+            return false;
+        }
+        
+        // Create attachment
+        $attachment = array(
+            'post_mime_type' => $uploaded_file['type'],
+            'post_title' => sanitize_file_name(basename($uploaded_file['file'])),
+            'post_content' => '',
+            'post_status' => 'inherit'
+        );
+        
+        $attachment_id = wp_insert_attachment($attachment, $uploaded_file['file']);
+        
+        if (!is_wp_error($attachment_id)) {
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            $attachment_data = wp_generate_attachment_metadata($attachment_id, $uploaded_file['file']);
+            wp_update_attachment_metadata($attachment_id, $attachment_data);
+            return $attachment_id;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get a single transaction by ID
+     */
+    public function get_transaction($id) {
+        global $wpdb;
+        
+        $sql = $wpdb->prepare("
+            SELECT * FROM {$this->table_transactions}
+            WHERE id = %d
+        ", intval($id));
+        
+        return $wpdb->get_row($sql);
+    }
+    
+    // Transaction Details Methods
+    
+    /**
+     * Get transaction details for a specific transaction
+     */
+    public function get_transaction_details($transaction_id) {
+        global $wpdb;
+        
+        $sql = $wpdb->prepare("
+            SELECT * FROM {$this->table_transaction_details}
+            WHERE transaction_id = %d
+            ORDER BY id ASC
+        ", intval($transaction_id));
+        
+        return $wpdb->get_results($sql);
+    }
+    
+    /**
+     * Save transaction details (itemized items)
+     */
+    public function save_transaction_details($transaction_id, $details) {
+        global $wpdb;
+        
+        // Start transaction
+        $wpdb->query('START TRANSACTION');
+        
+        try {
+            // Delete existing details
+            $wpdb->delete(
+                $this->table_transaction_details,
+                array('transaction_id' => intval($transaction_id)),
+                array('%d')
+            );
+            
+            // Insert new details
+            foreach ($details as $detail) {
+                $detail_data = array(
+                    'transaction_id' => intval($transaction_id),
+                    'item_name' => sanitize_text_field($detail['item_name']),
+                    'rate' => floatval($detail['rate']),
+                    'quantity' => floatval($detail['quantity']),
+                    'item_total' => floatval($detail['item_total'])
+                );
+                
+                $result = $wpdb->insert(
+                    $this->table_transaction_details,
+                    $detail_data,
+                    array('%d', '%s', '%f', '%f', '%f')
+                );
+                
+                if ($result === false) {
+                    throw new Exception('Failed to save transaction detail');
+                }
+            }
+            
+            // Commit transaction
+            $wpdb->query('COMMIT');
+            
+            return array('success' => true, 'message' => 'Transaction details saved successfully');
+            
+        } catch (Exception $e) {
+            // Rollback transaction
+            $wpdb->query('ROLLBACK');
+            return array('success' => false, 'message' => $e->getMessage());
+        }
+    }
+    
+    /**
+     * Delete transaction details
+     */
+    public function delete_transaction_details($transaction_id) {
+        global $wpdb;
+        
+        $result = $wpdb->delete(
+            $this->table_transaction_details,
+            array('transaction_id' => intval($transaction_id)),
+            array('%d')
+        );
+        
+        if ($result === false) {
+            return array('success' => false, 'message' => 'Failed to delete transaction details');
+        }
+        
+        return array('success' => true, 'message' => 'Transaction details deleted successfully');
+    }
+    
+    /**
+     * Validate transaction details against main amount
+     */
+    public function validate_transaction_details($transaction_id, $details) {
+        // Get main transaction
+        $transaction = $this->get_transaction($transaction_id);
+        if (!$transaction) {
+            return array('success' => false, 'message' => 'Transaction not found');
+        }
+        
+        // Calculate totals from details
+        $subtotal = 0;
+        foreach ($details as $detail) {
+            $subtotal += floatval($detail['item_total']);
+        }
+        
+        // Add tax and subtract discount
+        $tax = floatval($transaction->transaction_tax ?? 0);
+        $discount = floatval($transaction->transaction_discount ?? 0);
+        $calculated_total = $subtotal + $tax - $discount;
+        
+        // Compare with main amount
+        $main_amount = floatval($transaction->amount);
+        $difference = abs($calculated_total - $main_amount);
+        
+        if ($difference > 0.01) { // Allow for small rounding differences
+            return array(
+                'success' => false, 
+                'message' => sprintf(
+                    'Details total (%.2f) does not match transaction amount (%.2f). Difference: %.2f',
+                    $calculated_total,
+                    $main_amount,
+                    $difference
+                )
+            );
+        }
+        
+        return array('success' => true, 'message' => 'Validation passed');
     }
 }
