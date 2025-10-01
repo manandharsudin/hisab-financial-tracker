@@ -25,8 +25,8 @@ if (!defined('ABSPATH')) {
             </div>
 
             <div class="hisab-form-group">
-                <label for="transaction-category"><?php _e('Category', 'hisab-financial-tracker'); ?></label>
-                <select id="transaction-category" name="category_id">
+                <label for="transaction-category"><?php _e('Category', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
+                <select id="transaction-category" name="category_id" required>
                     <option value=""><?php _e('Select Category', 'hisab-financial-tracker'); ?></option>
                 </select>
             </div>
@@ -213,9 +213,16 @@ jQuery(document).ready(function($) {
         
         const messagesDiv = $('#hisab-form-messages');
         const calendarType = $('#date-calendar-type').val();
+        const categoryId = $('#transaction-category').val();
         
         // Clear previous messages
         messagesDiv.empty();
+        
+        // Validate required fields
+        if (!categoryId) {
+            messagesDiv.html('<div class="notice notice-error"><p><?php _e('Please select a category.', 'hisab-financial-tracker'); ?></p></div>');
+            return;
+        }
         
         // Show loading
         messagesDiv.html('<div class="notice notice-info"><p><?php _e('Saving transaction...', 'hisab-financial-tracker'); ?></p></div>');
