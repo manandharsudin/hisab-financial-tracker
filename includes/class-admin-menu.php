@@ -35,6 +35,16 @@ class HisabAdminMenu {
             array($this, 'admin_dashboard_page')
         );
         
+        // All Transactions submenu
+        add_submenu_page(
+            'hisab-dashboard',
+            __('All Transactions', 'hisab-financial-tracker'),
+            __('All Transactions', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-transactions',
+            array($this, 'admin_transactions_page')
+        );
+        
         // Add Transaction submenu
         add_submenu_page(
             'hisab-dashboard',
@@ -112,6 +122,14 @@ class HisabAdminMenu {
             return;
         }
         include HISAB_PLUGIN_PATH . 'admin/dashboard.php';
+    }
+    
+    public function admin_transactions_page() {
+        if (!class_exists('HisabAdmin')) {
+            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
+            return;
+        }
+        include HISAB_PLUGIN_PATH . 'admin/views/transactions.php';
     }
     
     public function admin_add_transaction_page() {

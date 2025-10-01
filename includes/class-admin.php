@@ -22,8 +22,8 @@ class HisabAdmin {
         // Get current month summary
         $monthly_summary = $this->database->get_monthly_summary($current_year, $current_month);
         
-        // Get recent transactions
-        $recent_transactions = $this->database->get_transactions(array('limit' => 10));
+        // Get recent transactions (only 5 for dashboard)
+        $recent_transactions = $this->database->get_recent_transactions(5);
         
         // Get trend data for charts
         $income_trend = $this->database->get_trend_data('income', 6);

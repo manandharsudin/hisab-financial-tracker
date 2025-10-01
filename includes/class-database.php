@@ -514,17 +514,36 @@ class HisabDatabase {
     public function delete_transaction($id) {
         global $wpdb;
         
-        $result = $wpdb->delete(
-            $this->table_transactions,
-            array('id' => intval($id)),
-            array('%d')
-        );
+        // Start transaction
+        $wpdb->query('START TRANSACTION');
         
-        if ($result === false) {
-            return array('success' => false, 'message' => 'Failed to delete transaction');
+        try {
+            // Delete transaction details first
+            $wpdb->delete(
+                $this->table_transaction_details,
+                array('transaction_id' => intval($id)),
+                array('%d')
+            );
+            
+            // Delete transaction
+            $result = $wpdb->delete(
+                $this->table_transactions,
+                array('id' => intval($id)),
+                array('%d')
+            );
+            
+            if ($result === false) {
+                $wpdb->query('ROLLBACK');
+                return false;
+            }
+            
+            $wpdb->query('COMMIT');
+            return true;
+            
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+            return false;
         }
-        
-        return array('success' => true, 'message' => 'Transaction deleted successfully');
     }
     
     public function get_yearly_summary($year) {
@@ -668,6 +687,108 @@ class HisabDatabase {
     }
     
     
+    /**
+     * Get transactions with pagination
+     */
+    public function get_transactions_paginated($page = 1, $per_page = 20, $filters = array()) {
+        global $wpdb;
+        
+        $offset = ($page - 1) * $per_page;
+        
+        // Build WHERE clause based on filters
+        $where_conditions = array('1=1');
+        $where_values = array();
+        
+        if (!empty($filters['type'])) {
+            $where_conditions[] = 't.type = %s';
+            $where_values[] = $filters['type'];
+        }
+        
+        if (!empty($filters['category_id'])) {
+            $where_conditions[] = 't.category_id = %d';
+            $where_values[] = intval($filters['category_id']);
+        }
+        
+        if (!empty($filters['owner_id'])) {
+            $where_conditions[] = 't.owner_id = %d';
+            $where_values[] = intval($filters['owner_id']);
+        }
+        
+        if (!empty($filters['date_from'])) {
+            $where_conditions[] = 't.transaction_date >= %s';
+            $where_values[] = $filters['date_from'];
+        }
+        
+        if (!empty($filters['date_to'])) {
+            $where_conditions[] = 't.transaction_date <= %s';
+            $where_values[] = $filters['date_to'];
+        }
+        
+        $where_clause = implode(' AND ', $where_conditions);
+        
+        // Get total count
+        $count_sql = "
+            SELECT COUNT(DISTINCT t.id)
+            FROM {$this->table_transactions} t
+            LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
+            LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id
+            WHERE {$where_clause}
+        ";
+        
+        if (!empty($where_values)) {
+            $count_sql = $wpdb->prepare($count_sql, $where_values);
+        }
+        
+        $total_items = $wpdb->get_var($count_sql);
+        $total_pages = ceil($total_items / $per_page);
+        
+        // Get transactions
+        $sql = "
+            SELECT t.*, c.name as category_name, o.name as owner_name,
+                   p.guid as bill_image_url, p.post_title as bill_image_title
+            FROM {$this->table_transactions} t
+            LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
+            LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id
+            LEFT JOIN {$wpdb->posts} p ON t.bill_image_id = p.ID
+            WHERE {$where_clause}
+            ORDER BY t.transaction_date DESC, t.created_at DESC
+            LIMIT %d OFFSET %d
+        ";
+        
+        $where_values[] = $per_page;
+        $where_values[] = $offset;
+        
+        $transactions = $wpdb->get_results($wpdb->prepare($sql, $where_values));
+        
+        return array(
+            'transactions' => $transactions,
+            'total_items' => $total_items,
+            'total_pages' => $total_pages,
+            'current_page' => $page,
+            'per_page' => $per_page
+        );
+    }
+    
+    /**
+     * Get recent transactions (for dashboard)
+     */
+    public function get_recent_transactions($limit = 5) {
+        global $wpdb;
+        
+        $sql = "
+            SELECT t.*, c.name as category_name, o.name as owner_name,
+                   p.guid as bill_image_url, p.post_title as bill_image_title
+            FROM {$this->table_transactions} t
+            LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
+            LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id
+            LEFT JOIN {$wpdb->posts} p ON t.bill_image_id = p.ID
+            ORDER BY t.transaction_date DESC, t.created_at DESC
+            LIMIT %d
+        ";
+        
+        return $wpdb->get_results($wpdb->prepare($sql, $limit));
+    }
+
     /**
      * Get a single transaction by ID
      */

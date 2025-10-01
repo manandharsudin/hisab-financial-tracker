@@ -1298,6 +1298,122 @@ input[type="color"] {
     color: #666;
 }
 
+/* Transactions Listing Styles */
+.hisab-filters {
+    background: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.hisab-filter-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: end;
+}
+
+.hisab-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.hisab-filter-group label {
+    font-weight: 600;
+    color: #1d2327;
+    font-size: 13px;
+}
+
+.hisab-results-summary {
+    margin: 20px 0;
+    padding: 10px 15px;
+    background: #f0f6fc;
+    border-left: 4px solid #0073aa;
+    border-radius: 0 4px 4px 0;
+}
+
+.hisab-transactions-table-container {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.hisab-no-transactions {
+    padding: 40px;
+    text-align: center;
+    color: #666;
+}
+
+.hisab-no-transactions h3 {
+    margin: 0 0 10px 0;
+    color: #1d2327;
+}
+
+.hisab-pagination {
+    margin: 20px 0;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.hisab-pagination-info {
+    margin: 0 20px;
+    padding: 8px 16px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.hisab-type-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.hisab-type-income {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.hisab-type-expense {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.hisab-category-badge,
+.hisab-owner-badge,
+.hisab-payment-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background: #e7f3ff;
+    color: #0073aa;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.hisab-owner-badge {
+    background: #f0f6fc;
+    color: #0073aa;
+}
+
+.hisab-payment-badge {
+    background: #f0f0f1;
+    color: #1d2327;
+}
+
 /* Responsive adjustments for transaction table */
 @media (max-width: 768px) {
     .hisab-transaction-actions {
@@ -1316,5 +1432,24 @@ input[type="color"] {
     .hisab-media-uploader .button {
         width: 100%;
         text-align: center;
+    }
+    
+    .hisab-filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .hisab-filter-group {
+        width: 100%;
+    }
+    
+    .hisab-filter-group select,
+    .hisab-filter-group input {
+        width: 100% !important;
+    }
+    
+    .hisab-pagination {
+        flex-direction: column;
+        gap: 10px;
     }
 }

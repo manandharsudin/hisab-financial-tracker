@@ -13,7 +13,12 @@ if (!defined('ABSPATH')) {
 
     <!-- Recent Transactions -->
     <div class="hisab-recent-transactions">
-        <h3><?php _e('Recent Transactions', 'hisab-financial-tracker'); ?></h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;"><?php _e('Recent Transactions', 'hisab-financial-tracker'); ?></h3>
+            <a href="<?php echo admin_url('admin.php?page=hisab-transactions'); ?>" class="button button-secondary">
+                <?php _e('View All Transactions', 'hisab-financial-tracker'); ?>
+            </a>
+        </div>
         <div class="hisab-table-container">
             <table class="wp-list-table widefat fixed striped">
                 <thead>
@@ -25,13 +30,12 @@ if (!defined('ABSPATH')) {
                         <th><?php _e('Owner', 'hisab-financial-tracker'); ?></th>
                         <th><?php _e('Payment', 'hisab-financial-tracker'); ?></th>
                         <th><?php _e('Amount', 'hisab-financial-tracker'); ?></th>
-                        <th><?php _e('Actions', 'hisab-financial-tracker'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($recent_transactions)): ?>
                         <tr>
-                            <td colspan="8" class="hisab-no-data">
+                            <td colspan="7" class="hisab-no-data">
                                 <?php _e('No transactions found. Add your first transaction!', 'hisab-financial-tracker'); ?>
                             </td>
                         </tr>
@@ -95,21 +99,6 @@ if (!defined('ABSPATH')) {
                                             <?php endif; ?>
                                         </div>
                                     <?php endif; ?>
-                                </td>
-                                <td>
-                                    <div class="hisab-transaction-actions">
-                                        <button class="button button-small hisab-add-details" data-id="<?php echo $transaction->id; ?>" title="<?php _e('Add Itemized Details', 'hisab-financial-tracker'); ?>">
-                                            <?php _e('Details', 'hisab-financial-tracker'); ?>
-                                        </button>
-                                        <?php if ($transaction->bill_image_url): ?>
-                                            <a href="<?php echo esc_url($transaction->bill_image_url); ?>" target="_blank" class="button button-small" title="<?php _e('View Bill', 'hisab-financial-tracker'); ?>">
-                                                <?php _e('Bill', 'hisab-financial-tracker'); ?>
-                                            </a>
-                                        <?php endif; ?>
-                                        <button class="button button-small hisab-delete-transaction" data-id="<?php echo $transaction->id; ?>" title="<?php _e('Delete Transaction', 'hisab-financial-tracker'); ?>">
-                                            <?php _e('Delete', 'hisab-financial-tracker'); ?>
-                                        </button>
-                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -89,20 +89,31 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_delete_transaction() {
-        check_ajax_referer('hisab_transaction', 'hisab_nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
         }
         
         if (!class_exists('HisabDatabase')) {
-            wp_send_json(array('success' => false, 'message' => 'Database class not available'));
+            wp_send_json_error(array('message' => __('Database class not available', 'hisab-financial-tracker')));
+        }
+        
+        // Handle both parameter formats
+        $transaction_id = isset($_POST['transaction_id']) ? intval($_POST['transaction_id']) : intval($_POST['id']);
+        
+        if (!$transaction_id) {
+            wp_send_json_error(array('message' => __('Invalid transaction ID', 'hisab-financial-tracker')));
         }
         
         $database = new HisabDatabase();
-        $result = $database->delete_transaction($_POST['id']);
+        $result = $database->delete_transaction($transaction_id);
         
-        wp_send_json($result);
+        if ($result) {
+            wp_send_json_success(array('message' => __('Transaction deleted successfully', 'hisab-financial-tracker')));
+        } else {
+            wp_send_json_error(array('message' => __('Failed to delete transaction', 'hisab-financial-tracker')));
+        }
     }
     
     public function ajax_update_transaction() {
