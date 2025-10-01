@@ -302,6 +302,11 @@ jQuery(document).ready(function($) {
             bsYearSelect.prop('required', false);
             bsMonthSelect.prop('required', false);
             bsDaySelect.prop('required', false);
+            
+            // Clear BS date fields when using AD calendar
+            bsYearSelect.val('');
+            bsMonthSelect.val('');
+            bsDaySelect.val('');
         }
     }
 
@@ -397,6 +402,10 @@ jQuery(document).ready(function($) {
                         $('#hisab-transaction-form')[0].reset();
                         $('#transaction-category').empty().append('<option value=""><?php _e('Select Category', 'hisab-financial-tracker'); ?></option>');
                         $('#bill-image-preview').empty();
+                        // Clear BS date fields
+                        $('#bs-year').val('');
+                        $('#bs-month').val('');
+                        $('#bs-day').val('');
                         // Reset calendar type to default
                         switchCalendarType(defaultCalendarType);
                     } else {

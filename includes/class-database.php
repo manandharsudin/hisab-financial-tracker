@@ -187,6 +187,18 @@ class HisabDatabase {
     public function save_transaction($data) {
         global $wpdb;        
         
+        // Validate and fix transaction_date
+        if (empty($data['transaction_date'])) {
+            // Fallback to current date if empty
+            $data['transaction_date'] = date('Y-m-d');
+        }
+        
+        // Ensure date is in correct format
+        $transaction_date = sanitize_text_field($data['transaction_date']);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $transaction_date)) {
+            return array('success' => false, 'message' => 'Invalid date format');
+        }
+        
         $transaction_data = array(
             'type' => sanitize_text_field($data['type']),
             'amount' => floatval($data['amount']),
@@ -194,11 +206,16 @@ class HisabDatabase {
             'category_id' => intval($data['category_id']),
             'owner_id' => isset($data['owner_id']) && !empty($data['owner_id']) ? intval($data['owner_id']) : null,
             'payment_method' => isset($data['payment_method']) && !empty($data['payment_method']) ? sanitize_text_field($data['payment_method']) : null,
+            'bill_image_id' => null, // Will be set later if file uploaded
             'transaction_tax' => isset($data['transaction_tax']) && !empty($data['transaction_tax']) ? floatval($data['transaction_tax']) : null,
             'transaction_discount' => isset($data['transaction_discount']) && !empty($data['transaction_discount']) ? floatval($data['transaction_discount']) : null,
-            'transaction_date' => sanitize_text_field($data['transaction_date']),
+            'transaction_date' => $transaction_date,
+            'bs_year' => null, // Will be set later
+            'bs_month' => null, // Will be set later
+            'bs_day' => null, // Will be set later
             'user_id' => get_current_user_id()
         );
+        
         
         // Handle bill image upload
         if (isset($_FILES['bill_image']) && $_FILES['bill_image']['error'] === UPLOAD_ERR_OK) {
@@ -209,13 +226,15 @@ class HisabDatabase {
         }
         
         // Add BS date if provided
-        if (isset($data['bs_year']) && isset($data['bs_month']) && isset($data['bs_day'])) {
+        if (isset($data['bs_year']) && isset($data['bs_month']) && isset($data['bs_day']) && 
+            !empty($data['bs_year']) && !empty($data['bs_month']) && !empty($data['bs_day'])) {
+            // BS date was explicitly provided
             $transaction_data['bs_year'] = intval($data['bs_year']);
             $transaction_data['bs_month'] = intval($data['bs_month']);
             $transaction_data['bs_day'] = intval($data['bs_day']);
         } else {
             // Convert AD date to BS date
-            $ad_date = explode('-', $data['transaction_date']);
+            $ad_date = explode('-', $transaction_date);
             $bs_date = HisabNepaliDate::ad_to_bs($ad_date[0], $ad_date[1], $ad_date[2]);
             if ($bs_date) {
                 $transaction_data['bs_year'] = $bs_date['year'];
@@ -224,6 +243,7 @@ class HisabDatabase {
             }
         }
         
+        
         $result = $wpdb->insert(
             $this->table_transactions,
             $transaction_data,
@@ -231,9 +251,8 @@ class HisabDatabase {
         );
         
         if ($result === false) {
-            return array('success' => false, 'message' => 'Failed to save transaction');
+            return array('success' => false, 'message' => 'Failed to save transaction: ' . $wpdb->last_error);
         }
-        
         return array('success' => true, 'message' => 'Transaction saved successfully', 'data' => array('transaction_id' => $wpdb->insert_id));
     }
     
