@@ -103,6 +103,7 @@ class HisabFinancialTracker {
         
         wp_enqueue_script('jquery');
         wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '3.9.1', true);
+        wp_enqueue_media(); // WordPress Media Uploader
         wp_enqueue_script('hisab-admin', HISAB_PLUGIN_URL . 'assets/js/admin.js', array('jquery', 'chart-js'), HISAB_VERSION, true);
         wp_enqueue_style('hisab-admin', HISAB_PLUGIN_URL . 'assets/css/admin.css', array(), HISAB_VERSION);
         

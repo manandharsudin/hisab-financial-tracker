@@ -63,8 +63,16 @@ if (!defined('ABSPATH')) {
             </div>
             <div class="hisab-form-group">
                 <label for="transaction-bill-image"><?php _e('Bill Image', 'hisab-financial-tracker'); ?></label>
-                <input type="file" id="transaction-bill-image" name="bill_image" accept="image/*,.pdf">
-                <div id="bill-image-preview" style="margin-top: 10px;"></div>
+                <div class="hisab-media-uploader">
+                    <input type="hidden" id="transaction-bill-image-id" name="bill_image_id" value="">
+                    <button type="button" class="button" id="upload-bill-image">
+                        <?php _e('Select Bill Image', 'hisab-financial-tracker'); ?>
+                    </button>
+                    <button type="button" class="button" id="remove-bill-image" style="display: none;">
+                        <?php _e('Remove Image', 'hisab-financial-tracker'); ?>
+                    </button>
+                    <div id="bill-image-preview" style="margin-top: 10px;"></div>
+                </div>
             </div>
         </div>
         
@@ -236,24 +244,51 @@ jQuery(document).ready(function($) {
     // Initialize owners dropdown
     populateOwners();
     
-    // File upload preview
-    $('#transaction-bill-image').on('change', function(e) {
-        const file = e.target.files[0];
-        const preview = $('#bill-image-preview');
+    // WordPress Media Uploader for bill image
+    let mediaUploader;
+    
+    $('#upload-bill-image').on('click', function(e) {
+        e.preventDefault();
         
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                if (file.type.startsWith('image/')) {
-                    preview.html('<img src="' + e.target.result + '" style="max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 4px;">');
-                } else {
-                    preview.html('<div style="padding: 10px; background: #f0f0f0; border-radius: 4px;">PDF: ' + file.name + '</div>');
-                }
-            };
-            reader.readAsDataURL(file);
-        } else {
-            preview.empty();
+        if (mediaUploader) {
+            mediaUploader.open();
+            return;
         }
+        
+        mediaUploader = wp.media({
+            title: '<?php _e('Select Bill Image', 'hisab-financial-tracker'); ?>',
+            button: {
+                text: '<?php _e('Use This Image', 'hisab-financial-tracker'); ?>'
+            },
+            multiple: false,
+            library: {
+                type: ['image', 'application/pdf']
+            }
+        });
+        
+        mediaUploader.on('select', function() {
+            const attachment = mediaUploader.state().get('selection').first().toJSON();
+            $('#transaction-bill-image-id').val(attachment.id);
+            
+            if (attachment.type === 'image') {
+                $('#bill-image-preview').html('<img src="' + attachment.sizes.medium.url + '" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;">');
+            } else {
+                $('#bill-image-preview').html('<div style="padding: 10px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px;"><strong>' + attachment.filename + '</strong><br><small>' + attachment.mime + '</small></div>');
+            }
+            
+            $('#upload-bill-image').hide();
+            $('#remove-bill-image').show();
+        });
+        
+        mediaUploader.open();
+    });
+    
+    $('#remove-bill-image').on('click', function(e) {
+        e.preventDefault();
+        $('#transaction-bill-image-id').val('');
+        $('#bill-image-preview').empty();
+        $('#upload-bill-image').show();
+        $('#remove-bill-image').hide();
     });
     
     // Update categories based on transaction type
@@ -381,6 +416,12 @@ jQuery(document).ready(function($) {
         function submitForm() {
             const formData = new FormData($('#hisab-transaction-form')[0]);
             formData.append('action', 'hisab_save_transaction');
+            
+            // Add bill image ID if selected
+            const billImageId = $('#transaction-bill-image-id').val();
+            if (billImageId) {
+                formData.append('bill_image_id', billImageId);
+            }
         
             $.ajax({
                 url: hisab_ajax.ajax_url,
@@ -402,6 +443,9 @@ jQuery(document).ready(function($) {
                         $('#hisab-transaction-form')[0].reset();
                         $('#transaction-category').empty().append('<option value=""><?php _e('Select Category', 'hisab-financial-tracker'); ?></option>');
                         $('#bill-image-preview').empty();
+                        $('#transaction-bill-image-id').val('');
+                        $('#upload-bill-image').show();
+                        $('#remove-bill-image').hide();
                         // Clear BS date fields
                         $('#bs-year').val('');
                         $('#bs-month').val('');

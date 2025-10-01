@@ -217,12 +217,9 @@ class HisabDatabase {
         );
         
         
-        // Handle bill image upload
-        if (isset($_FILES['bill_image']) && $_FILES['bill_image']['error'] === UPLOAD_ERR_OK) {
-            $uploaded_file = $this->handle_bill_image_upload($_FILES['bill_image']);
-            if ($uploaded_file) {
-                $transaction_data['bill_image_id'] = $uploaded_file;
-            }
+        // Handle bill image (attachment ID from media uploader)
+        if (isset($data['bill_image_id']) && !empty($data['bill_image_id'])) {
+            $transaction_data['bill_image_id'] = intval($data['bill_image_id']);
         }
         
         // Add BS date if provided
@@ -670,50 +667,6 @@ class HisabDatabase {
         return $wpdb->get_results($sql);
     }
     
-    /**
-     * Handle bill image upload
-     */
-    private function handle_bill_image_upload($file) {
-        if (!function_exists('wp_handle_upload')) {
-            require_once(ABSPATH . 'wp-admin/includes/file.php');
-        }
-        
-        $upload_overrides = array(
-            'test_form' => false,
-            'mimes' => array(
-                'jpg|jpeg|jpe' => 'image/jpeg',
-                'gif' => 'image/gif',
-                'png' => 'image/png',
-                'pdf' => 'application/pdf'
-            )
-        );
-        
-        $uploaded_file = wp_handle_upload($file, $upload_overrides);
-        
-        if (isset($uploaded_file['error'])) {
-            error_log('Bill image upload error: ' . $uploaded_file['error']);
-            return false;
-        }
-        
-        // Create attachment
-        $attachment = array(
-            'post_mime_type' => $uploaded_file['type'],
-            'post_title' => sanitize_file_name(basename($uploaded_file['file'])),
-            'post_content' => '',
-            'post_status' => 'inherit'
-        );
-        
-        $attachment_id = wp_insert_attachment($attachment, $uploaded_file['file']);
-        
-        if (!is_wp_error($attachment_id)) {
-            require_once(ABSPATH . 'wp-admin/includes/image.php');
-            $attachment_data = wp_generate_attachment_metadata($attachment_id, $uploaded_file['file']);
-            wp_update_attachment_metadata($attachment_id, $attachment_data);
-            return $attachment_id;
-        }
-        
-        return false;
-    }
     
     /**
      * Get a single transaction by ID

@@ -1230,6 +1230,74 @@ input[type="color"] {
     border-color: #45a049;
 }
 
+/* Media Uploader Styles */
+.hisab-media-uploader {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.hisab-media-uploader .button {
+    align-self: flex-start;
+}
+
+#upload-bill-image {
+    background: linear-gradient(135deg, #0073aa 0%, #005a87 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#upload-bill-image:hover {
+    background: linear-gradient(135deg, #005a87 0%, #004a70 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#remove-bill-image {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#remove-bill-image:hover {
+    background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#bill-image-preview {
+    margin-top: 10px;
+    padding: 10px;
+    border: 2px dashed #ddd;
+    border-radius: 6px;
+    background: #fafafa;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#bill-image-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#bill-image-preview div {
+    text-align: center;
+    color: #666;
+}
+
 /* Responsive adjustments for transaction table */
 @media (max-width: 768px) {
     .hisab-transaction-actions {
@@ -1239,5 +1307,14 @@ input[type="color"] {
     .hisab-transaction-actions .button {
         width: 100%;
         margin-bottom: 2px;
+    }
+    
+    .hisab-media-uploader {
+        align-items: stretch;
+    }
+    
+    .hisab-media-uploader .button {
+        width: 100%;
+        text-align: center;
     }
 }
