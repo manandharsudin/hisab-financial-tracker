@@ -147,7 +147,7 @@ $owners = $database->get_owners();
                             </td>
                             <td>
                                 <strong style="color: <?php echo $transaction->type === 'income' ? '#00a32a' : '#d63638'; ?>;">
-                                    <?php echo $transaction->type === 'income' ? '+' : '-'; ?>₹<?php echo number_format($transaction->amount, 2); ?>
+                                    <?php echo $transaction->type === 'income' ? '+' : '-'; ?><?php echo HISAB_CURRENCY_SYMBOL; ?><?php echo number_format($transaction->amount, 2); ?>
                                 </strong>
                             </td>
                             <td>
@@ -170,7 +170,7 @@ $owners = $database->get_owners();
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php echo date('M j, Y', strtotime($transaction->transaction_date)); ?>
+                                <?php echo date(HISAB_DATE_FORMAT, strtotime($transaction->transaction_date)); ?>
                                 <?php if ($transaction->bs_year && $transaction->bs_month && $transaction->bs_day): ?>
                                     <br><small style="color: #666;">BS: <?php echo $transaction->bs_year . '-' . sprintf('%02d', $transaction->bs_month) . '-' . sprintf('%02d', $transaction->bs_day); ?></small>
                                 <?php endif; ?>
@@ -378,10 +378,10 @@ jQuery(document).ready(function($) {
         const info = `
             <div class="transaction-summary">
                 <h4>${currentTransactionData.description || 'No Description'}</h4>
-                <p><strong>Amount:</strong> ₹${parseFloat(currentTransactionData.amount).toFixed(2)}</p>
+                <p><strong>Amount:</strong> <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.amount).toFixed(2)}</p>
                 <p><strong>Date:</strong> ${formattedDate}</p>
-                <p><strong>Tax:</strong> ₹${parseFloat(currentTransactionData.transaction_tax || 0).toFixed(2)}</p>
-                <p><strong>Discount:</strong> ₹${parseFloat(currentTransactionData.transaction_discount || 0).toFixed(2)}</p>
+                <p><strong>Tax:</strong> <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.transaction_tax || 0).toFixed(2)}</p>
+                <p><strong>Discount:</strong> <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.transaction_discount || 0).toFixed(2)}</p>
             </div>
         `;
         $('#transaction-info').html(info);

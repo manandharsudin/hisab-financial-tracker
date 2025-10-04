@@ -18,6 +18,10 @@ define('HISAB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('HISAB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('HISAB_VERSION', '1.0.0');
 
+// Define currency and date format constants
+define('HISAB_CURRENCY_SYMBOL', '₹');
+define('HISAB_DATE_FORMAT', 'M j, Y');
+
 class HisabFinancialTracker {
     
     public function __construct() {
@@ -87,8 +91,6 @@ class HisabFinancialTracker {
         
         // Set default options
         add_option('hisab_version', HISAB_VERSION);
-        add_option('hisab_currency', 'USD');
-        add_option('hisab_date_format', 'Y-m-d');
     }
     
     public function deactivate() {
@@ -110,7 +112,7 @@ class HisabFinancialTracker {
         wp_localize_script('hisab-admin', 'hisab_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('hisab_transaction'),
-            'currency' => get_option('hisab_currency', 'USD')
+            'currency' => HISAB_CURRENCY_SYMBOL
         ));
     }
     
@@ -123,7 +125,7 @@ class HisabFinancialTracker {
         wp_localize_script('hisab-frontend', 'hisab_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('hisab_transaction'),
-            'currency' => get_option('hisab_currency', 'USD')
+            'currency' => HISAB_CURRENCY_SYMBOL
         ));
     }
     

@@ -44,7 +44,7 @@ if (!defined('ABSPATH')) {
                             <tr>
                                 <td>
                                     <div class="hisab-date-display">
-                                        <div class="ad-date"><?php echo date('M j, Y', strtotime($transaction->transaction_date)); ?></div>
+                                        <div class="ad-date"><?php echo date(HISAB_DATE_FORMAT, strtotime($transaction->transaction_date)); ?></div>
                                         <?php 
                                         $show_dual_dates = get_option('hisab_show_dual_dates', 1);
                                         if ($show_dual_dates && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
@@ -88,14 +88,14 @@ if (!defined('ABSPATH')) {
                                     <?php endif; ?>
                                 </td>
                                 <td class="hisab-amount <?php echo $transaction->type; ?>">
-                                    <?php echo number_format($transaction->amount, 2); ?>
+                                    <?php echo HISAB_CURRENCY_SYMBOL . number_format($transaction->amount, 2); ?>
                                     <?php if ($transaction->transaction_tax || $transaction->transaction_discount): ?>
                                         <div class="hisab-amount-details">
                                             <?php if ($transaction->transaction_tax): ?>
-                                                <small class="tax">+Tax: <?php echo number_format($transaction->transaction_tax, 2); ?></small>
+                                                <small class="tax">+Tax: <?php echo HISAB_CURRENCY_SYMBOL . number_format($transaction->transaction_tax, 2); ?></small>
                                             <?php endif; ?>
                                             <?php if ($transaction->transaction_discount): ?>
-                                                <small class="discount">-Disc: <?php echo number_format($transaction->transaction_discount, 2); ?></small>
+                                                <small class="discount">-Disc: <?php echo HISAB_CURRENCY_SYMBOL . number_format($transaction->transaction_discount, 2); ?></small>
                                             <?php endif; ?>
                                         </div>
                                     <?php endif; ?>
@@ -313,10 +313,10 @@ jQuery(document).ready(function($) {
         const info = `
             <div class="transaction-summary">
                 <h4>${currentTransactionData.description || 'No Description'}</h4>
-                <p><strong>Amount:</strong> ₹${parseFloat(currentTransactionData.amount).toFixed(2)}</p>
+                <p><strong>Amount:</strong> <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.amount).toFixed(2)}</p>
                 <p><strong>Date:</strong> ${formattedDate}</p>
-                <p><strong>Tax:</strong> ₹${parseFloat(currentTransactionData.transaction_tax || 0).toFixed(2)}</p>
-                <p><strong>Discount:</strong> ₹${parseFloat(currentTransactionData.transaction_discount || 0).toFixed(2)}</p>
+                <p><strong>Tax:</strong> <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.transaction_tax || 0).toFixed(2)}</p>
+                <p><strong>Discount:</strong> <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.transaction_discount || 0).toFixed(2)}</p>
             </div>
         `;
         $('#transaction-info').html(info);

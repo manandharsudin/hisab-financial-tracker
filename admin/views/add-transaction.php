@@ -665,10 +665,10 @@ jQuery(document).ready(function($) {
         const info = `
             <div class="transaction-summary">
                 <h4>${currentTransactionData.description || 'No Description'}</h4>
-                <p><strong>Amount:</strong> ₹${parseFloat(currentTransactionData.amount).toFixed(2)}</p>
+                <p><strong>Amount:</strong> <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.amount).toFixed(2)}</p>
                 <p><strong>Date:</strong> ${formattedDate}</p>
-                <p><strong>Tax:</strong> ₹${parseFloat(currentTransactionData.transaction_tax || 0).toFixed(2)}</p>
-                <p><strong>Discount:</strong> ₹${parseFloat(currentTransactionData.transaction_discount || 0).toFixed(2)}</p>
+                <p><strong>Tax:</strong> <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.transaction_tax || 0).toFixed(2)}</p>
+                <p><strong>Discount:</strong> <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.transaction_discount || 0).toFixed(2)}</p>
             </div>
         `;
         $('#transaction-info').html(info);
@@ -857,7 +857,7 @@ jQuery(document).ready(function($) {
         
         const infoHtml = `
             <div class="transaction-summary">
-                <h4>${currentTransactionData.type === 'income' ? 'Income' : 'Expense'}: $${parseFloat(currentTransactionData.amount).toFixed(2)}</h4>
+                <h4>${currentTransactionData.type === 'income' ? 'Income' : 'Expense'}: <?php echo HISAB_CURRENCY_SYMBOL; ?>${parseFloat(currentTransactionData.amount).toFixed(2)}</h4>
                 <p><strong>Date:</strong> ${formattedDate}</p>
                 <p><strong>Description:</strong> ${currentTransactionData.description || 'N/A'}</p>
             </div>

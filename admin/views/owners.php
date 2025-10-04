@@ -73,7 +73,7 @@ $owners = $this->database->get_owners();
                                 <span class="hisab-color-preview" style="background-color: <?php echo esc_attr($owner->color); ?>"></span>
                                 <?php echo esc_html($owner->color); ?>
                             </td>
-                            <td><?php echo date('M j, Y', strtotime($owner->created_at)); ?></td>
+                            <td><?php echo date(HISAB_DATE_FORMAT, strtotime($owner->created_at)); ?></td>
                             <td>
                                 <button class="button button-small edit-owner" data-owner-id="<?php echo $owner->id; ?>" data-owner-name="<?php echo esc_attr($owner->name); ?>" data-owner-color="<?php echo esc_attr($owner->color); ?>">
                                     <?php _e('Edit', 'hisab-financial-tracker'); ?>
