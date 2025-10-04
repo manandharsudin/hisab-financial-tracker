@@ -196,12 +196,19 @@ $owners = $database->get_owners();
                                     <a href="<?php echo admin_url('admin.php?page=hisab-add-transaction&edit=' . $transaction->id); ?>" class="button button-small">
                                         <?php _e('Edit', 'hisab-financial-tracker'); ?>
                                     </a>
-                                    <button type="button" class="button button-small hisab-view-details" data-transaction-id="<?php echo $transaction->id; ?>">
-                                        <?php _e('Details', 'hisab-financial-tracker'); ?>
-                                    </button>
                                     <button type="button" class="button button-small button-link-delete hisab-delete-transaction" data-transaction-id="<?php echo $transaction->id; ?>">
                                         <?php _e('Delete', 'hisab-financial-tracker'); ?>
                                     </button>
+                                    <?php 
+                                    // Check if transaction has details
+                                    $database = new HisabDatabase();
+                                    $transaction_details = $database->get_transaction_details($transaction->id);
+                                    if (!empty($transaction_details)): 
+                                    ?>
+                                    <button type="button" class="button button-small hisab-view-details" data-transaction-id="<?php echo $transaction->id; ?>">
+                                        <?php _e('Details', 'hisab-financial-tracker'); ?>
+                                    </button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

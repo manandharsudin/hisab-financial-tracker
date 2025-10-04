@@ -185,13 +185,32 @@ if (!defined('ABSPATH')) {
         
         <div class="hisab-form-actions">
             <button type="submit" class="button button-primary">
-                <?php _e('Save Transaction', 'hisab-financial-tracker'); ?>
+                <?php echo $edit_transaction ? __('Update Transaction', 'hisab-financial-tracker') : __('Save Transaction', 'hisab-financial-tracker'); ?>
             </button>
+            <?php if (!$edit_transaction): ?>
             <button type="button" class="button" onclick="document.getElementById('hisab-transaction-form').reset();">
                 <?php _e('Reset Form', 'hisab-financial-tracker'); ?>
             </button>
+            <?php endif; ?>
         </div>
     </form>
+    
+    <?php if ($edit_transaction): ?>
+    <?php 
+    // Check if transaction has details
+    $database = new HisabDatabase();
+    $transaction_details = $database->get_transaction_details($edit_transaction->id);
+    if (!empty($transaction_details)): 
+    ?>
+    <div class="hisab-edit-details-section" style="margin-top: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+        <h3><?php _e('Transaction Details', 'hisab-financial-tracker'); ?></h3>
+        <p><?php _e('This transaction has itemized details. You can view or update them.', 'hisab-financial-tracker'); ?></p>
+        <button type="button" class="button button-secondary" id="edit-transaction-details" data-transaction-id="<?php echo $edit_transaction->id; ?>">
+            <?php _e('Update Transaction Details', 'hisab-financial-tracker'); ?>
+        </button>
+    </div>
+    <?php endif; ?>
+    <?php endif; ?>
     
     <div id="hisab-form-messages"></div>
 </div>
@@ -327,6 +346,12 @@ jQuery(document).ready(function($) {
     setTimeout(function() {
         $('#transaction-owner').val('<?php echo $edit_transaction ? $edit_transaction->owner_id : ''; ?>');
     }, 100);
+    
+    // Handle Update Transaction Details button
+    $('#edit-transaction-details').on('click', function() {
+        const transactionId = $(this).data('transaction-id');
+        loadTransactionDetails(transactionId);
+    });
     <?php endif; ?>
     
     // WordPress Media Uploader for bill image
@@ -795,5 +820,177 @@ jQuery(document).ready(function($) {
             }
         });
     }
+    
+    // Transaction Details Modal functionality
+    function loadTransactionDetails(transactionId) {
+        $.ajax({
+            url: hisab_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'hisab_get_transaction',
+                transaction_id: transactionId,
+                nonce: hisab_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    currentTransactionData = response.data;
+                    displayTransactionInfo();
+                    loadExistingDetails();
+                    $('#transaction-details-modal').show();
+                } else {
+                    alert('Error loading transaction details: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Error loading transaction details');
+            }
+        });
+    }
+    
+    function displayTransactionInfo() {
+        if (!currentTransactionData) return;
+        
+        let formattedDate = 'N/A';
+        if (currentTransactionData.transaction_date && currentTransactionData.transaction_date !== '0000-00-00') {
+            formattedDate = new Date(currentTransactionData.transaction_date).toLocaleDateString();
+        }
+        
+        const infoHtml = `
+            <div class="transaction-summary">
+                <h4>${currentTransactionData.type === 'income' ? 'Income' : 'Expense'}: $${parseFloat(currentTransactionData.amount).toFixed(2)}</h4>
+                <p><strong>Date:</strong> ${formattedDate}</p>
+                <p><strong>Description:</strong> ${currentTransactionData.description || 'N/A'}</p>
+            </div>
+        `;
+        
+        $('#transaction-info').html(infoHtml);
+    }
+    
+    function loadExistingDetails() {
+        if (!currentTransactionData || !currentTransactionData.details) return;
+        
+        $('#details-items').empty();
+        
+        currentTransactionData.details.forEach(function(detail) {
+            addDetailItem(detail.item_name, detail.rate, detail.quantity, detail.item_total);
+        });
+        
+        updateSummary();
+    }
+    
+    function addDetailItem(itemName = '', rate = '', quantity = '', total = '') {
+        const itemHtml = `
+            <div class="detail-item">
+                <div class="detail-row">
+                    <input type="text" class="detail-name" placeholder="<?php _e('Item Name', 'hisab-financial-tracker'); ?>" value="${itemName}">
+                    <input type="number" class="detail-rate" placeholder="<?php _e('Rate', 'hisab-financial-tracker'); ?>" step="0.01" value="${rate}">
+                    <input type="number" class="detail-quantity" placeholder="<?php _e('Qty', 'hisab-financial-tracker'); ?>" step="0.01" value="${quantity}">
+                    <input type="number" class="detail-total" placeholder="<?php _e('Total', 'hisab-financial-tracker'); ?>" step="0.01" readonly value="${total}">
+                    <button type="button" class="remove-detail-item">&times;</button>
+                </div>
+            </div>
+        `;
+        
+        $('#details-items').append(itemHtml);
+    }
+    
+    function updateSummary() {
+        let subtotal = 0;
+        
+        $('.detail-total').each(function() {
+            const total = parseFloat($(this).val()) || 0;
+            subtotal += total;
+        });
+        
+        const tax = parseFloat($('#details-tax').val()) || 0;
+        const discount = parseFloat($('#details-discount').val()) || 0;
+        const grandTotal = subtotal + tax - discount;
+        
+        $('#details-subtotal').text(subtotal.toFixed(2));
+        $('#details-grand-total').text(grandTotal.toFixed(2));
+    }
+    
+    // Close modal
+    $('.hisab-modal-close, #cancel-details').on('click', function() {
+        $('#transaction-details-modal').hide();
+    });
+    
+    // Add detail item
+    $(document).on('click', '#add-detail-item', function() {
+        addDetailItem();
+    });
+    
+    // Remove detail item
+    $(document).on('click', '.remove-detail-item', function() {
+        $(this).closest('.detail-item').remove();
+        updateSummary();
+    });
+    
+    // Calculate totals
+    $(document).on('input', '.detail-rate, .detail-quantity', function() {
+        const $row = $(this).closest('.detail-item');
+        const rate = parseFloat($row.find('.detail-rate').val()) || 0;
+        const quantity = parseFloat($row.find('.detail-quantity').val()) || 0;
+        const total = rate * quantity;
+        
+        $row.find('.detail-total').val(total.toFixed(2));
+        updateSummary();
+    });
+    
+    // Update summary on tax/discount change
+    $(document).on('input', '#details-tax, #details-discount', function() {
+        updateSummary();
+    });
+    
+    // Save details
+    $('#save-details').on('click', function() {
+        const details = [];
+        
+        $('.detail-item').each(function() {
+            const $item = $(this);
+            const name = $item.find('.detail-name').val().trim();
+            const rate = parseFloat($item.find('.detail-rate').val()) || 0;
+            const quantity = parseFloat($item.find('.detail-quantity').val()) || 0;
+            const total = parseFloat($item.find('.detail-total').val()) || 0;
+            
+            if (name) {
+                details.push({
+                    item_name: name,
+                    rate: rate,
+                    quantity: quantity,
+                    item_total: total
+                });
+            }
+        });
+        
+        if (details.length === 0) {
+            $('#details-messages').html('<div class="notice notice-error"><p><?php _e('Please add at least one item.', 'hisab-financial-tracker'); ?></p></div>');
+            return;
+        }
+        
+        $.ajax({
+            url: hisab_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'hisab_save_transaction_details',
+                transaction_id: currentTransactionId,
+                details: details,
+                nonce: hisab_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#details-messages').html('<div class="notice notice-success"><p>' + response.message + '</p></div>');
+                    setTimeout(function() {
+                        $('#transaction-details-modal').hide();
+                    }, 1500);
+                } else {
+                    $('#details-messages').html('<div class="notice notice-error"><p>' + response.message + '</p></div>');
+                }
+            },
+            error: function() {
+                $('#details-messages').html('<div class="notice notice-error"><p><?php _e('An error occurred while saving details.', 'hisab-financial-tracker'); ?></p></div>');
+            }
+        });
+    });
 });
 </script>
