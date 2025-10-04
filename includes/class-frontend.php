@@ -191,7 +191,19 @@ class HisabFrontend {
         ob_start();
         ?>
         <div class="hisab-monthly-summary">
-            <h3><?php echo date('F Y', mktime(0, 0, 0, $month, 1, $year)); ?></h3>
+            <h3>
+                <?php 
+                $default_calendar = get_option('hisab_default_calendar', 'ad');
+                if ($default_calendar === 'bs') {
+                    // Convert AD month/year to BS for display
+                    $bs_date = HisabNepaliDate::ad_to_bs($year, $month, 1);
+                    $bs_month_name = HisabNepaliDate::get_bs_months($bs_date['month']);
+                    echo $bs_month_name . ' ' . $bs_date['year'];
+                } else {
+                    echo date('F Y', mktime(0, 0, 0, $month, 1, $year));
+                }
+                ?>
+            </h3>
             <div class="hisab-summary-cards">
                 <div class="hisab-card">
                     <h4><?php _e('Income', 'hisab-financial-tracker'); ?></h4>

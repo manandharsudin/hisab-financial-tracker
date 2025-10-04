@@ -113,7 +113,18 @@ if (!defined('ABSPATH')) {
         <div class="hisab-card">
             <div class="hisab-card-header">
                 <h3><?php _e('This Month', 'hisab-financial-tracker'); ?></h3>
-                <span class="hisab-card-date"><?php echo date('F Y'); ?></span>
+                <span class="hisab-card-date">
+                    <?php 
+                    $default_calendar = get_option('hisab_default_calendar', 'ad');
+                    if ($default_calendar === 'bs') {
+                        $current_bs = HisabNepaliDate::get_current_bs_date();
+                        $bs_month_name = HisabNepaliDate::get_bs_months($current_bs['month']);
+                        echo $bs_month_name . ' ' . $current_bs['year'];
+                    } else {
+                        echo date('F Y');
+                    }
+                    ?>
+                </span>
             </div>
             <div class="hisab-card-content">
                 <div class="hisab-summary-item income">
@@ -136,6 +147,17 @@ if (!defined('ABSPATH')) {
         <div class="hisab-card">
             <div class="hisab-card-header">
                 <h3><?php _e('Quick Stats', 'hisab-financial-tracker'); ?></h3>
+                <span class="hisab-card-date">
+                    <?php 
+                    if ($default_calendar === 'bs') {
+                        $current_bs = HisabNepaliDate::get_current_bs_date();
+                        $bs_month_name = HisabNepaliDate::get_bs_months($current_bs['month']);
+                        echo $bs_month_name . ' ' . $current_bs['year'];
+                    } else {
+                        echo date('F Y');
+                    }
+                    ?>
+                </span>
             </div>
             <div class="hisab-card-content">
                 <div class="hisab-stat-item">

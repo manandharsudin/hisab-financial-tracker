@@ -33,10 +33,19 @@ class HisabProjection {
             $projected_income = $this->calculate_projected_amount($income_trend, $projection_month);
             $projected_expense = $this->calculate_projected_amount($expense_trend, $projection_month);
             
+            // Get calendar setting for month name display
+            $default_calendar = get_option('hisab_default_calendar', 'ad');
+            if ($default_calendar === 'bs') {
+                $bs_date = HisabNepaliDate::ad_to_bs($projection_year, $projection_month, 1);
+                $month_name = HisabNepaliDate::get_bs_months($bs_date['month']) . ' ' . $bs_date['year'];
+            } else {
+                $month_name = date('F Y', strtotime($projection_date));
+            }
+            
             $projections[] = array(
                 'month' => $projection_month,
                 'year' => $projection_year,
-                'month_name' => date('F Y', strtotime($projection_date)),
+                'month_name' => $month_name,
                 'projected_income' => $projected_income,
                 'projected_expense' => $projected_expense,
                 'projected_net' => $projected_income - $projected_expense
