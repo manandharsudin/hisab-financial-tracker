@@ -13,6 +13,8 @@ class HisabDatabase {
     private $table_categories;
     private $table_owners;
     private $table_transaction_details;
+    private $table_bank_accounts;
+    private $table_bank_transactions;
     
     public function __construct() {
         global $wpdb;
@@ -20,6 +22,8 @@ class HisabDatabase {
         $this->table_categories = $wpdb->prefix . 'hisab_categories';
         $this->table_owners = $wpdb->prefix . 'hisab_owners';
         $this->table_transaction_details = $wpdb->prefix . 'hisab_transaction_details';
+        $this->table_bank_accounts = $wpdb->prefix . 'hisab_bank_accounts';
+        $this->table_bank_transactions = $wpdb->prefix . 'hisab_bank_transactions';
     }
     
     public function create_tables() {
@@ -87,8 +91,50 @@ class HisabDatabase {
             item_total decimal(10,2) NOT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            KEY transaction_id (transaction_id),
-            FOREIGN KEY (transaction_id) REFERENCES {$this->table_transactions}(id) ON DELETE CASCADE
+            KEY transaction_id (transaction_id)
+        ) $charset_collate;";
+        
+        // Create bank accounts table
+        $sql_bank_accounts = "CREATE TABLE {$this->table_bank_accounts} (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            account_name varchar(255) NOT NULL,
+            bank_name varchar(255) NOT NULL,
+            account_number varchar(100) DEFAULT NULL,
+            account_type enum('savings','current','credit_card','fixed_deposit') NOT NULL DEFAULT 'savings',
+            currency enum('NPR','USD') NOT NULL DEFAULT 'NPR',
+            initial_balance decimal(15,2) NOT NULL DEFAULT 0.00,
+            current_balance decimal(15,2) NOT NULL DEFAULT 0.00,
+            is_active tinyint(1) NOT NULL DEFAULT 1,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            user_id int(11) DEFAULT NULL,
+            PRIMARY KEY (id),
+            KEY account_type (account_type),
+            KEY currency (currency),
+            KEY is_active (is_active),
+            KEY user_id (user_id)
+        ) $charset_collate;";
+        
+        // Create bank transactions table
+        $sql_bank_transactions = "CREATE TABLE {$this->table_bank_transactions} (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            account_id int(11) NOT NULL,
+            transaction_type enum('deposit','withdrawal','phone_pay','transfer_in','transfer_out') NOT NULL,
+            amount decimal(15,2) NOT NULL,
+            currency enum('NPR','USD') NOT NULL,
+            description text,
+            reference_number varchar(100) DEFAULT NULL,
+            phone_pay_reference varchar(100) DEFAULT NULL,
+            transaction_date date NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_by int(11) DEFAULT NULL,
+            PRIMARY KEY (id),
+            KEY account_id (account_id),
+            KEY transaction_type (transaction_type),
+            KEY transaction_date (transaction_date),
+            KEY currency (currency),
+            KEY created_by (created_by)
         ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -96,10 +142,29 @@ class HisabDatabase {
         dbDelta($sql_categories);
         dbDelta($sql_owners);
         dbDelta($sql_transaction_details);
+        dbDelta($sql_bank_accounts);
+        dbDelta($sql_bank_transactions);
+        
+        // Create foreign key constraints
+        $this->create_foreign_keys();
         
         // Insert default categories
         $this->insert_default_categories();        
-    }    
+    }
+    
+    private function create_foreign_keys() {
+        global $wpdb;
+        
+        // Add foreign key for transaction_details table
+        $wpdb->query("ALTER TABLE {$this->table_transaction_details} 
+                      ADD CONSTRAINT fk_transaction_details_transaction_id 
+                      FOREIGN KEY (transaction_id) REFERENCES {$this->table_transactions}(id) ON DELETE CASCADE");
+        
+        // Add foreign key for bank_transactions table
+        $wpdb->query("ALTER TABLE {$this->table_bank_transactions} 
+                      ADD CONSTRAINT fk_bank_transactions_account_id 
+                      FOREIGN KEY (account_id) REFERENCES {$this->table_bank_accounts}(id) ON DELETE CASCADE");
+    }
     
     private function insert_default_categories() {
         global $wpdb;

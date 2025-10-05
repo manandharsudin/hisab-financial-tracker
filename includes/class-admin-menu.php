@@ -55,6 +55,46 @@ class HisabAdminMenu {
             array($this, 'admin_add_transaction_page')
         );
         
+        // Bank Accounts submenu
+        add_submenu_page(
+            'hisab-dashboard',
+            __('Bank Accounts', 'hisab-financial-tracker'),
+            __('Bank Accounts', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-bank-accounts',
+            array($this, 'admin_bank_accounts_page')
+        );
+        
+        // Add Bank Account submenu
+        add_submenu_page(
+            'hisab-dashboard',
+            __('Add Bank Account', 'hisab-financial-tracker'),
+            __('Add Bank Account', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-add-bank-account',
+            array($this, 'admin_add_bank_account_page')
+        );
+        
+        // Bank Transactions submenu
+        add_submenu_page(
+            'hisab-dashboard',
+            __('Bank Transactions', 'hisab-financial-tracker'),
+            __('Bank Transactions', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-bank-transactions',
+            array($this, 'admin_bank_transactions_page')
+        );
+        
+        // Add Bank Transaction submenu
+        add_submenu_page(
+            'hisab-dashboard',
+            __('Add Bank Transaction', 'hisab-financial-tracker'),
+            __('Add Bank Transaction', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-add-bank-transaction',
+            array($this, 'admin_add_bank_transaction_page')
+        );
+        
         // Analytics submenu
         add_submenu_page(
             'hisab-dashboard',
@@ -138,6 +178,38 @@ class HisabAdminMenu {
             return;
         }
         include HISAB_PLUGIN_PATH . 'admin/add-transaction.php';
+    }
+    
+    public function admin_bank_accounts_page() {
+        if (!class_exists('HisabAdmin')) {
+            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
+            return;
+        }
+        include HISAB_PLUGIN_PATH . 'admin/views/bank-accounts.php';
+    }
+    
+    public function admin_add_bank_account_page() {
+        if (!class_exists('HisabAdmin')) {
+            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
+            return;
+        }
+        include HISAB_PLUGIN_PATH . 'admin/views/add-bank-account.php';
+    }
+    
+    public function admin_bank_transactions_page() {
+        if (!class_exists('HisabAdmin')) {
+            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
+            return;
+        }
+        include HISAB_PLUGIN_PATH . 'admin/views/bank-transactions.php';
+    }
+    
+    public function admin_add_bank_transaction_page() {
+        if (!class_exists('HisabAdmin')) {
+            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
+            return;
+        }
+        include HISAB_PLUGIN_PATH . 'admin/views/add-bank-transaction.php';
     }
     
     public function admin_analytics_page() {

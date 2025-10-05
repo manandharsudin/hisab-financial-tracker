@@ -55,6 +55,8 @@ class HisabFinancialTracker {
         require_once HISAB_PLUGIN_PATH . 'includes/class-shortcodes.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-ajax-handlers.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-nepali-date.php';
+        require_once HISAB_PLUGIN_PATH . 'includes/class-bank-account.php';
+        require_once HISAB_PLUGIN_PATH . 'includes/class-bank-transaction.php';
     }
     
     private function init_components() {
