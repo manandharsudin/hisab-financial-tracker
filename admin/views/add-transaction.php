@@ -845,6 +845,7 @@ jQuery(document).ready(function($) {
     
     // Transaction Details Modal functionality
     function loadTransactionDetails(transactionId) {
+        currentTransactionId = transactionId; // Set the transaction ID
         $.ajax({
             url: hisab_ajax.ajax_url,
             type: 'POST',
@@ -888,33 +889,6 @@ jQuery(document).ready(function($) {
         $('#transaction-info').html(infoHtml);
     }
     
-    function loadExistingDetails() {
-        if (!currentTransactionData || !currentTransactionData.details) return;
-        
-        $('#details-items').empty();
-        
-        currentTransactionData.details.forEach(function(detail) {
-            addDetailItem(detail.item_name, detail.rate, detail.quantity, detail.item_total);
-        });
-        
-        updateSummary();
-    }
-    
-    function addDetailItem(itemName = '', rate = '', quantity = '', total = '') {
-        const itemHtml = `
-            <div class="detail-item">
-                <div class="detail-row">
-                    <input type="text" class="detail-name" placeholder="<?php _e('Item Name', 'hisab-financial-tracker'); ?>" value="${itemName}">
-                    <input type="number" class="detail-rate" placeholder="<?php _e('Rate', 'hisab-financial-tracker'); ?>" step="0.01" value="${rate}">
-                    <input type="number" class="detail-quantity" placeholder="<?php _e('Qty', 'hisab-financial-tracker'); ?>" step="0.01" value="${quantity}">
-                    <input type="number" class="detail-total" placeholder="<?php _e('Total', 'hisab-financial-tracker'); ?>" step="0.01" readonly value="${total}">
-                    <button type="button" class="remove-detail-item">&times;</button>
-                </div>
-            </div>
-        `;
-        
-        $('#details-items').append(itemHtml);
-    }
     
     function updateSummary() {
         let subtotal = 0;
