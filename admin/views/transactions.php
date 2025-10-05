@@ -125,13 +125,13 @@ $owners = $database->get_owners();
                 <thead>
                     <tr>
                         <th style="width: 60px;"><?php _e('ID', 'hisab-financial-tracker'); ?></th>
+                        <th style="width: 100px;"><?php _e('Date', 'hisab-financial-tracker'); ?></th>
                         <th style="width: 100px;"><?php _e('Type', 'hisab-financial-tracker'); ?></th>
-                        <th style="width: 120px;"><?php _e('Amount', 'hisab-financial-tracker'); ?></th>
                         <th><?php _e('Description', 'hisab-financial-tracker'); ?></th>
                         <th style="width: 120px;"><?php _e('Category', 'hisab-financial-tracker'); ?></th>
                         <th style="width: 100px;"><?php _e('Owner', 'hisab-financial-tracker'); ?></th>
-                        <th style="width: 100px;"><?php _e('Date', 'hisab-financial-tracker'); ?></th>
                         <th style="width: 100px;"><?php _e('Payment', 'hisab-financial-tracker'); ?></th>
+                        <th style="width: 120px;"><?php _e('Amount', 'hisab-financial-tracker'); ?></th>
                         <th style="width: 80px;"><?php _e('Bill', 'hisab-financial-tracker'); ?></th>
                         <th style="width: 120px;"><?php _e('Actions', 'hisab-financial-tracker'); ?></th>
                     </tr>
@@ -141,14 +141,21 @@ $owners = $database->get_owners();
                         <tr>
                             <td><?php echo $transaction->id; ?></td>
                             <td>
+                                <div class="hisab-date-display">
+                                    <div class="ad-date"><?php echo date(HISAB_DATE_FORMAT, strtotime($transaction->transaction_date)); ?></div>
+                                    <?php 
+                                    $show_dual_dates = get_option('hisab_show_dual_dates', 1);
+                                    if ($show_dual_dates && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
+                                        $bs_month_name = HisabNepaliDate::get_bs_months($transaction->bs_month);
+                                        echo '<div class="bs-date">' . $bs_month_name . ' ' . $transaction->bs_day . ', ' . $transaction->bs_year . '</div>';
+                                    }
+                                    ?>
+                                </div>
+                            </td>
+                            <td>
                                 <span class="hisab-type-badge hisab-type-<?php echo $transaction->type; ?>">
                                     <?php echo ucfirst($transaction->type); ?>
                                 </span>
-                            </td>
-                            <td>
-                                <strong style="color: <?php echo $transaction->type === 'income' ? '#00a32a' : '#d63638'; ?>;">
-                                    <?php echo $transaction->type === 'income' ? '+' : '-'; ?><?php echo HISAB_CURRENCY_SYMBOL; ?><?php echo number_format($transaction->amount, 2); ?>
-                                </strong>
                             </td>
                             <td>
                                 <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr($transaction->description); ?>">
@@ -166,27 +173,20 @@ $owners = $database->get_owners();
                                 <?php if ($transaction->owner_name): ?>
                                     <span class="hisab-owner-badge" style="background-color: <?php echo esc_attr(isset($transaction->owner_color) && $transaction->owner_color ? $transaction->owner_color : '#6c757d'); ?>"><?php echo esc_html($transaction->owner_name); ?></span>
                                 <?php else: ?>
-                                    <span style="color: #999;">—</span>
+                                    <span class="hisab-owner-badge hisab-no-owner"><?php _e('No Owner', 'hisab-financial-tracker'); ?></span>
                                 <?php endif; ?>
-                            </td>
-                            <td>
-                                <div class="hisab-date-display">
-                                    <div class="ad-date"><?php echo date(HISAB_DATE_FORMAT, strtotime($transaction->transaction_date)); ?></div>
-                                    <?php 
-                                    $show_dual_dates = get_option('hisab_show_dual_dates', 1);
-                                    if ($show_dual_dates && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
-                                        $bs_month_name = HisabNepaliDate::get_bs_months($transaction->bs_month);
-                                        echo '<div class="bs-date">' . $bs_month_name . ' ' . $transaction->bs_day . ', ' . $transaction->bs_year . '</div>';
-                                    }
-                                    ?>
-                                </div>
                             </td>
                             <td>
                                 <?php if ($transaction->payment_method): ?>
                                     <span class="hisab-payment-badge"><?php echo esc_html(ucfirst(str_replace('_', ' ', $transaction->payment_method))); ?></span>
                                 <?php else: ?>
-                                    <span style="color: #999;">—</span>
+                                    <span class="hisab-payment-method hisab-no-payment"><?php _e('No Payment Method', 'hisab-financial-tracker'); ?></span>
                                 <?php endif; ?>
+                            </td>
+                            <td>
+                                <strong style="color: <?php echo $transaction->type === 'income' ? '#00a32a' : '#d63638'; ?>;">
+                                    <?php echo $transaction->type === 'income' ? '+' : '-'; ?><?php echo HISAB_CURRENCY_SYMBOL; ?><?php echo number_format($transaction->amount, 2); ?>
+                                </strong>
                             </td>
                             <td>
                                 <?php if ($transaction->bill_image_url): ?>
