@@ -93,6 +93,9 @@ $owners = $database->get_owners();
                 
                 <div class="hisab-filter-group">
                     <button type="submit" class="button button-primary"><?php _e('Filter', 'hisab-financial-tracker'); ?></button>
+                </div>
+
+                <div class="hisab-filter-group">
                     <a href="<?php echo admin_url('admin.php?page=hisab-transactions'); ?>" class="button"><?php _e('Clear', 'hisab-financial-tracker'); ?></a>
                 </div>
             </div>

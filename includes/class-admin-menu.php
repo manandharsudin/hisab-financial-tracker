@@ -14,7 +14,7 @@ class HisabAdminMenu {
     }
     
     public function add_admin_menu() {
-        // Main menu page
+        // Main Dashboard menu
         add_menu_page(
             __('Financial Tracker', 'hisab-financial-tracker'),
             __('Financial Tracker', 'hisab-financial-tracker'),
@@ -33,76 +33,6 @@ class HisabAdminMenu {
             'manage_options',
             'hisab-dashboard',
             array($this, 'admin_dashboard_page')
-        );
-        
-        // All Transactions submenu
-        add_submenu_page(
-            'hisab-dashboard',
-            __('All Transactions', 'hisab-financial-tracker'),
-            __('All Transactions', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-transactions',
-            array($this, 'admin_transactions_page')
-        );
-        
-        // Add Transaction submenu
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Add Transaction', 'hisab-financial-tracker'),
-            __('Add Transaction', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-add-transaction',
-            array($this, 'admin_add_transaction_page')
-        );
-        
-        // Bank Accounts submenu
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Bank Accounts', 'hisab-financial-tracker'),
-            __('Bank Accounts', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-bank-accounts',
-            array($this, 'admin_bank_accounts_page')
-        );
-        
-        // Add Bank Account submenu
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Add Bank Account', 'hisab-financial-tracker'),
-            __('Add Bank Account', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-add-bank-account',
-            array($this, 'admin_add_bank_account_page')
-        );
-        
-        // Bank Transactions submenu
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Bank Transactions', 'hisab-financial-tracker'),
-            __('Bank Transactions', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-bank-transactions',
-            array($this, 'admin_bank_transactions_page')
-        );
-        
-        // Add Bank Transaction submenu
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Add Bank Transaction', 'hisab-financial-tracker'),
-            __('Add Bank Transaction', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-add-bank-transaction',
-            array($this, 'admin_add_bank_transaction_page')
-        );
-        
-        // Transfer Between Accounts submenu
-        add_submenu_page(
-            'hisab-dashboard',
-            __('Transfer Between Accounts', 'hisab-financial-tracker'),
-            __('Transfer Between Accounts', 'hisab-financial-tracker'),
-            'manage_options',
-            'hisab-transfer-accounts',
-            array($this, 'admin_transfer_accounts_page')
         );
         
         // Analytics submenu
@@ -125,9 +55,41 @@ class HisabAdminMenu {
             array($this, 'admin_projections_page')
         );
         
+        
+        // Transactions main menu
+        add_menu_page(
+            __('Transactions', 'hisab-financial-tracker'),
+            __('Transactions', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-transactions',
+            array($this, 'admin_transactions_page'),
+            'dashicons-money-alt',
+            31
+        );
+        
+        // All Transactions submenu
+        add_submenu_page(
+            'hisab-transactions',
+            __('All Transactions', 'hisab-financial-tracker'),
+            __('All Transactions', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-transactions',
+            array($this, 'admin_transactions_page')
+        );
+        
+        // Add Transaction submenu
+        add_submenu_page(
+            'hisab-transactions',
+            __('Add Transaction', 'hisab-financial-tracker'),
+            __('Add Transaction', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-add-transaction',
+            array($this, 'admin_add_transaction_page')
+        );
+        
         // Categories submenu
         add_submenu_page(
-            'hisab-dashboard',
+            'hisab-transactions',
             __('Categories', 'hisab-financial-tracker'),
             __('Categories', 'hisab-financial-tracker'),
             'manage_options',
@@ -137,7 +99,7 @@ class HisabAdminMenu {
         
         // Owners submenu
         add_submenu_page(
-            'hisab-dashboard',
+            'hisab-transactions',
             __('Owners', 'hisab-financial-tracker'),
             __('Owners', 'hisab-financial-tracker'),
             'manage_options',
@@ -145,9 +107,81 @@ class HisabAdminMenu {
             array($this, 'admin_owners_page')
         );
         
+        // Bank Management main menu
+        add_menu_page(
+            __('Bank Management', 'hisab-financial-tracker'),
+            __('Bank Management', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-bank-accounts',
+            array($this, 'admin_bank_accounts_page'),
+            'dashicons-bank',
+            32
+        );
+        
+        // Bank Accounts submenu
+        add_submenu_page(
+            'hisab-bank-accounts',
+            __('Bank Accounts', 'hisab-financial-tracker'),
+            __('Bank Accounts', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-bank-accounts',
+            array($this, 'admin_bank_accounts_page')
+        );
+        
+        // Add Bank Account submenu
+        add_submenu_page(
+            'hisab-bank-accounts',
+            __('Add Bank Account', 'hisab-financial-tracker'),
+            __('Add Bank Account', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-add-bank-account',
+            array($this, 'admin_add_bank_account_page')
+        );
+        
+        // Bank Transactions submenu
+        add_submenu_page(
+            'hisab-bank-accounts',
+            __('Bank Transactions', 'hisab-financial-tracker'),
+            __('Bank Transactions', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-bank-transactions',
+            array($this, 'admin_bank_transactions_page')
+        );
+        
+        // Add Bank Transaction submenu
+        add_submenu_page(
+            'hisab-bank-accounts',
+            __('Add Bank Transaction', 'hisab-financial-tracker'),
+            __('Add Bank Transaction', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-add-bank-transaction',
+            array($this, 'admin_add_bank_transaction_page')
+        );
+        
+        // Transfer Between Accounts submenu
+        add_submenu_page(
+            'hisab-bank-accounts',
+            __('Transfer Between Accounts', 'hisab-financial-tracker'),
+            __('Transfer Between Accounts', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-transfer-accounts',
+            array($this, 'admin_transfer_accounts_page')
+        );
+        
+        // Tools main menu
+        add_menu_page(
+            __('Hisab Tools', 'hisab-financial-tracker'),
+            __('Hisab Tools', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-date-converter',
+            array($this, 'admin_date_converter_page'),
+            'dashicons-admin-tools',
+            33
+        );
+        
         // Date Converter submenu
         add_submenu_page(
-            'hisab-dashboard',
+            'hisab-date-converter',
             __('Date Converter', 'hisab-financial-tracker'),
             __('Date Converter', 'hisab-financial-tracker'),
             'manage_options',
@@ -157,7 +191,7 @@ class HisabAdminMenu {
         
         // Settings submenu
         add_submenu_page(
-            'hisab-dashboard',
+            'hisab-date-converter',
             __('Settings', 'hisab-financial-tracker'),
             __('Settings', 'hisab-financial-tracker'),
             'manage_options',
