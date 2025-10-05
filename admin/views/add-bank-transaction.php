@@ -32,45 +32,62 @@ if ($account_id > 0) {
     if (!$account) {
         $error_message = __('Bank account not found.', 'hisab-financial-tracker');
     }
-} else {
-    $error_message = __('No account specified.', 'hisab-financial-tracker');
 }
 
+// Get all bank accounts for the selector
+$all_accounts = $bank_account->get_all_accounts(array('is_active' => 1));
+
 // Handle form submission
-if (isset($_POST['submit_bank_transaction']) && $account) {
+if (isset($_POST['submit_bank_transaction'])) {
     $nonce = sanitize_text_field($_POST['_wpnonce']);
     if (!wp_verify_nonce($nonce, 'hisab_bank_transaction')) {
         $error_message = __('Security check failed. Please try again.', 'hisab-financial-tracker');
     } else {
-        $data = array(
-            'account_id' => $account->id,
-            'transaction_type' => sanitize_text_field($_POST['transaction_type']),
-            'amount' => floatval($_POST['amount']),
-            'currency' => $account->currency, // Use account currency
-            'description' => sanitize_textarea_field($_POST['description']),
-            'reference_number' => sanitize_text_field($_POST['reference_number']),
-            'phone_pay_reference' => sanitize_text_field($_POST['phone_pay_reference']),
-            'transaction_date' => sanitize_text_field($_POST['transaction_date'])
-        );
+        // Get account ID from form if not already set
+        $form_account_id = isset($_POST['account_id']) ? intval($_POST['account_id']) : $account_id;
         
-        if ($is_edit) {
-            $result = $bank_transaction->update_transaction($edit_transaction->id, $data);
-            if (is_wp_error($result)) {
-                $error_message = $result->get_error_message();
+        if ($form_account_id > 0) {
+            $form_account = $bank_account->get_account($form_account_id);
+            if (!$form_account) {
+                $error_message = __('Selected bank account not found.', 'hisab-financial-tracker');
             } else {
-                $success_message = __('Bank transaction updated successfully.', 'hisab-financial-tracker');
-                $edit_transaction = $bank_transaction->get_transaction($edit_transaction->id); // Refresh data
+                $data = array(
+                    'account_id' => $form_account->id,
+                    'transaction_type' => sanitize_text_field($_POST['transaction_type']),
+                    'amount' => floatval($_POST['amount']),
+                    'currency' => $form_account->currency, // Use account currency
+                    'description' => sanitize_textarea_field($_POST['description']),
+                    'reference_number' => sanitize_text_field($_POST['reference_number']),
+                    'phone_pay_reference' => sanitize_text_field($_POST['phone_pay_reference']),
+                    'transaction_date' => sanitize_text_field($_POST['transaction_date'])
+                );
+                
+                // Update account reference for the rest of the processing
+                $account = $form_account;
+                $account_id = $form_account->id;
+                
+                if ($is_edit) {
+                    $result = $bank_transaction->update_transaction($edit_transaction->id, $data);
+                    if (is_wp_error($result)) {
+                        $error_message = $result->get_error_message();
+                    } else {
+                        $success_message = __('Bank transaction updated successfully.', 'hisab-financial-tracker');
+                        $edit_transaction = $bank_transaction->get_transaction($edit_transaction->id); // Refresh data
+                    }
+                } else {
+                    $result = $bank_transaction->create_transaction($data);
+                    if (is_wp_error($result)) {
+                        $error_message = $result->get_error_message();
+                    } else {
+                        $success_message = __('Bank transaction created successfully.', 'hisab-financial-tracker');
+                        // Clear form data
+                        $edit_transaction = null;
+                        $is_edit = false;
+                    }
+                }
             }
         } else {
-            $result = $bank_transaction->create_transaction($data);
-            if (is_wp_error($result)) {
-                $error_message = $result->get_error_message();
-            } else {
-                $success_message = __('Bank transaction created successfully.', 'hisab-financial-tracker');
-                // Clear form data
-                $edit_transaction = null;
-                $is_edit = false;
-            }
+            $error_message = __('Please select a bank account.', 'hisab-financial-tracker');
         }
     }
 }
@@ -100,16 +117,15 @@ if ($edit_transaction) {
 ?>
 
 <div class="wrap">
+    <h1><?php echo $is_edit ? __('Edit Bank Transaction', 'hisab-financial-tracker') : __('Add Bank Transaction', 'hisab-financial-tracker'); ?></h1>
+    
     <?php if ($account): ?>
-        <h1><?php echo $is_edit ? __('Edit Bank Transaction', 'hisab-financial-tracker') : __('Add Bank Transaction', 'hisab-financial-tracker'); ?></h1>
         <p class="hisab-account-info" style="background: #f0f6fc; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px; margin: 20px 0;">
             <strong><?php _e('Account:', 'hisab-financial-tracker'); ?></strong> <?php echo esc_html($account->account_name); ?> 
             (<?php echo esc_html($account->bank_name); ?>) - 
             <strong><?php _e('Balance:', 'hisab-financial-tracker'); ?></strong> 
             <?php echo $account->currency === 'NPR' ? '₹' : '$'; ?><?php echo number_format($account->current_balance, 2); ?>
         </p>
-    <?php else: ?>
-        <h1><?php echo $is_edit ? __('Edit Bank Transaction', 'hisab-financial-tracker') : __('Add Bank Transaction', 'hisab-financial-tracker'); ?></h1>
     <?php endif; ?>
     
     <?php if (isset($success_message)): ?>
@@ -124,9 +140,65 @@ if ($edit_transaction) {
         </div>
     <?php endif; ?>
     
+    <?php if (!$account && !$is_edit): ?>
+        <!-- Bank Account Selector -->
+        <div class="hisab-account-selector" style="background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; padding: 30px; margin: 20px 0; text-align: center;">
+            <h3 style="margin: 0 0 20px 0;"><?php _e('Select a Bank Account', 'hisab-financial-tracker'); ?></h3>
+            <p style="margin: 0 0 20px 0; color: #666;"><?php _e('Choose a bank account to add a transaction to.', 'hisab-financial-tracker'); ?></p>
+            
+            <?php if (empty($all_accounts)): ?>
+                <div class="hisab-no-accounts" style="color: #d63638; margin: 20px 0;">
+                    <p><?php _e('No bank accounts found. Please create a bank account first.', 'hisab-financial-tracker'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=hisab-add-bank-account'); ?>" class="button button-primary">
+                        <?php _e('Create Bank Account', 'hisab-financial-tracker'); ?>
+                    </a>
+                </div>
+            <?php else: ?>
+                <form method="get" style="display: inline-block;">
+                    <input type="hidden" name="page" value="hisab-add-bank-transaction">
+                    
+                    <div style="display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                        <div>
+                            <label for="account_select" style="display: block; margin-bottom: 5px; font-weight: 600;">
+                                <?php _e('Bank Account:', 'hisab-financial-tracker'); ?>
+                            </label>
+                            <select name="account" id="account_select" style="min-width: 300px; padding: 8px 12px; border: 1px solid #8c8f94; border-radius: 3px; font-size: 14px;">
+                                <option value=""><?php _e('Select an account...', 'hisab-financial-tracker'); ?></option>
+                                <?php foreach ($all_accounts as $acc): ?>
+                                    <option value="<?php echo $acc->id; ?>" <?php selected($account_id, $acc->id); ?>>
+                                        <?php echo esc_html($acc->account_name . ' (' . $acc->bank_name . ') - ' . $acc->currency . ' ' . number_format($acc->current_balance, 2)); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <input type="submit" class="button button-primary" value="<?php _e('Select Account', 'hisab-financial-tracker'); ?>">
+                        </div>
+                    </div>
+                </form>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                        <?php _e('Quick Actions:', 'hisab-financial-tracker'); ?>
+                    </p>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <a href="<?php echo admin_url('admin.php?page=hisab-bank-accounts'); ?>" class="button">
+                            <?php _e('Manage Accounts', 'hisab-financial-tracker'); ?>
+                        </a>
+                        <a href="<?php echo admin_url('admin.php?page=hisab-add-bank-account'); ?>" class="button">
+                            <?php _e('Add New Account', 'hisab-financial-tracker'); ?>
+                        </a>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+    
     <?php if ($account): ?>
         <form method="post" class="hisab-form">
             <?php wp_nonce_field('hisab_bank_transaction', '_wpnonce'); ?>
+            <input type="hidden" name="account_id" value="<?php echo $account->id; ?>">
             
             <div class="hisab-form-row">
                 <div class="hisab-form-group">
@@ -179,12 +251,6 @@ if ($edit_transaction) {
                 <a href="<?php echo admin_url('admin.php?page=hisab-bank-transactions&account=' . $account->id); ?>" class="button"><?php _e('Cancel', 'hisab-financial-tracker'); ?></a>
             </div>
         </form>
-    <?php else: ?>
-        <div class="hisab-error" style="background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; padding: 40px; text-align: center; color: #666;">
-            <h3><?php _e('Account Not Found', 'hisab-financial-tracker'); ?></h3>
-            <p><?php _e('The specified bank account could not be found.', 'hisab-financial-tracker'); ?></p>
-            <a href="<?php echo admin_url('admin.php?page=hisab-bank-accounts'); ?>" class="button button-primary"><?php _e('Back to Accounts', 'hisab-financial-tracker'); ?></a>
-        </div>
     <?php endif; ?>
 </div>
 
@@ -247,6 +313,42 @@ if ($edit_transaction) {
 
 .hisab-account-info {
     font-size: 14px;
+}
+
+.hisab-account-selector {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.hisab-account-selector h3 {
+    color: #1d2327;
+    font-size: 18px;
+}
+
+.hisab-account-selector select {
+    background-color: #fff;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.hisab-account-selector select:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: 2px solid transparent;
+}
+
+.hisab-no-accounts {
+    background-color: #fcf0f1;
+    border: 1px solid #f0b7b8;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.hisab-no-accounts p {
+    margin: 0 0 15px 0;
+    font-weight: 500;
 }
 </style>
 

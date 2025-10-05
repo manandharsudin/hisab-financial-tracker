@@ -20,9 +20,10 @@ if ($account_id > 0) {
     if (!$account) {
         $error_message = __('Bank account not found.', 'hisab-financial-tracker');
     }
-} else {
-    $error_message = __('No account specified.', 'hisab-financial-tracker');
 }
+
+// Get all bank accounts for the selector
+$all_accounts = $bank_account->get_all_accounts(array('is_active' => 1));
 
 // Handle actions
 if (isset($_POST['action']) && $account) {
@@ -95,6 +96,9 @@ if ($account) {
         </a>
     <?php else: ?>
         <h1><?php _e('Bank Transactions', 'hisab-financial-tracker'); ?></h1>
+        <a href="<?php echo admin_url('admin.php?page=hisab-bank-accounts'); ?>" class="page-title-action">
+            <?php _e('Manage Accounts', 'hisab-financial-tracker'); ?>
+        </a>
     <?php endif; ?>
     <hr class="wp-header-end">
     
@@ -107,6 +111,61 @@ if ($account) {
     <?php if (isset($error_message)): ?>
         <div class="notice notice-error is-dismissible">
             <p><?php echo esc_html($error_message); ?></p>
+        </div>
+    <?php endif; ?>
+    
+    <?php if (!$account): ?>
+        <!-- Bank Account Selector -->
+        <div class="hisab-account-selector" style="background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; padding: 30px; margin: 20px 0; text-align: center;">
+            <h3 style="margin: 0 0 20px 0;"><?php _e('Select a Bank Account', 'hisab-financial-tracker'); ?></h3>
+            <p style="margin: 0 0 20px 0; color: #666;"><?php _e('Choose a bank account to view its transactions.', 'hisab-financial-tracker'); ?></p>
+            
+            <?php if (empty($all_accounts)): ?>
+                <div class="hisab-no-accounts" style="color: #d63638; margin: 20px 0;">
+                    <p><?php _e('No bank accounts found. Please create a bank account first.', 'hisab-financial-tracker'); ?></p>
+                    <a href="<?php echo admin_url('admin.php?page=hisab-add-bank-account'); ?>" class="button button-primary">
+                        <?php _e('Create Bank Account', 'hisab-financial-tracker'); ?>
+                    </a>
+                </div>
+            <?php else: ?>
+                <form method="get" style="display: inline-block;">
+                    <input type="hidden" name="page" value="hisab-bank-transactions">
+                    
+                    <div style="display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                        <div>
+                            <label for="account_select" style="display: block; margin-bottom: 5px; font-weight: 600;">
+                                <?php _e('Bank Account:', 'hisab-financial-tracker'); ?>
+                            </label>
+                            <select name="account" id="account_select" style="min-width: 300px; padding: 8px 12px; border: 1px solid #8c8f94; border-radius: 3px; font-size: 14px;">
+                                <option value=""><?php _e('Select an account...', 'hisab-financial-tracker'); ?></option>
+                                <?php foreach ($all_accounts as $acc): ?>
+                                    <option value="<?php echo $acc->id; ?>" <?php selected($account_id, $acc->id); ?>>
+                                        <?php echo esc_html($acc->account_name . ' (' . $acc->bank_name . ') - ' . $acc->currency . ' ' . number_format($acc->current_balance, 2)); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <input type="submit" class="button button-primary" value="<?php _e('View Transactions', 'hisab-financial-tracker'); ?>">
+                        </div>
+                    </div>
+                </form>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                        <?php _e('Quick Actions:', 'hisab-financial-tracker'); ?>
+                    </p>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <a href="<?php echo admin_url('admin.php?page=hisab-bank-accounts'); ?>" class="button">
+                            <?php _e('Manage Accounts', 'hisab-financial-tracker'); ?>
+                        </a>
+                        <a href="<?php echo admin_url('admin.php?page=hisab-add-bank-account'); ?>" class="button">
+                            <?php _e('Add New Account', 'hisab-financial-tracker'); ?>
+                        </a>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
     
@@ -263,12 +322,6 @@ if ($account) {
                 </div>
             <?php endif; ?>
         <?php endif; ?>
-    <?php else: ?>
-        <div class="hisab-error" style="background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; padding: 40px; text-align: center; color: #666;">
-            <h3><?php _e('Account Not Found', 'hisab-financial-tracker'); ?></h3>
-            <p><?php _e('The specified bank account could not be found.', 'hisab-financial-tracker'); ?></p>
-            <a href="<?php echo admin_url('admin.php?page=hisab-bank-accounts'); ?>" class="button button-primary"><?php _e('Back to Accounts', 'hisab-financial-tracker'); ?></a>
-        </div>
     <?php endif; ?>
 </div>
 
@@ -326,4 +379,40 @@ if ($account) {
 
 .hisab-status-active { background-color: #e8f5e8; color: #2e7d32; }
 .hisab-status-inactive { background-color: #ffebee; color: #c62828; }
+
+.hisab-account-selector {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.hisab-account-selector h3 {
+    color: #1d2327;
+    font-size: 18px;
+}
+
+.hisab-account-selector select {
+    background-color: #fff;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.hisab-account-selector select:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: 2px solid transparent;
+}
+
+.hisab-no-accounts {
+    background-color: #fcf0f1;
+    border: 1px solid #f0b7b8;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.hisab-no-accounts p {
+    margin: 0 0 15px 0;
+    font-weight: 500;
+}
 </style>
