@@ -72,7 +72,7 @@ if (!defined('ABSPATH')) {
             <div class="hisab-form-group">
                 <label for="transaction-bill-image"><?php _e('Bill Image', 'hisab-financial-tracker'); ?></label>
                 <div class="hisab-media-uploader">
-                    <input type="hidden" id="transaction-bill-image-id" name="bill_image_id" value="">
+                    <input type="hidden" id="transaction-bill-image-id" name="bill_image_id" value="<?php echo $edit_transaction ? esc_attr($edit_transaction->bill_image_id) : ''; ?>">
                     <button type="button" class="button" id="upload-bill-image">
                         <?php _e('Select Bill Image', 'hisab-financial-tracker'); ?>
                     </button>
@@ -356,6 +356,28 @@ jQuery(document).ready(function($) {
     
     // WordPress Media Uploader for bill image
     let mediaUploader;
+    
+    // Load existing image if in edit mode
+    function loadExistingImage() {
+        const imageId = $('#transaction-bill-image-id').val();
+        if (imageId) {
+            // Get attachment data from WordPress
+            wp.media.attachment(imageId).fetch().then(function(attachment) {
+                if (attachment) {
+                    if (attachment.type === 'image') {
+                        $('#bill-image-preview').html('<img src="' + attachment.sizes.medium.url + '" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;">');
+                    } else {
+                        $('#bill-image-preview').html('<div style="padding: 10px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px;"><strong>' + attachment.filename + '</strong><br><small>' + attachment.mime + '</small></div>');
+                    }
+                    $('#upload-bill-image').hide();
+                    $('#remove-bill-image').show();
+                }
+            });
+        }
+    }
+    
+    // Load existing image on page load
+    loadExistingImage();
     
     $('#upload-bill-image').on('click', function(e) {
         e.preventDefault();
