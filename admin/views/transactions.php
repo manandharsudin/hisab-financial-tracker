@@ -124,6 +124,7 @@ $owners = $database->get_owners();
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
+                        <th style="width: 50px;"><?php _e('#', 'hisab-financial-tracker'); ?></th>
                         <th style="width: 60px;"><?php _e('ID', 'hisab-financial-tracker'); ?></th>
                         <th style="width: 100px;"><?php _e('Date', 'hisab-financial-tracker'); ?></th>
                         <th style="width: 100px;"><?php _e('Type', 'hisab-financial-tracker'); ?></th>
@@ -137,8 +138,12 @@ $owners = $database->get_owners();
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($transactions as $transaction): ?>
+                    <?php 
+                    $serial_number = ($current_page - 1) * $per_page + 1; // Calculate starting serial number for current page
+                    foreach ($transactions as $transaction): 
+                    ?>
                         <tr>
+                            <td><?php echo $serial_number++; ?></td>
                             <td><?php echo $transaction->id; ?></td>
                             <td>
                                 <div class="hisab-date-display">
@@ -178,7 +183,7 @@ $owners = $database->get_owners();
                             </td>
                             <td>
                                 <?php if ($transaction->payment_method): ?>
-                                    <span class="hisab-payment-badge"><?php echo esc_html(ucfirst(str_replace('_', ' ', $transaction->payment_method))); ?></span>
+                                    <span class="hisab-payment-method"><?php echo esc_html(ucfirst(str_replace('_', ' ', $transaction->payment_method))); ?></span>
                                 <?php else: ?>
                                     <span class="hisab-payment-method hisab-no-payment"><?php _e('No Payment Method', 'hisab-financial-tracker'); ?></span>
                                 <?php endif; ?>
