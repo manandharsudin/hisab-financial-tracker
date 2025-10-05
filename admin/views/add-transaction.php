@@ -64,6 +64,7 @@ if (!defined('ABSPATH')) {
                     <option value="credit_card" <?php selected($edit_transaction ? $edit_transaction->payment_method : '', 'credit_card'); ?>><?php _e('Credit Card', 'hisab-financial-tracker'); ?></option>
                     <option value="debit_card" <?php selected($edit_transaction ? $edit_transaction->payment_method : '', 'debit_card'); ?>><?php _e('Debit Card', 'hisab-financial-tracker'); ?></option>
                     <option value="bank_transfer" <?php selected($edit_transaction ? $edit_transaction->payment_method : '', 'bank_transfer'); ?>><?php _e('Bank Transfer', 'hisab-financial-tracker'); ?></option>
+                    <option value="phone_pay" <?php selected($edit_transaction ? $edit_transaction->payment_method : '', 'phone_pay'); ?>><?php _e('Phone Pay', 'hisab-financial-tracker'); ?></option>
                     <option value="check" <?php selected($edit_transaction ? $edit_transaction->payment_method : '', 'check'); ?>><?php _e('Check', 'hisab-financial-tracker'); ?></option>
                     <option value="digital_wallet" <?php selected($edit_transaction ? $edit_transaction->payment_method : '', 'digital_wallet'); ?>><?php _e('Digital Wallet', 'hisab-financial-tracker'); ?></option>
                     <option value="other" <?php selected($edit_transaction ? $edit_transaction->payment_method : '', 'other'); ?>><?php _e('Other', 'hisab-financial-tracker'); ?></option>
@@ -81,6 +82,44 @@ if (!defined('ABSPATH')) {
                     </button>
                     <div id="bill-image-preview" style="margin-top: 10px;"></div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Bank Account Selection (shown for bank_transfer and phone_pay) -->
+        <div class="hisab-form-row" id="bank-account-row" style="display: none;">
+            <div class="hisab-form-group">
+                <label for="bank-account-id"><?php _e('Bank Account', 'hisab-financial-tracker'); ?></label>
+                <select id="bank-account-id" name="bank_account_id">
+                    <option value=""><?php _e('Select Bank Account', 'hisab-financial-tracker'); ?></option>
+                    <?php if (!empty($bank_accounts_npr)): ?>
+                        <optgroup label="<?php _e('NPR Accounts', 'hisab-financial-tracker'); ?>">
+                            <?php foreach ($bank_accounts_npr as $account): ?>
+                                <option value="<?php echo $account->id; ?>" data-currency="NPR" <?php selected($edit_transaction ? $edit_transaction->bank_account_id : '', $account->id); ?>>
+                                    <?php echo esc_html($account->account_name . ' (' . $account->bank_name . ')'); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php endif; ?>
+                    <?php if (!empty($bank_accounts_usd)): ?>
+                        <optgroup label="<?php _e('USD Accounts', 'hisab-financial-tracker'); ?>">
+                            <?php foreach ($bank_accounts_usd as $account): ?>
+                                <option value="<?php echo $account->id; ?>" data-currency="USD" <?php selected($edit_transaction ? $edit_transaction->bank_account_id : '', $account->id); ?>>
+                                    <?php echo esc_html($account->account_name . ' (' . $account->bank_name . ')'); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php endif; ?>
+                </select>
+                <p class="description"><?php _e('Select the bank account for this transaction', 'hisab-financial-tracker'); ?></p>
+            </div>
+        </div>
+        
+        <!-- Phone Pay Reference (shown for phone_pay only) -->
+        <div class="hisab-form-row" id="phone-pay-reference-row" style="display: none;">
+            <div class="hisab-form-group">
+                <label for="phone-pay-reference"><?php _e('Phone Pay Reference', 'hisab-financial-tracker'); ?></label>
+                <input type="text" id="phone-pay-reference" name="phone_pay_reference" value="<?php echo $edit_transaction ? esc_attr($edit_transaction->phone_pay_reference) : ''; ?>" placeholder="<?php _e('Enter phone pay transaction reference', 'hisab-financial-tracker'); ?>">
+                <p class="description"><?php _e('Enter the phone pay transaction reference number', 'hisab-financial-tracker'); ?></p>
             </div>
         </div>
         
@@ -318,6 +357,38 @@ jQuery(document).ready(function($) {
             categorySelect.val(currentValue);
         }
     }
+    
+    // Show/hide bank account fields based on payment method
+    function toggleBankAccountFields() {
+        const paymentMethod = $('#transaction-payment-method').val();
+        const bankAccountRow = $('#bank-account-row');
+        const phonePayReferenceRow = $('#phone-pay-reference-row');
+        const bankAccountSelect = $('#bank-account-id');
+        const phonePayReferenceInput = $('#phone-pay-reference');
+        
+        // Hide all bank-related fields first
+        bankAccountRow.hide();
+        phonePayReferenceRow.hide();
+        bankAccountSelect.prop('required', false);
+        phonePayReferenceInput.prop('required', false);
+        
+        // Show relevant fields based on payment method
+        if (paymentMethod === 'bank_transfer' || paymentMethod === 'phone_pay') {
+            bankAccountRow.show();
+            bankAccountSelect.prop('required', true);
+        }
+        
+        if (paymentMethod === 'phone_pay') {
+            phonePayReferenceRow.show();
+            phonePayReferenceInput.prop('required', true);
+        }
+    }
+    
+    // Bind payment method change event
+    $('#transaction-payment-method').on('change', toggleBankAccountFields);
+    
+    // Initialize bank account fields visibility
+    toggleBankAccountFields();
     
     // Initialize edit mode if editing
     <?php if ($edit_transaction): ?>

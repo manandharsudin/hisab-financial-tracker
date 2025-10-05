@@ -40,6 +40,8 @@ class HisabDatabase {
             category_id int(11) DEFAULT NULL,
             owner_id int(11) DEFAULT NULL,
             payment_method varchar(50) DEFAULT NULL,
+            bank_account_id int(11) DEFAULT NULL,
+            phone_pay_reference varchar(100) DEFAULT NULL,
             bill_image_id int(11) DEFAULT NULL,
             transaction_tax decimal(10,2) DEFAULT NULL,
             transaction_discount decimal(10,2) DEFAULT NULL,
@@ -164,6 +166,11 @@ class HisabDatabase {
         $wpdb->query("ALTER TABLE {$this->table_bank_transactions} 
                       ADD CONSTRAINT fk_bank_transactions_account_id 
                       FOREIGN KEY (account_id) REFERENCES {$this->table_bank_accounts}(id) ON DELETE CASCADE");
+        
+        // Add foreign key for transactions table bank_account_id
+        $wpdb->query("ALTER TABLE {$this->table_transactions} 
+                      ADD CONSTRAINT fk_transactions_bank_account_id 
+                      FOREIGN KEY (bank_account_id) REFERENCES {$this->table_bank_accounts}(id) ON DELETE SET NULL");
     }
     
     private function insert_default_categories() {

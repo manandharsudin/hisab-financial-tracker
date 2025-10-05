@@ -51,6 +51,19 @@ class HisabAjaxHandlers {
         add_action('wp_ajax_hisab_get_transaction_details', array($this, 'ajax_get_transaction_details'));
         add_action('wp_ajax_hisab_save_transaction_details', array($this, 'ajax_save_transaction_details'));
         add_action('wp_ajax_hisab_delete_transaction_details', array($this, 'ajax_delete_transaction_details'));
+        
+        // Bank Account AJAX handlers
+        add_action('wp_ajax_hisab_save_bank_account', array($this, 'ajax_save_bank_account'));
+        add_action('wp_ajax_hisab_delete_bank_account', array($this, 'ajax_delete_bank_account'));
+        add_action('wp_ajax_hisab_get_bank_account', array($this, 'ajax_get_bank_account'));
+        add_action('wp_ajax_hisab_get_bank_accounts', array($this, 'ajax_get_bank_accounts'));
+        
+        // Bank Transaction AJAX handlers
+        add_action('wp_ajax_hisab_save_bank_transaction', array($this, 'ajax_save_bank_transaction'));
+        add_action('wp_ajax_hisab_delete_bank_transaction', array($this, 'ajax_delete_bank_transaction'));
+        add_action('wp_ajax_hisab_get_bank_transaction', array($this, 'ajax_get_bank_transaction'));
+        add_action('wp_ajax_hisab_get_bank_transactions', array($this, 'ajax_get_bank_transactions'));
+        add_action('wp_ajax_hisab_transfer_between_accounts', array($this, 'ajax_transfer_between_accounts'));
     }
     
     // Transaction AJAX Handlers
@@ -537,5 +550,266 @@ class HisabAjaxHandlers {
         $result = $database->delete_transaction_details($transaction_id);
         
         wp_send_json($result);
+    }
+    
+    // Bank Account AJAX Handlers
+    public function ajax_save_bank_account() {
+        check_ajax_referer('hisab_bank_account', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAccount')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Account class not available'));
+        }
+        
+        $bank_account = new HisabBankAccount();
+        
+        $data = array(
+            'account_name' => sanitize_text_field($_POST['account_name']),
+            'bank_name' => sanitize_text_field($_POST['bank_name']),
+            'account_number' => sanitize_text_field($_POST['account_number']),
+            'account_type' => sanitize_text_field($_POST['account_type']),
+            'currency' => sanitize_text_field($_POST['currency']),
+            'initial_balance' => floatval($_POST['initial_balance']),
+            'is_active' => isset($_POST['is_active']) ? 1 : 0
+        );
+        
+        $account_id = isset($_POST['account_id']) ? intval($_POST['account_id']) : 0;
+        
+        if ($account_id > 0) {
+            $result = $bank_account->update_account($account_id, $data);
+        } else {
+            $result = $bank_account->create_account($data);
+        }
+        
+        if (is_wp_error($result)) {
+            wp_send_json(array('success' => false, 'message' => $result->get_error_message()));
+        }
+        
+        wp_send_json(array('success' => true, 'message' => 'Bank account saved successfully', 'account_id' => $result));
+    }
+    
+    public function ajax_delete_bank_account() {
+        check_ajax_referer('hisab_bank_account', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAccount')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Account class not available'));
+        }
+        
+        $account_id = intval($_POST['account_id']);
+        $bank_account = new HisabBankAccount();
+        
+        $result = $bank_account->delete_account($account_id);
+        
+        if (is_wp_error($result)) {
+            wp_send_json(array('success' => false, 'message' => $result->get_error_message()));
+        }
+        
+        wp_send_json(array('success' => true, 'message' => 'Bank account deleted successfully'));
+    }
+    
+    public function ajax_get_bank_account() {
+        check_ajax_referer('hisab_bank_account', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAccount')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Account class not available'));
+        }
+        
+        $account_id = intval($_POST['account_id']);
+        $bank_account = new HisabBankAccount();
+        
+        $account = $bank_account->get_account($account_id);
+        
+        if (!$account) {
+            wp_send_json(array('success' => false, 'message' => 'Bank account not found'));
+        }
+        
+        wp_send_json(array('success' => true, 'data' => $account));
+    }
+    
+    public function ajax_get_bank_accounts() {
+        check_ajax_referer('hisab_bank_account', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAccount')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Account class not available'));
+        }
+        
+        $filters = array();
+        if (isset($_POST['currency'])) {
+            $filters['currency'] = sanitize_text_field($_POST['currency']);
+        }
+        if (isset($_POST['is_active'])) {
+            $filters['is_active'] = intval($_POST['is_active']);
+        }
+        
+        $bank_account = new HisabBankAccount();
+        $accounts = $bank_account->get_all_accounts($filters);
+        
+        wp_send_json(array('success' => true, 'data' => $accounts));
+    }
+    
+    // Bank Transaction AJAX Handlers
+    public function ajax_save_bank_transaction() {
+        check_ajax_referer('hisab_bank_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankTransaction')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Transaction class not available'));
+        }
+        
+        $bank_transaction = new HisabBankTransaction();
+        
+        $data = array(
+            'account_id' => intval($_POST['account_id']),
+            'transaction_type' => sanitize_text_field($_POST['transaction_type']),
+            'amount' => floatval($_POST['amount']),
+            'currency' => sanitize_text_field($_POST['currency']),
+            'description' => sanitize_textarea_field($_POST['description']),
+            'reference_number' => sanitize_text_field($_POST['reference_number']),
+            'phone_pay_reference' => sanitize_text_field($_POST['phone_pay_reference']),
+            'transaction_date' => sanitize_text_field($_POST['transaction_date'])
+        );
+        
+        $transaction_id = isset($_POST['transaction_id']) ? intval($_POST['transaction_id']) : 0;
+        
+        if ($transaction_id > 0) {
+            $result = $bank_transaction->update_transaction($transaction_id, $data);
+        } else {
+            $result = $bank_transaction->create_transaction($data);
+        }
+        
+        if (is_wp_error($result)) {
+            wp_send_json(array('success' => false, 'message' => $result->get_error_message()));
+        }
+        
+        wp_send_json(array('success' => true, 'message' => 'Bank transaction saved successfully', 'transaction_id' => $result));
+    }
+    
+    public function ajax_delete_bank_transaction() {
+        check_ajax_referer('hisab_bank_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankTransaction')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Transaction class not available'));
+        }
+        
+        $transaction_id = intval($_POST['transaction_id']);
+        $bank_transaction = new HisabBankTransaction();
+        
+        $result = $bank_transaction->delete_transaction($transaction_id);
+        
+        if (is_wp_error($result)) {
+            wp_send_json(array('success' => false, 'message' => $result->get_error_message()));
+        }
+        
+        wp_send_json(array('success' => true, 'message' => 'Bank transaction deleted successfully'));
+    }
+    
+    public function ajax_get_bank_transaction() {
+        check_ajax_referer('hisab_bank_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankTransaction')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Transaction class not available'));
+        }
+        
+        $transaction_id = intval($_POST['transaction_id']);
+        $bank_transaction = new HisabBankTransaction();
+        
+        $transaction = $bank_transaction->get_transaction($transaction_id);
+        
+        if (!$transaction) {
+            wp_send_json(array('success' => false, 'message' => 'Bank transaction not found'));
+        }
+        
+        wp_send_json(array('success' => true, 'data' => $transaction));
+    }
+    
+    public function ajax_get_bank_transactions() {
+        check_ajax_referer('hisab_bank_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankTransaction')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Transaction class not available'));
+        }
+        
+        $filters = array();
+        if (isset($_POST['account_id'])) {
+            $filters['account_id'] = intval($_POST['account_id']);
+        }
+        if (isset($_POST['transaction_type'])) {
+            $filters['transaction_type'] = sanitize_text_field($_POST['transaction_type']);
+        }
+        if (isset($_POST['start_date'])) {
+            $filters['start_date'] = sanitize_text_field($_POST['start_date']);
+        }
+        if (isset($_POST['end_date'])) {
+            $filters['end_date'] = sanitize_text_field($_POST['end_date']);
+        }
+        
+        $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 20;
+        
+        $bank_transaction = new HisabBankTransaction();
+        $result = $bank_transaction->get_all_transactions($filters, $page, $per_page);
+        
+        wp_send_json(array('success' => true, 'data' => $result));
+    }
+    
+    public function ajax_transfer_between_accounts() {
+        check_ajax_referer('hisab_transfer', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankTransaction')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Transaction class not available'));
+        }
+        
+        $from_account_id = intval($_POST['from_account_id']);
+        $to_account_id = intval($_POST['to_account_id']);
+        $amount = floatval($_POST['amount']);
+        $description = sanitize_textarea_field($_POST['description']);
+        $transaction_date = sanitize_text_field($_POST['transaction_date']);
+        
+        if ($from_account_id === $to_account_id) {
+            wp_send_json(array('success' => false, 'message' => 'Cannot transfer to the same account'));
+        }
+        
+        $bank_transaction = new HisabBankTransaction();
+        $result = $bank_transaction->create_transfer($from_account_id, $to_account_id, $amount, $description, $transaction_date);
+        
+        if (is_wp_error($result)) {
+            wp_send_json(array('success' => false, 'message' => $result->get_error_message()));
+        }
+        
+        wp_send_json(array('success' => true, 'message' => 'Transfer completed successfully', 'data' => $result));
     }
 }

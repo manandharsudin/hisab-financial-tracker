@@ -95,6 +95,16 @@ class HisabAdminMenu {
             array($this, 'admin_add_bank_transaction_page')
         );
         
+        // Transfer Between Accounts submenu
+        add_submenu_page(
+            'hisab-dashboard',
+            __('Transfer Between Accounts', 'hisab-financial-tracker'),
+            __('Transfer Between Accounts', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-transfer-accounts',
+            array($this, 'admin_transfer_accounts_page')
+        );
+        
         // Analytics submenu
         add_submenu_page(
             'hisab-dashboard',
@@ -210,6 +220,14 @@ class HisabAdminMenu {
             return;
         }
         include HISAB_PLUGIN_PATH . 'admin/views/add-bank-transaction.php';
+    }
+    
+    public function admin_transfer_accounts_page() {
+        if (!class_exists('HisabAdmin')) {
+            echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
+            return;
+        }
+        include HISAB_PLUGIN_PATH . 'admin/views/transfer-between-accounts.php';
     }
     
     public function admin_analytics_page() {
