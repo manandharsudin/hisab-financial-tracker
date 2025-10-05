@@ -282,12 +282,14 @@ class HisabDatabase {
             $transaction_data['bs_day'] = $bs_day;
         } else {
             // Convert AD to BS
-            $nepali_date = new HisabNepaliDate();
-            $bs_date = $nepali_date->ad_to_bs($data['transaction_date']);
-            if ($bs_date) {
-                $transaction_data['bs_year'] = $bs_date['year'];
-                $transaction_data['bs_month'] = $bs_date['month'];
-                $transaction_data['bs_day'] = $bs_date['day'];
+            $ad_parts = explode('-', $data['transaction_date']);
+            if (count($ad_parts) === 3) {
+                $bs_date = HisabNepaliDate::ad_to_bs($ad_parts[0], $ad_parts[1], $ad_parts[2]);
+                if ($bs_date) {
+                    $transaction_data['bs_year'] = $bs_date['year'];
+                    $transaction_data['bs_month'] = $bs_date['month'];
+                    $transaction_data['bs_day'] = $bs_date['day'];
+                }
             }
         }
         
@@ -769,7 +771,7 @@ class HisabDatabase {
         
         // Get transactions
         $sql = "
-            SELECT t.*, c.name as category_name, o.name as owner_name,
+            SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color,
                    p.guid as bill_image_url, p.post_title as bill_image_title
             FROM {$this->table_transactions} t
             LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
@@ -801,7 +803,7 @@ class HisabDatabase {
         global $wpdb;
         
         $sql = "
-            SELECT t.*, c.name as category_name, o.name as owner_name,
+            SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color,
                    p.guid as bill_image_url, p.post_title as bill_image_title
             FROM {$this->table_transactions} t
             LEFT JOIN {$this->table_categories} c ON t.category_id = c.id

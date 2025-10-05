@@ -1392,26 +1392,14 @@ input[type="color"] {
     color: #842029;
 }
 
-.hisab-category-badge,
-.hisab-owner-badge,
 .hisab-payment-badge {
     display: inline-block;
     padding: 3px 8px;
-    background: #e7f3ff;
-    color: #0073aa;
+    background: #f0f0f1;
+    color: #1d2327;
     border-radius: 10px;
     font-size: 11px;
     font-weight: 500;
-}
-
-.hisab-owner-badge {
-    background: #f0f6fc;
-    color: #0073aa;
-}
-
-.hisab-payment-badge {
-    background: #f0f0f1;
-    color: #1d2327;
 }
 
 /* Responsive adjustments for transaction table */

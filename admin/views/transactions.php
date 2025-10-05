@@ -157,23 +157,29 @@ $owners = $database->get_owners();
                             </td>
                             <td>
                                 <?php if ($transaction->category_name): ?>
-                                    <span class="hisab-category-badge"><?php echo esc_html($transaction->category_name); ?></span>
+                                    <span class="hisab-category-badge" style="background-color: <?php echo esc_attr(isset($transaction->category_color) && $transaction->category_color ? $transaction->category_color : '#6c757d'); ?>"><?php echo esc_html($transaction->category_name); ?></span>
                                 <?php else: ?>
                                     <span style="color: #999;">—</span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($transaction->owner_name): ?>
-                                    <span class="hisab-owner-badge"><?php echo esc_html($transaction->owner_name); ?></span>
+                                    <span class="hisab-owner-badge" style="background-color: <?php echo esc_attr(isset($transaction->owner_color) && $transaction->owner_color ? $transaction->owner_color : '#6c757d'); ?>"><?php echo esc_html($transaction->owner_name); ?></span>
                                 <?php else: ?>
                                     <span style="color: #999;">—</span>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php echo date(HISAB_DATE_FORMAT, strtotime($transaction->transaction_date)); ?>
-                                <?php if ($transaction->bs_year && $transaction->bs_month && $transaction->bs_day): ?>
-                                    <br><small style="color: #666;">BS: <?php echo $transaction->bs_year . '-' . sprintf('%02d', $transaction->bs_month) . '-' . sprintf('%02d', $transaction->bs_day); ?></small>
-                                <?php endif; ?>
+                                <div class="hisab-date-display">
+                                    <div class="ad-date"><?php echo date(HISAB_DATE_FORMAT, strtotime($transaction->transaction_date)); ?></div>
+                                    <?php 
+                                    $show_dual_dates = get_option('hisab_show_dual_dates', 1);
+                                    if ($show_dual_dates && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
+                                        $bs_month_name = HisabNepaliDate::get_bs_months($transaction->bs_month);
+                                        echo '<div class="bs-date">' . $bs_month_name . ' ' . $transaction->bs_day . ', ' . $transaction->bs_year . '</div>';
+                                    }
+                                    ?>
+                                </div>
                             </td>
                             <td>
                                 <?php if ($transaction->payment_method): ?>

@@ -62,7 +62,7 @@ if (!defined('ABSPATH')) {
                                 <td><?php echo esc_html($transaction->description); ?></td>
                                 <td>
                                     <?php if ($transaction->category_name): ?>
-                                        <span class="hisab-category-badge" style="background-color: <?php echo $transaction->category_color; ?>">
+                                        <span class="hisab-category-badge" style="background-color: <?php echo esc_attr(isset($transaction->category_color) && $transaction->category_color ? $transaction->category_color : '#6c757d'); ?>">
                                             <?php echo esc_html($transaction->category_name); ?>
                                         </span>
                                     <?php else: ?>
@@ -71,7 +71,7 @@ if (!defined('ABSPATH')) {
                                 </td>
                                 <td>
                                     <?php if ($transaction->owner_name): ?>
-                                        <span class="hisab-owner-badge" style="background-color: <?php echo $transaction->owner_color; ?>">
+                                        <span class="hisab-owner-badge" style="background-color: <?php echo esc_attr(isset($transaction->owner_color) && $transaction->owner_color ? $transaction->owner_color : '#6c757d'); ?>">
                                             <?php echo esc_html($transaction->owner_name); ?>
                                         </span>
                                     <?php else: ?>
