@@ -310,4 +310,62 @@ jQuery(document).ready(function($) {
             $(container).find('.notice').fadeOut();
         }, 5000);
     }
+    
+    // Bank Transaction Form Functionality
+    function initBankTransactionForm() {
+        // Show/hide phone pay reference field based on transaction type
+        function togglePhonePayField() {
+            var transactionType = $('#transaction_type').val();
+            if (transactionType === 'phone_pay') {
+                $('#phone_pay_row').show();
+                $('#phone_pay_reference').prop('required', true);
+            } else {
+                $('#phone_pay_row').hide();
+                $('#phone_pay_reference').prop('required', false);
+            }
+        }
+        
+        // Initial call
+        togglePhonePayField();
+        
+        // Bind to change event
+        $('#transaction_type').on('change', togglePhonePayField);
+        
+        // Form validation
+        $('form').on('submit', function(e) {
+            var transactionType = $('#transaction_type').val();
+            var amount = parseFloat($('#amount').val());
+            var accountBalance = parseFloat($('#account-balance').data('balance') || 0);
+            
+            // Check for withdrawal/phone pay/transfer out with insufficient balance
+            if (['withdrawal', 'phone_pay', 'transfer_out'].includes(transactionType) && amount > accountBalance) {
+                e.preventDefault();
+                alert(hisab_ajax.insufficient_balance);
+                return false;
+            }
+            
+            // Check for zero or negative amount
+            if (amount <= 0) {
+                e.preventDefault();
+                alert(hisab_ajax.amount_required);
+                return false;
+            }
+        });
+        
+        // Account switcher functionality
+        $('#switch-account-btn').on('click', function() {
+            var selectedAccountId = $('#account-switcher').val();
+            if (selectedAccountId) {
+                // Redirect to the same page with the selected account
+                var currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('account', selectedAccountId);
+                window.location.href = currentUrl.toString();
+            }
+        });
+    }
+    
+    // Initialize bank transaction form if on the add bank transaction page
+    if ($('#transaction_type').length && $('#amount').length) {
+        initBankTransactionForm();
+    }
 });

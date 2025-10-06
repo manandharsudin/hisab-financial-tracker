@@ -120,7 +120,7 @@ if ($edit_transaction) {
     <h1><?php echo $is_edit ? __('Edit Bank Transaction', 'hisab-financial-tracker') : __('Add Bank Transaction', 'hisab-financial-tracker'); ?></h1>
     
     <?php if ($account): ?>
-        <p class="hisab-account-info" style="background: #f0f6fc; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px; margin: 20px 0;">
+        <p class="hisab-account-info" id="account-balance" data-balance="<?php echo $account->current_balance; ?>" style="background: #f0f6fc; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px; margin: 20px 0;">
             <strong><?php _e('Account:', 'hisab-financial-tracker'); ?></strong> <?php echo esc_html($account->account_name); ?> 
             (<?php echo esc_html($account->bank_name); ?>) - 
             <strong><?php _e('Balance:', 'hisab-financial-tracker'); ?></strong> 
@@ -277,56 +277,3 @@ if ($edit_transaction) {
 </div>
 
 
-<script>
-jQuery(document).ready(function($) {
-    // Show/hide phone pay reference field based on transaction type
-    function togglePhonePayField() {
-        var transactionType = $('#transaction_type').val();
-        if (transactionType === 'phone_pay') {
-            $('#phone_pay_row').show();
-            $('#phone_pay_reference').prop('required', true);
-        } else {
-            $('#phone_pay_row').hide();
-            $('#phone_pay_reference').prop('required', false);
-        }
-    }
-    
-    // Initial call
-    togglePhonePayField();
-    
-    // Bind to change event
-    $('#transaction_type').on('change', togglePhonePayField);
-    
-    // Form validation
-    $('form').on('submit', function(e) {
-        var transactionType = $('#transaction_type').val();
-        var amount = parseFloat($('#amount').val());
-        var accountBalance = <?php echo $account ? $account->current_balance : 0; ?>;
-        
-        // Check for withdrawal/phone pay/transfer out with insufficient balance
-        if (['withdrawal', 'phone_pay', 'transfer_out'].includes(transactionType) && amount > accountBalance) {
-            e.preventDefault();
-            alert('<?php _e('Insufficient balance for this transaction.', 'hisab-financial-tracker'); ?>');
-            return false;
-        }
-        
-        // Check for zero or negative amount
-        if (amount <= 0) {
-            e.preventDefault();
-            alert('<?php _e('Amount must be greater than zero.', 'hisab-financial-tracker'); ?>');
-            return false;
-        }
-    });
-    
-    // Account switcher functionality
-    $('#switch-account-btn').on('click', function() {
-        var selectedAccountId = $('#account-switcher').val();
-        if (selectedAccountId) {
-            // Redirect to the same page with the selected account
-            var currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('account', selectedAccountId);
-            window.location.href = currentUrl.toString();
-        }
-    });
-});
-</script>

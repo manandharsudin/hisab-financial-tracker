@@ -201,7 +201,7 @@ if ($account) {
                     <p style="margin: 0; color: #666;"><?php echo esc_html($account->account_number ?: 'No account number'); ?></p>
                 </div>
                 <div>
-                    <div style="font-size: 24px; font-weight: bold; color: <?php echo $account->current_balance >= 0 ? '#00a32a' : '#d63638'; ?>;">
+                    <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px; color: <?php echo $account->current_balance >= 0 ? '#00a32a' : '#d63638'; ?>;">
                         <?php echo $account->currency === 'NPR' ? '₹' : '$'; ?><?php echo number_format($account->current_balance, 2); ?>
                     </div>
                     <div style="color: #666; font-size: 14px;"><?php _e('Current Balance', 'hisab-financial-tracker'); ?></div>

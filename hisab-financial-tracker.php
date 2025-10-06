@@ -114,7 +114,9 @@ class HisabFinancialTracker {
         wp_localize_script('hisab-admin', 'hisab_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('hisab_transaction'),
-            'currency' => HISAB_CURRENCY_SYMBOL
+            'currency' => HISAB_CURRENCY_SYMBOL,
+            'insufficient_balance' => __('Insufficient balance for this transaction.', 'hisab-financial-tracker'),
+            'amount_required' => __('Amount must be greater than zero.', 'hisab-financial-tracker')
         ));
     }
     
