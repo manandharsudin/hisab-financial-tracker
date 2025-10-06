@@ -129,7 +129,9 @@ class HisabFinancialTracker {
             'select_bill_image' => __('Select Bill Image', 'hisab-financial-tracker'),
             'use_this_image' => __('Use This Image', 'hisab-financial-tracker'),
             'add_at_least_one_item' => __('Please add at least one item.', 'hisab-financial-tracker'),
-            'error_saving_details' => __('An error occurred while saving details.', 'hisab-financial-tracker')
+            'error_saving_details' => __('An error occurred while saving details.', 'hisab-financial-tracker'),
+            'income' => __('Income', 'hisab-financial-tracker'),
+            'expenses' => __('Expenses', 'hisab-financial-tracker')
         ));
     }
     

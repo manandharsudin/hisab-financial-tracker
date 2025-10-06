@@ -990,4 +990,107 @@ jQuery(document).ready(function($) {
     if ($('#hisab-transaction-form').length) {
         initTransactionForm();
     }
+    
+    // Analytics Charts Functionality
+    function initAnalyticsCharts() {
+        // Yearly chart
+        const yearlyCtx = document.getElementById('hisab-yearly-chart');
+        if (yearlyCtx) {
+            const yearlyData = $('#hisab-yearly-chart').data('yearly-data') || {};
+            
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const incomeData = [];
+            const expenseData = [];
+            
+            for (let i = 1; i <= 12; i++) {
+                incomeData.push(yearlyData[i] ? yearlyData[i].income : 0);
+                expenseData.push(yearlyData[i] ? yearlyData[i].expense : 0);
+            }
+            
+            new Chart(yearlyCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: hisab_ajax.income,
+                        data: incomeData,
+                        backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                        borderColor: '#28a745',
+                        borderWidth: 1
+                    }, {
+                        label: hisab_ajax.expenses,
+                        data: expenseData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                        borderColor: '#dc3545',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Income categories pie chart
+        const incomeCtx = document.getElementById('hisab-income-categories');
+        if (incomeCtx) {
+            const incomeCategories = $('#hisab-income-categories').data('income-categories') || [];
+            
+            new Chart(incomeCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: incomeCategories.map(cat => cat.category_name),
+                    datasets: [{
+                        data: incomeCategories.map(cat => cat.total),
+                        backgroundColor: incomeCategories.map(cat => cat.category_color),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Expense categories pie chart
+        const expenseCtx = document.getElementById('hisab-expense-categories');
+        if (expenseCtx) {
+            const expenseCategories = $('#hisab-expense-categories').data('expense-categories') || [];
+            
+            new Chart(expenseCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: expenseCategories.map(cat => cat.category_name),
+                    datasets: [{
+                        data: expenseCategories.map(cat => cat.total),
+                        backgroundColor: expenseCategories.map(cat => cat.category_color),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Initialize analytics charts if on the analytics page
+    if ($('#hisab-yearly-chart').length || $('#hisab-income-categories').length || $('#hisab-expense-categories').length) {
+        initAnalyticsCharts();
+    }
 });

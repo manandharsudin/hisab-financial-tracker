@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
         <h2><?php _e('Yearly Overview', 'hisab-financial-tracker'); ?> - <?php echo $current_year; ?></h2>
         
         <div class="hisab-yearly-chart">
-            <canvas id="hisab-yearly-chart" width="800" height="400"></canvas>
+            <canvas id="hisab-yearly-chart" width="800" height="400" data-yearly-data="<?php echo esc_attr(json_encode($yearly_data)); ?>"></canvas>
         </div>
         
         <div class="hisab-yearly-stats">
@@ -47,14 +47,14 @@ if (!defined('ABSPATH')) {
         <div class="hisab-category-section">
             <h3><?php _e('Income Categories', 'hisab-financial-tracker'); ?></h3>
             <div class="hisab-category-chart">
-                <canvas id="hisab-income-categories" width="400" height="300"></canvas>
+                <canvas id="hisab-income-categories" width="400" height="300" data-income-categories="<?php echo esc_attr(json_encode($income_categories)); ?>"></canvas>
             </div>
         </div>
         
         <div class="hisab-category-section">
             <h3><?php _e('Expense Categories', 'hisab-financial-tracker'); ?></h3>
             <div class="hisab-category-chart">
-                <canvas id="hisab-expense-categories" width="400" height="300"></canvas>
+                <canvas id="hisab-expense-categories" width="400" height="300" data-expense-categories="<?php echo esc_attr(json_encode($expense_categories)); ?>"></canvas>
             </div>
         </div>
     </div>
@@ -127,95 +127,3 @@ if (!defined('ABSPATH')) {
     </div>
 </div>
 
-<script>
-jQuery(document).ready(function($) {
-    // Yearly chart
-    const yearlyCtx = document.getElementById('hisab-yearly-chart').getContext('2d');
-    const yearlyData = <?php echo json_encode($yearly_data); ?>;
-    
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const incomeData = [];
-    const expenseData = [];
-    
-    for (let i = 1; i <= 12; i++) {
-        incomeData.push(yearlyData[i] ? yearlyData[i].income : 0);
-        expenseData.push(yearlyData[i] ? yearlyData[i].expense : 0);
-    }
-    
-    new Chart(yearlyCtx, {
-        type: 'bar',
-        data: {
-            labels: months,
-            datasets: [{
-                label: '<?php _e('Income', 'hisab-financial-tracker'); ?>',
-                data: incomeData,
-                backgroundColor: 'rgba(40, 167, 69, 0.8)',
-                borderColor: '#28a745',
-                borderWidth: 1
-            }, {
-                label: '<?php _e('Expenses', 'hisab-financial-tracker'); ?>',
-                data: expenseData,
-                backgroundColor: 'rgba(220, 53, 69, 0.8)',
-                borderColor: '#dc3545',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-    
-    // Income categories pie chart
-    const incomeCtx = document.getElementById('hisab-income-categories').getContext('2d');
-    const incomeCategories = <?php echo json_encode($income_categories); ?>;
-    
-    new Chart(incomeCtx, {
-        type: 'doughnut',
-        data: {
-            labels: incomeCategories.map(cat => cat.category_name),
-            datasets: [{
-                data: incomeCategories.map(cat => cat.total),
-                backgroundColor: incomeCategories.map(cat => cat.category_color),
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-    
-    // Expense categories pie chart
-    const expenseCtx = document.getElementById('hisab-expense-categories').getContext('2d');
-    const expenseCategories = <?php echo json_encode($expense_categories); ?>;
-    
-    new Chart(expenseCtx, {
-        type: 'doughnut',
-        data: {
-            labels: expenseCategories.map(cat => cat.category_name),
-            datasets: [{
-                data: expenseCategories.map(cat => cat.total),
-                backgroundColor: expenseCategories.map(cat => cat.category_color),
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-});
-</script>
