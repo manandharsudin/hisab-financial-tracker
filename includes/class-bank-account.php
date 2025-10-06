@@ -34,6 +34,7 @@ class HisabBankAccount {
             'account_type' => 'savings',
             'currency' => 'NPR',
             'initial_balance' => 0.00,
+            'current_balance' => 0.00,
             'is_active' => 1,
             'user_id' => get_current_user_id()
         );
