@@ -116,7 +116,20 @@ class HisabFinancialTracker {
             'nonce' => wp_create_nonce('hisab_transaction'),
             'currency' => HISAB_CURRENCY_SYMBOL,
             'insufficient_balance' => __('Insufficient balance for this transaction.', 'hisab-financial-tracker'),
-            'amount_required' => __('Amount must be greater than zero.', 'hisab-financial-tracker')
+            'amount_required' => __('Amount must be greater than zero.', 'hisab-financial-tracker'),
+            'select_category' => __('Please select a category.', 'hisab-financial-tracker'),
+            'saving_transaction' => __('Saving transaction...', 'hisab-financial-tracker'),
+            'select_bs_date' => __('Please select BS year, month, and day', 'hisab-financial-tracker'),
+            'date_conversion_failed' => __('Date conversion failed. Please try again.', 'hisab-financial-tracker'),
+            'transaction_updated' => __('Transaction updated successfully!', 'hisab-financial-tracker'),
+            'error_saving' => __('An error occurred while saving the transaction.', 'hisab-financial-tracker'),
+            'add_itemized_details' => __('Add Itemized Details', 'hisab-financial-tracker'),
+            'select_owner_optional' => __('Select Owner (Optional)', 'hisab-financial-tracker'),
+            'select_category_placeholder' => __('Select Category', 'hisab-financial-tracker'),
+            'select_bill_image' => __('Select Bill Image', 'hisab-financial-tracker'),
+            'use_this_image' => __('Use This Image', 'hisab-financial-tracker'),
+            'add_at_least_one_item' => __('Please add at least one item.', 'hisab-financial-tracker'),
+            'error_saving_details' => __('An error occurred while saving details.', 'hisab-financial-tracker')
         ));
     }
     
