@@ -346,28 +346,3 @@ if ($account) {
         <?php endif; ?>
     <?php endif; ?>
 </div>
-
-
-<script>
-jQuery(document).ready(function($) {
-    // Account switcher functionality
-    $('#switch-account-btn').on('click', function() {
-        var selectedAccountId = $('#account-switcher').val();
-        if (selectedAccountId) {
-            // Redirect to the same page with the selected account
-            var currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('account', selectedAccountId);
-            window.location.href = currentUrl.toString();
-        }
-    });
-    
-    // Also allow switching on select change (optional)
-    $('#account-switcher').on('change', function() {
-        var selectedAccountId = $(this).val();
-        if (selectedAccountId) {
-            // Uncomment the line below if you want automatic switching on select change
-            // $('#switch-account-btn').click();
-        }
-    });
-});
-</script>

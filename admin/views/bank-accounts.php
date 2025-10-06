@@ -244,4 +244,3 @@ foreach ($accounts as $account) {
         </table>
     <?php endif; ?>
 </div>
-
