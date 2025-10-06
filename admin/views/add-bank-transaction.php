@@ -126,6 +126,28 @@ if ($edit_transaction) {
             <strong><?php _e('Balance:', 'hisab-financial-tracker'); ?></strong> 
             <?php echo $account->currency === 'NPR' ? '₹' : '$'; ?><?php echo number_format($account->current_balance, 2); ?>
         </p>
+        
+        <?php if (!empty($all_accounts) && count($all_accounts) > 1): ?>
+            <!-- Quick Account Switcher -->
+            <div class="hisab-quick-switcher" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; margin: 20px 0;">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <label for="account-switcher" style="font-weight: 600; margin: 0;">
+                        <?php _e('Switch Account:', 'hisab-financial-tracker'); ?>
+                    </label>
+                    <select id="account-switcher" style="min-width: 250px; padding: 5px 10px; border: 1px solid #8c8f94; border-radius: 3px;">
+                        <option value=""><?php _e('Select Account', 'hisab-financial-tracker'); ?></option>
+                        <?php foreach ($all_accounts as $acc): ?>
+                            <option value="<?php echo $acc->id; ?>" <?php selected($account->id, $acc->id); ?>>
+                                <?php echo esc_html($acc->account_name . ' (' . $acc->bank_name . ') - ' . $acc->currency . ' ' . number_format($acc->current_balance, 2)); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="button" id="switch-account-btn" class="button button-secondary" style="margin: 0;">
+                        <?php _e('Switch', 'hisab-financial-tracker'); ?>
+                    </button>
+                </div>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
     
     <?php if (isset($success_message)): ?>
@@ -390,6 +412,17 @@ jQuery(document).ready(function($) {
             e.preventDefault();
             alert('<?php _e('Amount must be greater than zero.', 'hisab-financial-tracker'); ?>');
             return false;
+        }
+    });
+    
+    // Account switcher functionality
+    $('#switch-account-btn').on('click', function() {
+        var selectedAccountId = $('#account-switcher').val();
+        if (selectedAccountId) {
+            // Redirect to the same page with the selected account
+            var currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('account', selectedAccountId);
+            window.location.href = currentUrl.toString();
         }
     });
 });

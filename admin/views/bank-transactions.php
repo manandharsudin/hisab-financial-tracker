@@ -53,6 +53,9 @@ $per_page = 20;
 
 // Build filters
 $filters = array();
+if ($account_id > 0) {
+    $filters['account_id'] = $account_id; // Filter by specific account
+}
 if ($transaction_type_filter) {
     $filters['transaction_type'] = $transaction_type_filter;
 }
@@ -96,11 +99,30 @@ if ($account) {
         </a>
     <?php else: ?>
         <h1><?php _e('Bank Transactions', 'hisab-financial-tracker'); ?></h1>
-        <a href="<?php echo admin_url('admin.php?page=hisab-bank-accounts'); ?>" class="page-title-action">
-            <?php _e('Manage Accounts', 'hisab-financial-tracker'); ?>
-        </a>
     <?php endif; ?>
     <hr class="wp-header-end">
+    
+    <?php if ($account && !empty($all_accounts)): ?>
+        <!-- Quick Account Switcher -->
+        <div class="hisab-quick-switcher" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; margin: 20px 0;">
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <label for="account-switcher" style="font-weight: 600; margin: 0;">
+                    <?php _e('Switch Account:', 'hisab-financial-tracker'); ?>
+                </label>
+                <select id="account-switcher" style="min-width: 250px; padding: 5px 10px; border: 1px solid #8c8f94; border-radius: 3px;">
+                    <option value=""><?php _e('Select Account', 'hisab-financial-tracker'); ?></option>
+                    <?php foreach ($all_accounts as $acc): ?>
+                        <option value="<?php echo $acc->id; ?>" <?php selected($account->id, $acc->id); ?>>
+                            <?php echo esc_html($acc->account_name . ' (' . $acc->bank_name . ') - ' . $acc->currency . ' ' . number_format($acc->current_balance, 2)); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" id="switch-account-btn" class="button button-secondary" style="margin: 0;">
+                    <?php _e('Go', 'hisab-financial-tracker'); ?>
+                </button>
+            </div>
+        </div>
+    <?php endif; ?>
     
     <?php if (isset($success_message)): ?>
         <div class="notice notice-success is-dismissible">
@@ -415,4 +437,46 @@ if ($account) {
     margin: 0 0 15px 0;
     font-weight: 500;
 }
+
+.hisab-quick-switcher {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.hisab-quick-switcher select {
+    background-color: #fff;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.hisab-quick-switcher select:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: 2px solid transparent;
+}
 </style>
+
+<script>
+jQuery(document).ready(function($) {
+    // Account switcher functionality
+    $('#switch-account-btn').on('click', function() {
+        var selectedAccountId = $('#account-switcher').val();
+        if (selectedAccountId) {
+            // Redirect to the same page with the selected account
+            var currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('account', selectedAccountId);
+            window.location.href = currentUrl.toString();
+        }
+    });
+    
+    // Also allow switching on select change (optional)
+    $('#account-switcher').on('change', function() {
+        var selectedAccountId = $(this).val();
+        if (selectedAccountId) {
+            // Uncomment the line below if you want automatic switching on select change
+            // $('#switch-account-btn').click();
+        }
+    });
+});
+</script>
