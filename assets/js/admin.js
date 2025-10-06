@@ -201,8 +201,8 @@ jQuery(document).ready(function($) {
             setInterval(refreshDashboardData, 300000); // 5 minutes
         }
         
-        // Initialize date pickers
-        $('input[type="date"]').each(function() {
+        // Initialize date pickers - only for form inputs, not filter inputs
+        $('input[type="date"]').not('[name="start_date"], [name="end_date"]').each(function() {
             if (!$(this).val()) {
                 $(this).val(getCurrentDate());
             }
@@ -470,8 +470,8 @@ jQuery(document).ready(function($) {
         // Bind to change event
         $('#transaction_type').on('change', togglePhonePayField);
         
-        // Form validation
-        $('form').on('submit', function(e) {
+        // Form validation - only for bank transaction forms
+        $('form').has('#transaction_type').has('#amount').on('submit', function(e) {
             var transactionType = $('#transaction_type').val();
             var amount = parseFloat($('#amount').val());
             var accountBalance = parseFloat($('#account-balance').data('balance') || 0);
@@ -490,7 +490,15 @@ jQuery(document).ready(function($) {
                 return false;
             }
         });
-        
+    }
+    
+    // Initialize bank transaction form if on the add bank transaction page
+    if ($('#transaction_type').length && $('#amount').length) {
+        initBankTransactionForm();
+    }
+    
+    // Bank Transactions Page Functionality
+    function initBankTransactionsPage() {
         // Account switcher functionality
         $('#switch-account-btn').on('click', function() {
             var selectedAccountId = $('#account-switcher').val();
@@ -503,9 +511,9 @@ jQuery(document).ready(function($) {
         });
     }
     
-    // Initialize bank transaction form if on the add bank transaction page
-    if ($('#transaction_type').length && $('#amount').length) {
-        initBankTransactionForm();
+    // Initialize bank transactions page if on the bank transactions page
+    if ($('#account-switcher').length && $('#switch-account-btn').length) {
+        initBankTransactionsPage();
     }
     
     // Transaction Form Functionality

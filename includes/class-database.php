@@ -813,14 +813,14 @@ class HisabDatabase {
             $where_values[] = intval($filters['owner_id']);
         }
         
-        if (!empty($filters['date_from'])) {
+        if (!empty($filters['start_date'])) {
             $where_conditions[] = 't.transaction_date >= %s';
-            $where_values[] = $filters['date_from'];
+            $where_values[] = $filters['start_date'];
         }
         
-        if (!empty($filters['date_to'])) {
+        if (!empty($filters['end_date'])) {
             $where_conditions[] = 't.transaction_date <= %s';
-            $where_values[] = $filters['date_to'];
+            $where_values[] = $filters['end_date'];
         }
         
         $where_clause = implode(' AND ', $where_conditions);

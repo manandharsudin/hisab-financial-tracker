@@ -19,11 +19,11 @@ if (!empty($_GET['category_id'])) {
 if (!empty($_GET['owner_id'])) {
     $filters['owner_id'] = intval($_GET['owner_id']);
 }
-if (!empty($_GET['date_from'])) {
-    $filters['date_from'] = sanitize_text_field($_GET['date_from']);
+if (!empty($_GET['start_date'])) {
+    $filters['start_date'] = sanitize_text_field($_GET['start_date']);
 }
-if (!empty($_GET['date_to'])) {
-    $filters['date_to'] = sanitize_text_field($_GET['date_to']);
+if (!empty($_GET['end_date'])) {
+    $filters['end_date'] = sanitize_text_field($_GET['end_date']);
 }
 
 // Get paginated transactions
@@ -82,13 +82,13 @@ $owners = $database->get_owners();
                 </div>
                 
                 <div class="hisab-filter-group">
-                    <label for="filter-date-from"><?php _e('From Date:', 'hisab-financial-tracker'); ?></label>
-                    <input type="date" id="filter-date-from" name="date_from" value="<?php echo esc_attr($filters['date_from'] ?? ''); ?>" style="width: 150px;">
+                    <label for="start_date"><?php _e('Start Date:', 'hisab-financial-tracker'); ?></label>
+                    <input type="date" id="start_date" name="start_date" value="<?php echo esc_attr($filters['start_date'] ?? ''); ?>" style="width: 150px;">
                 </div>
                 
                 <div class="hisab-filter-group">
-                    <label for="filter-date-to"><?php _e('To Date:', 'hisab-financial-tracker'); ?></label>
-                    <input type="date" id="filter-date-to" name="date_to" value="<?php echo esc_attr($filters['date_to'] ?? ''); ?>" style="width: 150px;">
+                    <label for="end_date"><?php _e('End Date:', 'hisab-financial-tracker'); ?></label>
+                    <input type="date" id="end_date" name="end_date" value="<?php echo esc_attr($filters['end_date'] ?? ''); ?>" style="width: 150px;">
                 </div>
                 
                 <div class="hisab-filter-group">
