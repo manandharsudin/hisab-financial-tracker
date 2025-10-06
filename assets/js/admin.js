@@ -5,6 +5,181 @@
 jQuery(document).ready(function($) {
     'use strict';
     
+    // ========================================
+    // UTILITY FUNCTIONS
+    // ========================================
+    
+    // Centralized AJAX handler
+    function makeAjaxCall(action, data, successCallback, errorCallback) {
+        const defaultData = {
+            action: action,
+            nonce: hisab_ajax.nonce
+        };
+        
+        $.ajax({
+            url: hisab_ajax.ajax_url,
+            type: 'POST',
+            data: Object.assign(defaultData, data),
+            success: function(response) {
+                if (response.success) {
+                    if (successCallback) successCallback(response.data);
+                } else {
+                    if (errorCallback) errorCallback(response.message);
+                    else showError(response.message);
+                }
+            },
+            error: function() {
+                if (errorCallback) errorCallback('Network error occurred');
+                else showError('Network error occurred');
+            }
+        });
+    }
+    
+    // Centralized message display
+    function showMessage(container, type, message, autoHide = true) {
+        const messageClass = type === 'success' ? 'notice-success' : 'notice-error';
+        const messageHtml = `<div class="notice ${messageClass} is-dismissible"><p>${message}</p></div>`;
+        
+        if (typeof container === 'string') {
+            $(container).html(messageHtml);
+        } else {
+            container.html(messageHtml);
+        }
+        
+        if (autoHide) {
+            setTimeout(function() {
+                $(container).find('.notice').fadeOut();
+            }, 5000);
+        }
+    }
+    
+    function showSuccess(message, container = null) {
+        if (container) {
+            showMessage(container, 'success', message);
+        } else {
+            alert(message);
+        }
+    }
+    
+    function showError(message, container = null) {
+        if (container) {
+            showMessage(container, 'error', message);
+        } else {
+            alert(message);
+        }
+    }
+    
+    function showConfirm(message, callback) {
+        if (confirm(message)) {
+            callback();
+        }
+    }
+    
+    // Centralized form validation
+    function validateForm(form, rules) {
+        let isValid = true;
+        const errors = [];
+        
+        for (const rule of rules) {
+            const field = $(rule.selector);
+            const value = field.val();
+            
+            if (rule.required && (!value || value.trim() === '')) {
+                errors.push(rule.message || `${rule.selector} is required`);
+                isValid = false;
+            }
+            
+            if (rule.min && parseFloat(value) < rule.min) {
+                errors.push(rule.message || `${rule.selector} must be at least ${rule.min}`);
+                isValid = false;
+            }
+            
+            if (rule.max && parseFloat(value) > rule.max) {
+                errors.push(rule.message || `${rule.selector} must be at most ${rule.max}`);
+                isValid = false;
+            }
+        }
+        
+        if (!isValid && errors.length > 0) {
+            showError(errors.join('\n'));
+        }
+        
+        return isValid;
+    }
+    
+    // Centralized loading state management
+    function setLoadingState(button, isLoading, loadingText = 'Saving...') {
+        if (isLoading) {
+            button.data('original-text', button.text());
+            button.prop('disabled', true).text(loadingText);
+        } else {
+            button.prop('disabled', false).text(button.data('original-text') || 'Save');
+        }
+    }
+    
+    // Centralized transaction details functions
+    function createDetailItem(data = {}, isReadOnly = false) {
+        const item = Object.assign({
+            item_name: '',
+            rate: 0,
+            quantity: 1,
+            item_total: 0
+        }, data);
+        
+        const readonlyAttr = isReadOnly ? 'readonly' : '';
+        const removeButton = isReadOnly ? '' : '<button type="button" class="remove-detail-item" title="Remove item">×</button>';
+        
+        const itemHtml = `
+            <div class="detail-item">
+                <div class="detail-row">
+                    <input type="text" class="detail-name" placeholder="${hisab_ajax.item_name || 'Item name'}" value="${item.item_name}" ${readonlyAttr}>
+                    <input type="number" class="detail-rate" placeholder="${hisab_ajax.rate || 'Rate'}" step="0.01" min="0" value="${item.rate}" ${readonlyAttr}>
+                    <input type="number" class="detail-quantity" placeholder="${hisab_ajax.quantity || 'Qty'}" step="0.01" min="0" value="${item.quantity}" ${readonlyAttr}>
+                    <input type="number" class="detail-total" placeholder="${hisab_ajax.total || 'Total'}" step="0.01" min="0" value="${item.item_total}" readonly>
+                    ${removeButton}
+                </div>
+            </div>
+        `;
+        
+        return itemHtml;
+    }
+    
+    function calculateItemTotal($row) {
+        const rate = parseFloat($row.find('.detail-rate').val()) || 0;
+        const quantity = parseFloat($row.find('.detail-quantity').val()) || 0;
+        const total = rate * quantity;
+        
+        $row.find('.detail-total').val(total.toFixed(2));
+        updateSummary();
+    }
+    
+    function updateSummary() {
+        let subtotal = 0;
+        
+        $('.detail-item').each(function() {
+            const total = parseFloat($(this).find('.detail-total').val()) || 0;
+            subtotal += total;
+        });
+        
+        const tax = parseFloat($('#details-tax').text()) || 0;
+        const discount = parseFloat($('#details-discount').text()) || 0;
+        const total = subtotal + tax - discount;
+        
+        const currency = hisab_ajax.currency || '$';
+        $('#details-subtotal').text(currency + subtotal.toFixed(2));
+        $('#details-total').text(currency + total.toFixed(2));
+        
+        // Check for mismatch with main transaction amount
+        const mainAmount = parseFloat($('#transaction-amount').val()) || 0;
+        const difference = Math.abs(total - mainAmount);
+        
+        if (difference > 0.01) {
+            $('#details-total').addClass('mismatch');
+        } else {
+            $('#details-total').removeClass('mismatch');
+        }
+    }
+    
     // Initialize tooltips and other admin features
     initAdminFeatures();
     
@@ -300,16 +475,6 @@ jQuery(document).ready(function($) {
         });
     });
     
-    function showMessage(container, type, message) {
-        const messageClass = type === 'success' ? 'notice-success' : 'notice-error';
-        const messageHtml = `<div class="notice ${messageClass} is-dismissible"><p>${message}</p></div>`;
-        $(container).html(messageHtml);
-        
-        // Auto-dismiss after 5 seconds
-        setTimeout(function() {
-            $(container).find('.notice').fadeOut();
-        }, 5000);
-    }
     
     // Bank Transaction Form Functionality
     function initBankTransactionForm() {
@@ -737,24 +902,15 @@ jQuery(document).ready(function($) {
         });
         
         function openDetailsModal() {
-            // Load transaction data
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_get_transaction',
-                    transaction_id: currentTransactionId,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        currentTransactionData = response.data;
-                        displayTransactionInfo();
-                        loadExistingDetails();
-                        $('#transaction-details-modal').show();
-                    }
-                }
-            });
+        // Load transaction data
+        makeAjaxCall('hisab_get_transaction', {
+            transaction_id: currentTransactionId
+        }, function(data) {
+            currentTransactionData = data;
+            displayTransactionInfo();
+            loadExistingDetails();
+            $('#transaction-details-modal').show();
+        });
         }
         
         function closeDetailsModal() {
@@ -797,96 +953,36 @@ jQuery(document).ready(function($) {
         }
         
         function loadExistingDetails() {
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_get_transaction_details',
-                    transaction_id: currentTransactionId,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success && response.data && response.data.length > 0) {
-                        response.data.forEach(function(item) {
-                            addDetailItem(item);
-                        });
-                    } else {
-                        addDetailItem(); // Add one empty item
-                    }
-                    updateSummary();
-                },
-                error: function() {
-                    addDetailItem(); // Add one empty item on error
-                    updateSummary();
+            makeAjaxCall('hisab_get_transaction_details', {
+                transaction_id: currentTransactionId
+            }, function(data) {
+                if (data && data.length > 0) {
+                    data.forEach(function(item) {
+                        addDetailItem(item);
+                    });
+                } else {
+                    addDetailItem(); // Add one empty item
                 }
-            });
-        }
-        
-        function addDetailItem(data = null) {
-            const item = data || {
-                item_name: '',
-                rate: 0,
-                quantity: 1,
-                item_total: 0
-            };
-            
-            const itemHtml = `
-                <div class="detail-item">
-                    <div class="detail-row">
-                        <input type="text" class="detail-name" placeholder="Item name" value="${item.item_name}">
-                        <input type="number" class="detail-rate" placeholder="Rate" step="0.01" min="0" value="${item.rate}">
-                        <input type="number" class="detail-quantity" placeholder="Qty" step="0.01" min="0" value="${item.quantity}">
-                        <input type="number" class="detail-total" placeholder="Total" step="0.01" min="0" value="${item.item_total}" readonly>
-                        <button type="button" class="remove-detail-item" title="Remove item">×</button>
-                    </div>
-                </div>
-            `;
-            
-            $('#details-items').append(itemHtml);
-            
-            // Add event listeners for the new item
-            const newItem = $('#details-items .detail-item').last();
-            newItem.find('.detail-rate, .detail-quantity').on('input', calculateItemTotal);
-            newItem.find('.remove-detail-item').on('click', function() {
-                $(this).closest('.detail-item').remove();
+                updateSummary();
+            }, function() {
+                addDetailItem(); // Add one empty item on error
                 updateSummary();
             });
         }
         
-        function calculateItemTotal() {
-            const $row = $(this).closest('.detail-item');
-            const rate = parseFloat($row.find('.detail-rate').val()) || 0;
-            const quantity = parseFloat($row.find('.detail-quantity').val()) || 0;
-            const total = rate * quantity;
+        function addDetailItem(data = null) {
+            const itemHtml = createDetailItem(data || {}, false);
+            $('#details-items').append(itemHtml);
             
-            $row.find('.detail-total').val(total.toFixed(2));
-            updateSummary();
-        }
-        
-        function updateSummary() {
-            let subtotal = 0;
-            
-            $('.detail-item').each(function() {
-                const total = parseFloat($(this).find('.detail-total').val()) || 0;
-                subtotal += total;
+            // Add event listeners for the new item
+            const newItem = $('#details-items .detail-item').last();
+            newItem.find('.detail-rate, .detail-quantity').on('input', function() {
+                calculateItemTotal($(this).closest('.detail-item'));
             });
-            
-            const tax = parseFloat($('#details-tax').text()) || 0;
-            const discount = parseFloat($('#details-discount').text()) || 0;
-            const grandTotal = subtotal + tax - discount;
-            
-            $('#details-subtotal').text(subtotal.toFixed(2));
-            $('#details-grand-total').text(grandTotal.toFixed(2));
-            
-            // Highlight if totals don't match
-            const mainAmount = parseFloat(currentTransactionData.amount) || 0;
-            const difference = Math.abs(grandTotal - mainAmount);
-            
-            if (difference > 0.01) {
-                $('#details-grand-total').addClass('mismatch');
-            } else {
-                $('#details-grand-total').removeClass('mismatch');
-            }
+            newItem.find('.remove-detail-item').on('click', function() {
+                $(this).closest('.detail-item').remove();
+                updateSummary();
+            });
         }
         
         function saveTransactionDetails() {
@@ -913,28 +1009,16 @@ jQuery(document).ready(function($) {
                 return;
             }
             
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_save_transaction_details',
-                    transaction_id: currentTransactionId,
-                    details: details,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#details-messages').html('<div class="notice notice-success"><p>' + response.message + '</p></div>');
-                        setTimeout(function() {
-                            closeDetailsModal();
-                        }, 1500);
-                    } else {
-                        $('#details-messages').html('<div class="notice notice-error"><p>' + response.message + '</p></div>');
-                    }
-                },
-                error: function() {
-                    $('#details-messages').html('<div class="notice notice-error"><p>' + hisab_ajax.error_saving_details + '</p></div>');
-                }
+            makeAjaxCall('hisab_save_transaction_details', {
+                transaction_id: currentTransactionId,
+                details: details
+            }, function(data) {
+                showMessage('#details-messages', 'success', data.message || 'Details saved successfully');
+                setTimeout(function() {
+                    closeDetailsModal();
+                }, 1500);
+            }, function(message) {
+                showMessage('#details-messages', 'error', message || hisab_ajax.error_saving_details);
             });
         }
         
@@ -1600,10 +1684,10 @@ jQuery(document).ready(function($) {
         
         // Delete transaction
         $('.hisab-delete-transaction').on('click', function() {
-            if (confirm(hisab_ajax.confirm_delete_transaction)) {
+            showConfirm(hisab_ajax.confirm_delete_transaction, function() {
                 const transactionId = $(this).data('transaction-id');
                 deleteTransaction(transactionId);
-            }
+            }.bind(this));
         });
         
         // Modal close
@@ -1614,27 +1698,15 @@ jQuery(document).ready(function($) {
         });
         
         function loadTransactionDetails(transactionId) {
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_get_transaction',
-                    transaction_id: transactionId,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        currentTransactionData = response.data;
-                        displayTransactionInfo();
-                        loadExistingDetails();
-                        $('#transaction-details-modal').show();
-                    } else {
-                        alert(hisab_ajax.error_loading_details + ': ' + response.message);
-                    }
-                },
-                error: function() {
-                    alert(hisab_ajax.error_loading_details);
-                }
+            makeAjaxCall('hisab_get_transaction', {
+                transaction_id: transactionId
+            }, function(data) {
+                currentTransactionData = data;
+                displayTransactionInfo();
+                loadExistingDetails();
+                $('#transaction-details-modal').show();
+            }, function(message) {
+                showError(hisab_ajax.error_loading_details + ': ' + message);
             });
         }
         
@@ -1670,81 +1742,32 @@ jQuery(document).ready(function($) {
         function loadExistingDetails() {
             if (!currentTransactionData) return;
             
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_get_transaction_details',
-                    transaction_id: currentTransactionData.id,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#transaction-details-list').empty();
-                        if (response.data && response.data.length > 0) {
-                            response.data.forEach(function(item) {
-                                addDetailItem(item);
-                            });
-                        } else {
-                            $('#transaction-details-list').html('<p style="color: #666; text-align: center; padding: 20px;">' + hisab_ajax.no_itemized_details + '</p>');
-                        }
-                        updateSummary();
-                    }
-                },
-                error: function() {
-                    $('#transaction-details-list').html('<p style="color: #d63638; text-align: center; padding: 20px;">' + hisab_ajax.error_loading_details + '</p>');
+            makeAjaxCall('hisab_get_transaction_details', {
+                transaction_id: currentTransactionData.id
+            }, function(data) {
+                $('#transaction-details-list').empty();
+                if (data && data.length > 0) {
+                    data.forEach(function(item) {
+                        const itemHtml = createDetailItem(item, true);
+                        $('#transaction-details-list').append(itemHtml);
+                    });
+                } else {
+                    $('#transaction-details-list').html('<p style="color: #666; text-align: center; padding: 20px;">' + hisab_ajax.no_itemized_details + '</p>');
                 }
+                updateSummary();
+            }, function() {
+                $('#transaction-details-list').html('<p style="color: #d63638; text-align: center; padding: 20px;">' + hisab_ajax.error_loading_details + '</p>');
             });
         }
         
-        function addDetailItem(item = {}) {
-            const itemHtml = `
-                <div class="detail-item">
-                    <div class="detail-row">
-                        <input type="text" class="detail-name" placeholder="${hisab_ajax.item_name}" value="${item.item_name || ''}" readonly>
-                        <input type="number" class="detail-rate" placeholder="${hisab_ajax.rate}" step="0.01" min="0" value="${item.rate || ''}" readonly>
-                        <input type="number" class="detail-quantity" placeholder="${hisab_ajax.quantity}" step="0.01" min="0" value="${item.quantity || ''}" readonly>
-                        <input type="number" class="detail-total" placeholder="${hisab_ajax.total}" step="0.01" min="0" value="${item.item_total || ''}" readonly>
-                    </div>
-                </div>
-            `;
-            $('#transaction-details-list').append(itemHtml);
-        }
-        
-        function updateSummary() {
-            let subtotal = 0;
-            $('.detail-total').each(function() {
-                const total = parseFloat($(this).val()) || 0;
-                subtotal += total;
-            });
-            
-            const tax = parseFloat($('#details-tax').text()) || 0;
-            const discount = parseFloat($('#details-discount').text()) || 0;
-            const total = subtotal + tax - discount;
-            
-            $('#details-subtotal').text(hisab_ajax.currency + subtotal.toFixed(2));
-            $('#details-total').text(hisab_ajax.currency + total.toFixed(2));
-        }
         
         function deleteTransaction(transactionId) {
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_delete_transaction',
-                    transaction_id: transactionId,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        location.reload();
-                    } else {
-                        alert(hisab_ajax.error_deleting_transaction + ': ' + response.message);
-                    }
-                },
-                error: function() {
-                    alert(hisab_ajax.error_deleting_transaction);
-                }
+            makeAjaxCall('hisab_delete_transaction', {
+                transaction_id: transactionId
+            }, function() {
+                location.reload();
+            }, function(message) {
+                showError(hisab_ajax.error_deleting_transaction + ': ' + message);
             });
         }
     }
