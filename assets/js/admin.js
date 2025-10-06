@@ -1210,4 +1210,147 @@ jQuery(document).ready(function($) {
     if ($('#hisab-category-form').length) {
         initCategoriesManagement();
     }
+    
+    // Date Converter Functionality
+    function initDateConverter() {
+        // Load conversion history from localStorage
+        loadConversionHistory();
+        
+        // AD to BS conversion
+        $('#ad-to-bs-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const adDate = $('#ad-date-input').val();
+            
+            if (!adDate) {
+                alert(hisab_ajax.select_ad_date);
+                return;
+            }
+            
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_convert_ad_to_bs',
+                    ad_date: adDate,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const bsDate = response.data;
+                        const bsMonthName = getBSMonthName(bsDate.month);
+                        const result = `${bsMonthName} ${bsDate.day}, ${bsDate.year}`;
+                        $('#ad-to-bs-result').html(`<div class="hisab-result-success"><strong>${result}</strong></div>`);
+                        
+                        // Add to history
+                        addToHistory('AD', adDate, 'BS', result);
+                    } else {
+                        $('#ad-to-bs-result').html('<div class="hisab-result-error">' + hisab_ajax.conversion_failed + '</div>');
+                    }
+                },
+                error: function() {
+                    $('#ad-to-bs-result').html('<div class="hisab-result-error">' + hisab_ajax.error_converting_date + '</div>');
+                }
+            });
+        });
+        
+        // BS to AD conversion
+        $('#bs-to-ad-form').on('submit', function(e) {
+            e.preventDefault();
+            const bsYear = $('#bs-year-input').val();
+            const bsMonth = $('#bs-month-input').val();
+            const bsDay = $('#bs-day-input').val();
+            
+            if (!bsYear || !bsMonth || !bsDay) {
+                alert(hisab_ajax.select_bs_date_components);
+                return;
+            }
+            
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_convert_bs_to_ad',
+                    bs_year: bsYear,
+                    bs_month: bsMonth,
+                    bs_day: bsDay,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const adDate = response.data.ad_date;
+                        const formattedDate = new Date(adDate).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                        $('#bs-to-ad-result').html(`<div class="hisab-result-success"><strong>${formattedDate}</strong></div>`);
+                        
+                        // Add to history
+                        const bsMonthName = getBSMonthName(bsMonth);
+                        const bsDateString = `${bsMonthName} ${bsDay}, ${bsYear}`;
+                        addToHistory('BS', bsDateString, 'AD', formattedDate);
+                    } else {
+                        $('#bs-to-ad-result').html('<div class="hisab-result-error">' + hisab_ajax.conversion_failed + '</div>');
+                    }
+                },
+                error: function() {
+                    $('#bs-to-ad-result').html('<div class="hisab-result-error">' + hisab_ajax.error_converting_date + '</div>');
+                }
+            });
+        });
+        
+        // Clear history
+        $('#clear-history').on('click', function() {
+            if (confirm(hisab_ajax.confirm_clear_history)) {
+                localStorage.removeItem('hisab_conversion_history');
+                loadConversionHistory();
+            }
+        });
+        
+        // Helper function to get BS month name
+        function getBSMonthName(month) {
+            const monthNames = ['', 'Baisakh', 'Jestha', 'Ashadh', 'Shrawan', 'Bhadra', 'Ashwin', 'Kartik', 'Mangsir', 'Poush', 'Magh', 'Falgun', 'Chaitra'];
+            return monthNames[month] || month;
+        }
+        
+        // Add conversion to history
+        function addToHistory(fromType, fromDate, toType, toDate) {
+            let history = JSON.parse(localStorage.getItem('hisab_conversion_history') || '[]');
+            
+            history.unshift({
+                fromType: fromType,
+                fromDate: fromDate,
+                toType: toType,
+                toDate: toDate,
+                timestamp: new Date().toLocaleString()
+            });
+            
+            // Keep only last 10 conversions
+            history = history.slice(0, 10);
+            
+            localStorage.setItem('hisab_conversion_history', JSON.stringify(history));
+            loadConversionHistory();
+        }
+        
+        // Load conversion history
+        function loadConversionHistory() {
+            const history = JSON.parse(localStorage.getItem('hisab_conversion_history') || '[]');
+            const historyHtml = history.map(item => `
+                <div class="hisab-history-item">
+                    <span class="hisab-history-from">${item.fromType}: ${item.fromDate}</span>
+                    <span class="hisab-history-arrow">→</span>
+                    <span class="hisab-history-to">${item.toType}: ${item.toDate}</span>
+                    <span class="hisab-history-time">${item.timestamp}</span>
+                </div>
+            `).join('');
+            
+            $('#conversion-history').html(historyHtml || '<p>' + hisab_ajax.no_conversion_history + '</p>');
+        }
+    }
+    
+    // Initialize date converter if on the date converter page
+    if ($('#ad-to-bs-form').length || $('#bs-to-ad-form').length) {
+        initDateConverter();
+    }
 });

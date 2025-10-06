@@ -136,7 +136,13 @@ class HisabFinancialTracker {
             'save_category' => __('Save Category', 'hisab-financial-tracker'),
             'update_category' => __('Update Category', 'hisab-financial-tracker'),
             'error_saving_category' => __('An error occurred while saving the category.', 'hisab-financial-tracker'),
-            'confirm_delete_category' => __('Are you sure you want to delete this category?', 'hisab-financial-tracker')
+            'confirm_delete_category' => __('Are you sure you want to delete this category?', 'hisab-financial-tracker'),
+            'select_ad_date' => __('Please select an AD date', 'hisab-financial-tracker'),
+            'select_bs_date_components' => __('Please select BS year, month, and day', 'hisab-financial-tracker'),
+            'conversion_failed' => __('Conversion failed', 'hisab-financial-tracker'),
+            'error_converting_date' => __('Error converting date', 'hisab-financial-tracker'),
+            'confirm_clear_history' => __('Are you sure you want to clear the conversion history?', 'hisab-financial-tracker'),
+            'no_conversion_history' => __('No conversion history yet', 'hisab-financial-tracker')
         ));
     }
     
