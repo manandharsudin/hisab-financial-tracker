@@ -1473,4 +1473,110 @@ jQuery(document).ready(function($) {
     if ($('#hisab-owner-form').length) {
         initOwnersManagement();
     }
+    
+    // Projections Functionality
+    function initProjections() {
+        // Projections chart
+        const projectionsCtx = document.getElementById('hisab-projections-chart');
+        if (projectionsCtx) {
+            const projections = JSON.parse(projectionsCtx.dataset.projections || '[]');
+            
+            const labels = projections.map(p => p.month_name);
+            const incomeData = projections.map(p => p.projected_income);
+            const expenseData = projections.map(p => p.projected_expense);
+            const netData = projections.map(p => p.projected_net);
+            
+            new Chart(projectionsCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: hisab_ajax.projected_income,
+                        data: incomeData,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: hisab_ajax.projected_expenses,
+                        data: expenseData,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: hisab_ajax.projected_net,
+                        data: netData,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Savings calculator
+        $('#hisab-savings-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const targetAmount = parseFloat($('#target-amount').val());
+            const monthsToTarget = parseInt($('#months-to-target').val());
+            
+            if (!targetAmount || !monthsToTarget) {
+                alert(hisab_ajax.enter_target_and_months);
+                return;
+            }
+            
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_calculate_savings',
+                    target_amount: targetAmount,
+                    months_to_target: monthsToTarget,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const result = response.data;
+                        let html = '<div class="hisab-savings-analysis">';
+                        
+                        if (result.achievable) {
+                            html += '<div class="notice notice-success">';
+                            html += '<p><strong>' + hisab_ajax.goal_achievable + '</strong></p>';
+                            html += '<p>' + hisab_ajax.required_monthly_savings + ' <strong>' + result.required_monthly_savings.toFixed(2) + '</strong></p>';
+                            html += '<p>' + hisab_ajax.current_monthly_savings + ' <strong>' + result.current_monthly_savings.toFixed(2) + '</strong></p>';
+                            html += '</div>';
+                        } else {
+                            html += '<div class="notice notice-error">';
+                            html += '<p><strong>' + hisab_ajax.goal_difficult + '</strong></p>';
+                            html += '<p>' + hisab_ajax.required_monthly_savings + ' <strong>' + result.required_monthly_savings.toFixed(2) + '</strong></p>';
+                            html += '<p>' + hisab_ajax.current_monthly_savings + ' <strong>' + result.current_monthly_savings.toFixed(2) + '</strong></p>';
+                            html += '<p>' + hisab_ajax.increase_savings_by + ' <strong>' + (result.required_monthly_savings - result.current_monthly_savings).toFixed(2) + '</strong></p>';
+                            html += '</div>';
+                        }
+                        
+                        html += '</div>';
+                        $('#hisab-savings-result').html(html);
+                    } else {
+                        $('#hisab-savings-result').html('<div class="notice notice-error"><p>' + response.message + '</p></div>');
+                    }
+                },
+                error: function() {
+                    $('#hisab-savings-result').html('<div class="notice notice-error"><p>' + hisab_ajax.error_calculating_savings + '</p></div>');
+                }
+            });
+        });
+    }
+    
+    // Initialize projections if on the projections page
+    if ($('#hisab-projections-chart').length || $('#hisab-savings-form').length) {
+        initProjections();
+    }
 });

@@ -148,7 +148,17 @@ class HisabFinancialTracker {
             'error_saving_owner' => __('An error occurred while saving the owner.', 'hisab-financial-tracker'),
             'confirm_delete_owner' => __('Are you sure you want to delete this owner?', 'hisab-financial-tracker'),
             'deleting' => __('Deleting...', 'hisab-financial-tracker'),
-            'error_deleting_owner' => __('An error occurred while deleting the owner.', 'hisab-financial-tracker')
+            'error_deleting_owner' => __('An error occurred while deleting the owner.', 'hisab-financial-tracker'),
+            'projected_income' => __('Projected Income', 'hisab-financial-tracker'),
+            'projected_expenses' => __('Projected Expenses', 'hisab-financial-tracker'),
+            'projected_net' => __('Projected Net', 'hisab-financial-tracker'),
+            'enter_target_and_months' => __('Please enter both target amount and months to target.', 'hisab-financial-tracker'),
+            'goal_achievable' => __('Goal is achievable!', 'hisab-financial-tracker'),
+            'required_monthly_savings' => __('Required monthly savings:', 'hisab-financial-tracker'),
+            'current_monthly_savings' => __('Current monthly savings:', 'hisab-financial-tracker'),
+            'goal_difficult' => __('Goal may be difficult to achieve.', 'hisab-financial-tracker'),
+            'increase_savings_by' => __('You need to increase savings by:', 'hisab-financial-tracker'),
+            'error_calculating_savings' => __('An error occurred while calculating savings.', 'hisab-financial-tracker')
         ));
     }
     
