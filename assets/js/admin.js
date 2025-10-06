@@ -1579,4 +1579,178 @@ jQuery(document).ready(function($) {
     if ($('#hisab-projections-chart').length || $('#hisab-savings-form').length) {
         initProjections();
     }
+    
+    // Transactions Management Functionality
+    function initTransactionsManagement() {
+        let currentTransactionData = null;
+        
+        // View transaction details
+        $('.hisab-view-details').on('click', function() {
+            const transactionId = $(this).data('transaction-id');
+            loadTransactionDetails(transactionId);
+        });
+        
+        // View bill image
+        $('.hisab-view-bill').on('click', function() {
+            const imageUrl = $(this).data('image-url');
+            const imageTitle = $(this).data('image-title');
+            $('#bill-image-preview').attr('src', imageUrl).attr('alt', imageTitle);
+            $('#bill-image-modal').show();
+        });
+        
+        // Delete transaction
+        $('.hisab-delete-transaction').on('click', function() {
+            if (confirm(hisab_ajax.confirm_delete_transaction)) {
+                const transactionId = $(this).data('transaction-id');
+                deleteTransaction(transactionId);
+            }
+        });
+        
+        // Modal close
+        $('.hisab-modal-close, .hisab-modal').on('click', function(e) {
+            if (e.target === this) {
+                $('.hisab-modal').hide();
+            }
+        });
+        
+        function loadTransactionDetails(transactionId) {
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_get_transaction',
+                    transaction_id: transactionId,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        currentTransactionData = response.data;
+                        displayTransactionInfo();
+                        loadExistingDetails();
+                        $('#transaction-details-modal').show();
+                    } else {
+                        alert(hisab_ajax.error_loading_details + ': ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert(hisab_ajax.error_loading_details);
+                }
+            });
+        }
+        
+        function displayTransactionInfo() {
+            if (!currentTransactionData) return;
+            
+            let formattedDate = 'N/A';
+            if (currentTransactionData.transaction_date && currentTransactionData.transaction_date !== '0000-00-00') {
+                const date = new Date(currentTransactionData.transaction_date);
+                formattedDate = date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            
+            const info = `
+                <div class="transaction-summary">
+                    <h4>${currentTransactionData.description || hisab_ajax.no_description}</h4>
+                    <p><strong>${hisab_ajax.amount}:</strong> ${hisab_ajax.currency}${parseFloat(currentTransactionData.amount).toFixed(2)}</p>
+                    <p><strong>${hisab_ajax.date}:</strong> ${formattedDate}</p>
+                    <p><strong>${hisab_ajax.tax}:</strong> ${hisab_ajax.currency}${parseFloat(currentTransactionData.transaction_tax || 0).toFixed(2)}</p>
+                    <p><strong>${hisab_ajax.discount}:</strong> ${hisab_ajax.currency}${parseFloat(currentTransactionData.transaction_discount || 0).toFixed(2)}</p>
+                </div>
+            `;
+            $('#transaction-info').html(info);
+            
+            $('#details-tax').text(parseFloat(currentTransactionData.transaction_tax || 0).toFixed(2));
+            $('#details-discount').text(parseFloat(currentTransactionData.transaction_discount || 0).toFixed(2));
+            updateSummary();
+        }
+        
+        function loadExistingDetails() {
+            if (!currentTransactionData) return;
+            
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_get_transaction_details',
+                    transaction_id: currentTransactionData.id,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#transaction-details-list').empty();
+                        if (response.data && response.data.length > 0) {
+                            response.data.forEach(function(item) {
+                                addDetailItem(item);
+                            });
+                        } else {
+                            $('#transaction-details-list').html('<p style="color: #666; text-align: center; padding: 20px;">' + hisab_ajax.no_itemized_details + '</p>');
+                        }
+                        updateSummary();
+                    }
+                },
+                error: function() {
+                    $('#transaction-details-list').html('<p style="color: #d63638; text-align: center; padding: 20px;">' + hisab_ajax.error_loading_details + '</p>');
+                }
+            });
+        }
+        
+        function addDetailItem(item = {}) {
+            const itemHtml = `
+                <div class="detail-item">
+                    <div class="detail-row">
+                        <input type="text" class="detail-name" placeholder="${hisab_ajax.item_name}" value="${item.item_name || ''}" readonly>
+                        <input type="number" class="detail-rate" placeholder="${hisab_ajax.rate}" step="0.01" min="0" value="${item.rate || ''}" readonly>
+                        <input type="number" class="detail-quantity" placeholder="${hisab_ajax.quantity}" step="0.01" min="0" value="${item.quantity || ''}" readonly>
+                        <input type="number" class="detail-total" placeholder="${hisab_ajax.total}" step="0.01" min="0" value="${item.item_total || ''}" readonly>
+                    </div>
+                </div>
+            `;
+            $('#transaction-details-list').append(itemHtml);
+        }
+        
+        function updateSummary() {
+            let subtotal = 0;
+            $('.detail-total').each(function() {
+                const total = parseFloat($(this).val()) || 0;
+                subtotal += total;
+            });
+            
+            const tax = parseFloat($('#details-tax').text()) || 0;
+            const discount = parseFloat($('#details-discount').text()) || 0;
+            const total = subtotal + tax - discount;
+            
+            $('#details-subtotal').text(hisab_ajax.currency + subtotal.toFixed(2));
+            $('#details-total').text(hisab_ajax.currency + total.toFixed(2));
+        }
+        
+        function deleteTransaction(transactionId) {
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_delete_transaction',
+                    transaction_id: transactionId,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert(hisab_ajax.error_deleting_transaction + ': ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert(hisab_ajax.error_deleting_transaction);
+                }
+            });
+        }
+    }
+    
+    // Initialize transactions management if on the transactions page
+    if ($('.hisab-view-details').length || $('.hisab-delete-transaction').length) {
+        initTransactionsManagement();
+    }
 });

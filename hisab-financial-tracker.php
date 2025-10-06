@@ -158,7 +158,20 @@ class HisabFinancialTracker {
             'current_monthly_savings' => __('Current monthly savings:', 'hisab-financial-tracker'),
             'goal_difficult' => __('Goal may be difficult to achieve.', 'hisab-financial-tracker'),
             'increase_savings_by' => __('You need to increase savings by:', 'hisab-financial-tracker'),
-            'error_calculating_savings' => __('An error occurred while calculating savings.', 'hisab-financial-tracker')
+            'error_calculating_savings' => __('An error occurred while calculating savings.', 'hisab-financial-tracker'),
+            'confirm_delete_transaction' => __('Are you sure you want to delete this transaction?', 'hisab-financial-tracker'),
+            'error_loading_details' => __('Error loading transaction details', 'hisab-financial-tracker'),
+            'no_description' => __('No Description', 'hisab-financial-tracker'),
+            'amount' => __('Amount', 'hisab-financial-tracker'),
+            'date' => __('Date', 'hisab-financial-tracker'),
+            'tax' => __('Tax', 'hisab-financial-tracker'),
+            'discount' => __('Discount', 'hisab-financial-tracker'),
+            'no_itemized_details' => __('No itemized details available', 'hisab-financial-tracker'),
+            'item_name' => __('Item name', 'hisab-financial-tracker'),
+            'rate' => __('Rate', 'hisab-financial-tracker'),
+            'quantity' => __('Qty', 'hisab-financial-tracker'),
+            'total' => __('Total', 'hisab-financial-tracker'),
+            'error_deleting_transaction' => __('Error deleting transaction', 'hisab-financial-tracker')
         ));
     }
     
