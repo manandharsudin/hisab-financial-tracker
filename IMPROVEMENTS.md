@@ -18,7 +18,6 @@ This document outlines the improvements made to the Hisab Financial Tracker plug
 - **Purpose**: Manages all frontend shortcodes
 - **New Shortcodes Added**:
   - `[hisab_monthly_summary]` - Display monthly financial summary
-  - `[hisab_transaction_form]` - Frontend transaction form
 - **Benefits**:
   - Centralized shortcode management
   - Easy to add new shortcodes
@@ -42,7 +41,6 @@ This document outlines the improvements made to the Hisab Financial Tracker plug
 - **File**: `includes/class-frontend.php`
 - **New Methods Added**:
   - `render_monthly_summary()` - Monthly summary display
-  - `render_transaction_form()` - Frontend transaction form
 - **Benefits**:
   - More frontend functionality
   - Better user experience
@@ -106,11 +104,6 @@ This document outlines the improvements made to the Hisab Financial Tracker plug
 [hisab_monthly_summary year="2024" month="12" show_net="true"]
 ```
 
-### Transaction Form
-```
-[hisab_transaction_form show_categories="true" default_type="expense"]
-[hisab_transaction_form redirect_url="/thank-you"]
-```
 
 ## Category Management System
 

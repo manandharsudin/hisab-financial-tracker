@@ -14,7 +14,6 @@ class HisabShortcodes {
         add_shortcode('hisab_income_chart', array($this, 'shortcode_income_chart'));
         add_shortcode('hisab_expense_chart', array($this, 'shortcode_expense_chart'));
         add_shortcode('hisab_monthly_summary', array($this, 'shortcode_monthly_summary'));
-        add_shortcode('hisab_transaction_form', array($this, 'shortcode_transaction_form'));
     }
     
     public function shortcode_dashboard($atts) {
@@ -81,18 +80,4 @@ class HisabShortcodes {
         return $frontend->render_monthly_summary($atts);
     }
     
-    public function shortcode_transaction_form($atts) {
-        if (!class_exists('HisabFrontend')) {
-            return '<p>Frontend class not available</p>';
-        }
-        
-        $atts = shortcode_atts(array(
-            'show_categories' => 'true',
-            'default_type' => '',
-            'redirect_url' => ''
-        ), $atts);
-        
-        $frontend = new HisabFrontend();
-        return $frontend->render_transaction_form($atts);
-    }
 }

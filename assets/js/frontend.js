@@ -83,6 +83,32 @@ jQuery(document).ready(function($) {
             });
         },
         
+        createLineChart: function(canvasId, data, label, color, backgroundColor) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.month),
+                    datasets: [{
+                        label: label,
+                        data: data.map(d => d.total),
+                        borderColor: color,
+                        backgroundColor: backgroundColor,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        },
+        
         formatCurrency: function(amount, currency = 'USD') {
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
@@ -95,60 +121,8 @@ jQuery(document).ready(function($) {
         }
     };
     
-    // Add CSS animations
-    $('<style>')
-        .prop('type', 'text/css')
-        .html(`
-            .hisab-card {
-                animation: fadeInUp 0.6s ease-out;
-            }
-            
-            .hisab-chart-container {
-                animation: fadeIn 0.8s ease-out;
-            }
-            
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                }
-                to {
-                    opacity: 1;
-                }
-            }
-            
-            .hisab-table-responsive.scrollable::after {
-                content: '← Scroll to see more →';
-                position: absolute;
-                top: 50%;
-                right: 10px;
-                transform: translateY(-50%);
-                background: rgba(0,0,0,0.7);
-                color: white;
-                padding: 5px 10px;
-                border-radius: 3px;
-                font-size: 12px;
-                pointer-events: none;
-                opacity: 0.8;
-            }
-            
-            @media (max-width: 768px) {
-                .hisab-table-responsive.scrollable::after {
-                    display: none;
-                }
-            }
-        `)
-        .appendTo('head');
+    
+    // CSS animations are now handled in frontend.css
     
     // Add mobile-friendly interactions
     if (window.innerWidth <= 768) {
@@ -161,39 +135,10 @@ jQuery(document).ready(function($) {
             }, 150);
         });
         
-        // Add CSS for touch effects
-        $('<style>')
-            .prop('type', 'text/css')
-            .html(`
-                .hisab-card.touched {
-                    transform: scale(0.98);
-                    transition: transform 0.1s ease;
-                }
-            `)
-            .appendTo('head');
+        // Touch effects CSS is now handled in frontend.css
     }
     
-    // Add print styles
-    $('<style>')
-        .prop('type', 'text/css')
-        .html(`
-            @media print {
-                .hisab-card {
-                    break-inside: avoid;
-                    box-shadow: none;
-                    border: 1px solid #000;
-                }
-                
-                .hisab-table {
-                    font-size: 12px;
-                }
-                
-                .hisab-chart-container {
-                    break-inside: avoid;
-                }
-            }
-        `)
-        .appendTo('head');
+    // Print styles are now handled in frontend.css
     
     // Add accessibility improvements
     $('.hisab-card').attr('role', 'region');
@@ -215,14 +160,5 @@ jQuery(document).ready(function($) {
         $(this).removeClass('focused');
     });
     
-    // Add CSS for focus styles
-    $('<style>')
-        .prop('type', 'text/css')
-        .html(`
-            .hisab-card.focused {
-                outline: 2px solid #007cba;
-                outline-offset: 2px;
-            }
-        `)
-        .appendTo('head');
+    // Focus styles are now handled in frontend.css
 });
