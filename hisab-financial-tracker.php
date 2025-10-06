@@ -142,7 +142,13 @@ class HisabFinancialTracker {
             'conversion_failed' => __('Conversion failed', 'hisab-financial-tracker'),
             'error_converting_date' => __('Error converting date', 'hisab-financial-tracker'),
             'confirm_clear_history' => __('Are you sure you want to clear the conversion history?', 'hisab-financial-tracker'),
-            'no_conversion_history' => __('No conversion history yet', 'hisab-financial-tracker')
+            'no_conversion_history' => __('No conversion history yet', 'hisab-financial-tracker'),
+            'save_owner' => __('Save Owner', 'hisab-financial-tracker'),
+            'update_owner' => __('Update Owner', 'hisab-financial-tracker'),
+            'error_saving_owner' => __('An error occurred while saving the owner.', 'hisab-financial-tracker'),
+            'confirm_delete_owner' => __('Are you sure you want to delete this owner?', 'hisab-financial-tracker'),
+            'deleting' => __('Deleting...', 'hisab-financial-tracker'),
+            'error_deleting_owner' => __('An error occurred while deleting the owner.', 'hisab-financial-tracker')
         ));
     }
     

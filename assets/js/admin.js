@@ -1353,4 +1353,124 @@ jQuery(document).ready(function($) {
     if ($('#ad-to-bs-form').length || $('#bs-to-ad-form').length) {
         initDateConverter();
     }
+    
+    // Owners Management Functionality
+    function initOwnersManagement() {
+        // Save owner
+        $('#hisab-owner-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = $(this).serialize();
+            const messagesDiv = $('#hisab-owner-messages');
+            const saveBtn = $('#save-owner-btn');
+            const originalText = saveBtn.text();
+            
+            // Clear previous messages
+            messagesDiv.empty();
+            
+            // Show loading
+            saveBtn.prop('disabled', true).text(hisab_ajax.saving);
+            
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: formData + '&action=hisab_save_owner',
+                success: function(response) {
+                    messagesDiv.empty();
+                    
+                    if (response.success) {
+                        messagesDiv.html('<div class="notice notice-success"><p>' + response.message + '</p></div>');
+                        $('#hisab-owner-form')[0].reset();
+                        $('#owner-id').val('');
+                        $('#save-owner-btn').text(hisab_ajax.save_owner);
+                        $('#cancel-owner-btn').hide();
+                        
+                        // Reload page to show updated list
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        messagesDiv.html('<div class="notice notice-error"><p>' + response.message + '</p></div>');
+                    }
+                },
+                error: function() {
+                    messagesDiv.html('<div class="notice notice-error"><p>' + hisab_ajax.error_saving_owner + '</p></div>');
+                },
+                complete: function() {
+                    saveBtn.prop('disabled', false).text(originalText);
+                }
+            });
+        });
+        
+        // Edit owner
+        $('.edit-owner').on('click', function() {
+            const ownerId = $(this).data('owner-id');
+            const ownerName = $(this).data('owner-name');
+            const ownerColor = $(this).data('owner-color');
+            
+            $('#owner-id').val(ownerId);
+            $('#owner-name').val(ownerName);
+            $('#owner-color').val(ownerColor);
+            $('#save-owner-btn').text(hisab_ajax.update_owner);
+            $('#cancel-owner-btn').show();
+            
+            // Scroll to form
+            $('html, body').animate({
+                scrollTop: $('.hisab-add-owner-section').offset().top - 100
+            }, 500);
+        });
+        
+        // Cancel edit
+        $('#cancel-owner-btn').on('click', function() {
+            $('#hisab-owner-form')[0].reset();
+            $('#owner-id').val('');
+            $('#save-owner-btn').text(hisab_ajax.save_owner);
+            $(this).hide();
+        });
+        
+        // Delete owner
+        $('.delete-owner').on('click', function() {
+            const ownerId = $(this).data('owner-id');
+            const ownerName = $(this).data('owner-name');
+            
+            if (!confirm(hisab_ajax.confirm_delete_owner + ' "' + ownerName + '"?')) {
+                return;
+            }
+            
+            const button = $(this);
+            const originalText = button.text();
+            
+            button.prop('disabled', true).text(hisab_ajax.deleting);
+            
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_delete_owner',
+                    owner_id: ownerId,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('tr[data-owner-id="' + ownerId + '"]').fadeOut(300, function() {
+                            $(this).remove();
+                        });
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert(hisab_ajax.error_deleting_owner);
+                },
+                complete: function() {
+                    button.prop('disabled', false).text(originalText);
+                }
+            });
+        });
+    }
+    
+    // Initialize owners management if on the owners page
+    if ($('#hisab-owner-form').length) {
+        initOwnersManagement();
+    }
 });
