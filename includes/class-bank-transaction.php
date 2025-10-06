@@ -249,10 +249,48 @@ class HisabBankTransaction {
     }
     
     /**
+     * Calculate effective balance for transaction updates
+     * This adds back the original transaction amount to get the effective balance
+     */
+    public function calculate_effective_balance($account_id, $original_transaction) {
+        global $wpdb;
+        
+        // Get current account balance
+        $account = $wpdb->get_row($wpdb->prepare(
+            "SELECT current_balance FROM {$this->table_bank_accounts} WHERE id = %d",
+            $account_id
+        ));
+        
+        if (!$account) {
+            return 0;
+        }
+        
+        $current_balance = $account->current_balance;
+        
+        // For debit transactions (withdrawals, phone_pay, transfer_out), add back the original amount
+        if (in_array($original_transaction->transaction_type, ['withdrawal', 'phone_pay', 'transfer_out'])) {
+            return $current_balance + $original_transaction->amount;
+        }
+        
+        // For credit transactions (deposits, transfer_in), subtract the original amount
+        if (in_array($original_transaction->transaction_type, ['deposit', 'transfer_in'])) {
+            return $current_balance - $original_transaction->amount;
+        }
+        
+        return $current_balance;
+    }
+    
+    /**
      * Update bank transaction
      */
     public function update_transaction($id, $data) {
         global $wpdb;
+        
+        // Get the original transaction first
+        $original_transaction = $this->get_transaction($id);
+        if (!$original_transaction) {
+            return new WP_Error('transaction_not_found', __('Transaction not found.', 'hisab-financial-tracker'));
+        }
         
         // Validate transaction type if provided
         if (isset($data['transaction_type']) && !in_array($data['transaction_type'], ['deposit', 'withdrawal', 'phone_pay', 'transfer_in', 'transfer_out'])) {
@@ -262,6 +300,28 @@ class HisabBankTransaction {
         // Validate currency if provided
         if (isset($data['currency']) && !in_array($data['currency'], ['NPR', 'USD'])) {
             return new WP_Error('invalid_currency', __('Invalid currency. Must be NPR or USD.', 'hisab-financial-tracker'));
+        }
+        
+        // Context-aware balance validation for withdrawals
+        if (isset($data['amount']) || isset($data['transaction_type'])) {
+            $new_transaction_type = isset($data['transaction_type']) ? $data['transaction_type'] : $original_transaction->transaction_type;
+            $new_amount = isset($data['amount']) ? $data['amount'] : $original_transaction->amount;
+            
+            // Check sufficient balance for debit transactions
+            if (in_array($new_transaction_type, ['withdrawal', 'phone_pay', 'transfer_out'])) {
+                $effective_balance = $this->calculate_effective_balance($original_transaction->account_id, $original_transaction);
+                
+                if ($effective_balance < $new_amount) {
+                    return new WP_Error('insufficient_balance', 
+                        sprintf(__('Insufficient balance for this transaction. Available: %s %s, Required: %s %s', 'hisab-financial-tracker'),
+                            number_format($effective_balance, 2),
+                            $original_transaction->currency,
+                            number_format($new_amount, 2),
+                            $original_transaction->currency
+                        )
+                    );
+                }
+            }
         }
         
         $result = $wpdb->update(

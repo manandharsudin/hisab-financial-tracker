@@ -472,22 +472,40 @@ jQuery(document).ready(function($) {
         
         // Form validation - only for bank transaction forms
         $('form').has('#transaction_type').has('#amount').on('submit', function(e) {
+            var $form = $(this);
             var transactionType = $('#transaction_type').val();
             var amount = parseFloat($('#amount').val());
             var accountBalance = parseFloat($('#account-balance').data('balance') || 0);
             
-            // Check for withdrawal/phone pay/transfer out with insufficient balance
-            if (['withdrawal', 'phone_pay', 'transfer_out'].includes(transactionType) && amount > accountBalance) {
-                e.preventDefault();
-                alert(hisab_ajax.insufficient_balance);
-                return false;
-            }
+            // Check if this is an edit operation
+            var isEdit = $form.data('is-edit') === 'true' || $form.data('is-edit') === true;
+            var transactionId = $form.find('input[name="transaction_id"]').val();
             
-            // Check for zero or negative amount
+            // Check for zero or negative amount first
             if (amount <= 0) {
                 e.preventDefault();
                 alert(hisab_ajax.amount_required);
                 return false;
+            }
+            
+            // Check for withdrawal/phone pay/transfer out with insufficient balance
+            if (['withdrawal', 'phone_pay', 'transfer_out'].includes(transactionType)) {
+                // For edit operations, use effective balance
+                if (isEdit && transactionId) {
+                    var effectiveBalance = parseFloat($form.data('effective-balance') || 0);
+                    if (amount > effectiveBalance) {
+                        e.preventDefault();
+                        alert('Insufficient balance for this transaction. Available: ' + effectiveBalance.toFixed(2) + ', Required: ' + amount.toFixed(2));
+                        return false;
+                    }
+                } else {
+                    // For new transactions, use current balance
+                    if (amount > accountBalance) {
+                        e.preventDefault();
+                        alert(hisab_ajax.insufficient_balance);
+                        return false;
+                    }
+                }
             }
         });
     }

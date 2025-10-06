@@ -218,9 +218,16 @@ if ($edit_transaction) {
     <?php endif; ?>
     
     <?php if ($account): ?>
-        <form method="post" class="hisab-form">
+        <form method="post" class="hisab-form" 
+              data-is-edit="<?php echo $is_edit ? 'true' : 'false'; ?>"
+              data-original-amount="<?php echo $is_edit ? esc_attr($edit_transaction->amount) : '0'; ?>"
+              data-original-type="<?php echo $is_edit ? esc_attr($edit_transaction->transaction_type) : ''; ?>"
+              data-effective-balance="<?php echo $is_edit ? esc_attr($bank_transaction->calculate_effective_balance($account->id, $edit_transaction)) : '0'; ?>">
             <?php wp_nonce_field('hisab_bank_transaction', '_wpnonce'); ?>
             <input type="hidden" name="account_id" value="<?php echo $account->id; ?>">
+            <?php if ($is_edit): ?>
+                <input type="hidden" name="transaction_id" value="<?php echo $edit_transaction->id; ?>">
+            <?php endif; ?>
             
             <div class="hisab-form-row">
                 <div class="hisab-form-group">
