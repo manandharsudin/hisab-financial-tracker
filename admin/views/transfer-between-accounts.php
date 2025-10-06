@@ -194,57 +194,6 @@ $form_data = array(
     <?php endif; ?>
 </div>
 
-<style>
-.hisab-form {
-    max-width: 800px;
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    padding: 20px;
-}
-
-.hisab-form-row {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-.hisab-form-group {
-    flex: 1;
-}
-
-.hisab-form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-
-.hisab-form-group input[type="text"],
-.hisab-form-group input[type="number"],
-.hisab-form-group input[type="date"],
-.hisab-form-group select,
-.hisab-form-group textarea {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #8c8f94;
-    border-radius: 3px;
-    font-size: 14px;
-}
-
-.hisab-form-actions {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #ccd0d4;
-}
-
-.hisab-form-actions .button {
-    margin-right: 10px;
-}
-
-.required {
-    color: #d63638;
-}
-</style>
 
 <script>
 jQuery(document).ready(function($) {
