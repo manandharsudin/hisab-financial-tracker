@@ -171,7 +171,13 @@ class HisabFinancialTracker {
             'rate' => __('Rate', 'hisab-financial-tracker'),
             'quantity' => __('Qty', 'hisab-financial-tracker'),
             'total' => __('Total', 'hisab-financial-tracker'),
-            'error_deleting_transaction' => __('Error deleting transaction', 'hisab-financial-tracker')
+            'error_deleting_transaction' => __('Error deleting transaction', 'hisab-financial-tracker'),
+            'available_balance' => __('Available Balance', 'hisab-financial-tracker'),
+            'current_balance' => __('Current Balance', 'hisab-financial-tracker'),
+            'insufficient_balance_text' => __('Insufficient balance. Available:', 'hisab-financial-tracker'),
+            'cannot_transfer_same_account' => __('Cannot transfer to the same account.', 'hisab-financial-tracker'),
+            'amount_must_be_greater_than_zero' => __('Amount must be greater than zero.', 'hisab-financial-tracker'),
+            'insufficient_balance_for_transfer' => __('Insufficient balance for this transfer.', 'hisab-financial-tracker')
         ));
     }
     

@@ -1753,4 +1753,130 @@ jQuery(document).ready(function($) {
     if ($('.hisab-view-details').length || $('.hisab-delete-transaction').length) {
         initTransactionsManagement();
     }
+    
+    // Transfer Between Accounts Functionality
+    function initTransferBetweenAccounts() {
+        // Update currency symbol and account balances when from account changes
+        $('#from_account_id').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const currency = selectedOption.data('currency');
+            const balance = selectedOption.data('balance');
+            
+            // Update currency symbol
+            $('#currency-symbol').text(currency === 'NPR' ? '₹' : '$');
+            
+            // Update from account balance display
+            if (balance !== undefined) {
+                $('#from-account-balance').text(hisab_ajax.available_balance + ': ' + (currency === 'NPR' ? '₹' : '$') + parseFloat(balance).toFixed(2));
+            } else {
+                $('#from-account-balance').text('');
+            }
+            
+            // Filter to account options to same currency
+            filterToAccountOptions(currency);
+            
+            // Clear to account selection
+            $('#to_account_id').val('');
+            $('#to-account-balance').text('');
+            
+            // Validate amount
+            validateAmount();
+        });
+        
+        // Update to account balance when to account changes
+        $('#to_account_id').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const balance = selectedOption.data('balance');
+            const currency = selectedOption.data('currency');
+            
+            if (balance !== undefined) {
+                $('#to-account-balance').text(hisab_ajax.current_balance + ': ' + (currency === 'NPR' ? '₹' : '$') + parseFloat(balance).toFixed(2));
+            } else {
+                $('#to-account-balance').text('');
+            }
+        });
+        
+        // Validate amount on input
+        $('#amount').on('input', validateAmount);
+        
+        function filterToAccountOptions(currency) {
+            const toAccountSelect = $('#to_account_id');
+            const currentValue = toAccountSelect.val();
+            
+            toAccountSelect.find('option').each(function() {
+                const option = $(this);
+                const optionCurrency = option.data('currency');
+                
+                if (option.val() === '') {
+                    option.show(); // Always show the placeholder
+                } else if (optionCurrency === currency) {
+                    option.show();
+                } else {
+                    option.hide();
+                }
+            });
+            
+            // Restore selection if it's still valid
+            if (currentValue && toAccountSelect.find('option[value="' + currentValue + '"]').is(':visible')) {
+                toAccountSelect.val(currentValue);
+            } else {
+                toAccountSelect.val('');
+            }
+        }
+        
+        function validateAmount() {
+            const fromAccountId = $('#from_account_id').val();
+            const amount = parseFloat($('#amount').val()) || 0;
+            const validationDiv = $('#amount-validation');
+            
+            if (fromAccountId && amount > 0) {
+                const selectedOption = $('#from_account_id').find('option:selected');
+                const balance = selectedOption.data('balance');
+                
+                if (amount > balance) {
+                    validationDiv.text(hisab_ajax.insufficient_balance_text + ' ' + (selectedOption.data('currency') === 'NPR' ? '₹' : '$') + parseFloat(balance).toFixed(2));
+                    validationDiv.show();
+                } else {
+                    validationDiv.text('');
+                    validationDiv.hide();
+                }
+            } else {
+                validationDiv.text('');
+                validationDiv.hide();
+            }
+        }
+        
+        // Form submission validation
+        $('.hisab-form').has('#from_account_id').on('submit', function(e) {
+            const fromAccountId = $('#from_account_id').val();
+            const toAccountId = $('#to_account_id').val();
+            const amount = parseFloat($('#amount').val()) || 0;
+            
+            if (fromAccountId === toAccountId) {
+                e.preventDefault();
+                alert(hisab_ajax.cannot_transfer_same_account);
+                return false;
+            }
+            
+            if (amount <= 0) {
+                e.preventDefault();
+                alert(hisab_ajax.amount_must_be_greater_than_zero);
+                return false;
+            }
+            
+            const selectedOption = $('#from_account_id').find('option:selected');
+            const balance = selectedOption.data('balance');
+            
+            if (amount > balance) {
+                e.preventDefault();
+                alert(hisab_ajax.insufficient_balance_for_transfer);
+                return false;
+            }
+        });
+    }
+    
+    // Initialize transfer between accounts if on the transfer page
+    if ($('#from_account_id').length && $('#to_account_id').length) {
+        initTransferBetweenAccounts();
+    }
 });
