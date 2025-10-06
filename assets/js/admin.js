@@ -1093,4 +1093,121 @@ jQuery(document).ready(function($) {
     if ($('#hisab-yearly-chart').length || $('#hisab-income-categories').length || $('#hisab-expense-categories').length) {
         initAnalyticsCharts();
     }
+    
+    // Categories Management Functionality
+    function initCategoriesManagement() {
+        // Form submission
+        $('#hisab-category-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = $(this).serialize();
+            const messagesDiv = $('#hisab-category-messages');
+            const saveBtn = $('#save-category-btn');
+            const cancelBtn = $('#cancel-edit-btn');
+            
+            messagesDiv.empty();
+            saveBtn.prop('disabled', true).text(hisab_ajax.saving);
+            
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: formData + '&action=hisab_save_category',
+                success: function(response) {
+                    messagesDiv.empty();
+                    saveBtn.prop('disabled', false);
+                    
+                    if (response.success) {
+                        messagesDiv.html('<div class="notice notice-success"><p>' + response.message + '</p></div>');
+                        $('#hisab-category-form')[0].reset();
+                        $('#category-id').val('');
+                        saveBtn.text(hisab_ajax.save_category);
+                        cancelBtn.hide();
+                        loadCategories();
+                    } else {
+                        messagesDiv.html('<div class="notice notice-error"><p>' + response.message + '</p></div>');
+                        saveBtn.text(hisab_ajax.save_category);
+                    }
+                },
+                error: function() {
+                    messagesDiv.empty();
+                    messagesDiv.html('<div class="notice notice-error"><p>' + hisab_ajax.error_saving_category + '</p></div>');
+                    saveBtn.prop('disabled', false).text(hisab_ajax.save_category);
+                }
+            });
+        });
+        
+        // Edit category
+        $(document).on('click', '.hisab-edit-category', function() {
+            const categoryId = $(this).data('id');
+            
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_get_category',
+                    id: categoryId,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const category = response.data;
+                        $('#category-id').val(category.id);
+                        $('#category-name').val(category.name);
+                        $('#category-type').val(category.type);
+                        $('#category-color').val(category.color);
+                        $('#save-category-btn').text(hisab_ajax.update_category);
+                        $('#cancel-edit-btn').show();
+                        $('html, body').animate({
+                            scrollTop: $('#hisab-category-form').offset().top - 100
+                        }, 500);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                }
+            });
+        });
+        
+        // Cancel edit
+        $('#cancel-edit-btn').on('click', function() {
+            $('#hisab-category-form')[0].reset();
+            $('#category-id').val('');
+            $('#save-category-btn').text(hisab_ajax.save_category);
+            $(this).hide();
+        });
+        
+        // Delete category
+        $(document).on('click', '.hisab-delete-category', function() {
+            if (confirm(hisab_ajax.confirm_delete_category)) {
+                const categoryId = $(this).data('id');
+                
+                $.ajax({
+                    url: hisab_ajax.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'hisab_delete_category',
+                        id: categoryId,
+                        nonce: hisab_ajax.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            loadCategories();
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Load categories (refresh the page)
+        function loadCategories() {
+            location.reload();
+        }
+    }
+    
+    // Initialize categories management if on the categories page
+    if ($('#hisab-category-form').length) {
+        initCategoriesManagement();
+    }
 });

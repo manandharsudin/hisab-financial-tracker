@@ -131,7 +131,12 @@ class HisabFinancialTracker {
             'add_at_least_one_item' => __('Please add at least one item.', 'hisab-financial-tracker'),
             'error_saving_details' => __('An error occurred while saving details.', 'hisab-financial-tracker'),
             'income' => __('Income', 'hisab-financial-tracker'),
-            'expenses' => __('Expenses', 'hisab-financial-tracker')
+            'expenses' => __('Expenses', 'hisab-financial-tracker'),
+            'saving' => __('Saving...', 'hisab-financial-tracker'),
+            'save_category' => __('Save Category', 'hisab-financial-tracker'),
+            'update_category' => __('Update Category', 'hisab-financial-tracker'),
+            'error_saving_category' => __('An error occurred while saving the category.', 'hisab-financial-tracker'),
+            'confirm_delete_category' => __('Are you sure you want to delete this category?', 'hisab-financial-tracker')
         ));
     }
     
