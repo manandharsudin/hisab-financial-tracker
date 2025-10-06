@@ -208,29 +208,12 @@ jQuery(document).ready(function($) {
             }
         });
         
-        // Add confirmation dialogs for destructive actions
-        $('.hisab-delete-transaction').on('click', function(e) {
-            if (!confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
-                e.preventDefault();
-                return false;
-            }
-        });
     }
     
     function refreshDashboardData() {
         // Refresh dashboard data without page reload
-        $.ajax({
-            url: hisab_ajax.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'hisab_get_dashboard_data',
-                nonce: hisab_ajax.nonce
-            },
-            success: function(response) {
-                if (response.success) {
-                    updateDashboardCards(response.data);
-                }
-            }
+        makeAjaxCall('hisab_get_dashboard_data', {}, function(data) {
+            updateDashboardCards(data);
         });
     }
     
@@ -328,28 +311,19 @@ jQuery(document).ready(function($) {
     });
     
     function exportData(format, type) {
-        $.ajax({
-            url: hisab_ajax.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'hisab_export_data',
-                format: format,
-                type: type,
-                nonce: hisab_ajax.nonce
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Create download link
-                    const link = document.createElement('a');
-                    link.href = response.data.url;
-                    link.download = response.data.filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } else {
-                    alert('Export failed: ' + response.message);
-                }
-            }
+        makeAjaxCall('hisab_export_data', {
+            format: format,
+            type: type
+        }, function(data) {
+            // Create download link
+            const link = document.createElement('a');
+            link.href = data.url;
+            link.download = data.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }, function(message) {
+            showError('Export failed: ' + message);
         });
     }
     
@@ -1901,5 +1875,49 @@ jQuery(document).ready(function($) {
     // Initialize transfer between accounts if on the transfer page
     if ($('#from_account_id').length && $('#to_account_id').length) {
         initTransferBetweenAccounts();
+    }
+    
+    // Dashboard Charts Functionality
+    function initDashboardCharts() {
+        // Initialize trend chart
+        const trendCtx = document.getElementById('hisab-trend-chart');
+        if (trendCtx) {
+            const incomeData = JSON.parse(trendCtx.dataset.incomeData || '[]');
+            const expenseData = JSON.parse(trendCtx.dataset.expenseData || '[]');
+            const labels = JSON.parse(trendCtx.dataset.labels || '[]');
+            
+            new Chart(trendCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: hisab_ajax.income || 'Income',
+                        data: incomeData,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: hisab_ajax.expenses || 'Expenses',
+                        data: expenseData,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Initialize dashboard charts if on the dashboard page
+    if ($('#hisab-trend-chart').length) {
+        initDashboardCharts();
     }
 });

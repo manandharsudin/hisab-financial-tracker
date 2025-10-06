@@ -177,7 +177,9 @@ class HisabFinancialTracker {
             'insufficient_balance_text' => __('Insufficient balance. Available:', 'hisab-financial-tracker'),
             'cannot_transfer_same_account' => __('Cannot transfer to the same account.', 'hisab-financial-tracker'),
             'amount_must_be_greater_than_zero' => __('Amount must be greater than zero.', 'hisab-financial-tracker'),
-            'insufficient_balance_for_transfer' => __('Insufficient balance for this transfer.', 'hisab-financial-tracker')
+            'insufficient_balance_for_transfer' => __('Insufficient balance for this transfer.', 'hisab-financial-tracker'),
+            'income' => __('Income', 'hisab-financial-tracker'),
+            'expenses' => __('Expenses', 'hisab-financial-tracker')
         ));
     }
     
