@@ -134,7 +134,7 @@ if ($edit_transaction) {
                     <label for="account-switcher" style="font-weight: 600; margin: 0;">
                         <?php _e('Switch Account:', 'hisab-financial-tracker'); ?>
                     </label>
-                    <select id="account-switcher" style="min-width: 250px; padding: 5px 10px; border: 1px solid #8c8f94; border-radius: 3px;">
+                    <select id="account-switcher" style="min-width: 300px; max-width: 600px; width: auto; padding: 5px 10px; border: 1px solid #8c8f94; border-radius: 3px;">
                         <option value=""><?php _e('Select Account', 'hisab-financial-tracker'); ?></option>
                         <?php foreach ($all_accounts as $acc): ?>
                             <option value="<?php echo $acc->id; ?>" <?php selected($account->id, $acc->id); ?>>
@@ -184,7 +184,7 @@ if ($edit_transaction) {
                             <label for="account_select" style="display: block; margin-bottom: 5px; font-weight: 600;">
                                 <?php _e('Bank Account:', 'hisab-financial-tracker'); ?>
                             </label>
-                            <select name="account" id="account_select" style="min-width: 300px; padding: 8px 12px; border: 1px solid #8c8f94; border-radius: 3px; font-size: 14px;">
+                            <select name="account" id="account_select" style="min-width: 350px; max-width: 700px; width: auto; padding: 8px 12px; border: 1px solid #8c8f94; border-radius: 3px; font-size: 14px;">
                                 <option value=""><?php _e('Select an account...', 'hisab-financial-tracker'); ?></option>
                                 <?php foreach ($all_accounts as $acc): ?>
                                     <option value="<?php echo $acc->id; ?>" <?php selected($account_id, $acc->id); ?>>
