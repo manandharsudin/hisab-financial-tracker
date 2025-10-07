@@ -11,6 +11,15 @@ if (!defined('ABSPATH')) {
 $bank_account = new HisabBankAccount();
 $bank_transaction = new HisabBankTransaction();
 
+// Check for success messages from redirects
+if (isset($_GET['created']) && $_GET['created'] == '1') {
+    $success_message = __('Bank transaction created successfully.', 'hisab-financial-tracker');
+}
+
+if (isset($_GET['updated']) && $_GET['updated'] == '1') {
+    $success_message = __('Bank transaction updated successfully.', 'hisab-financial-tracker');
+}
+
 // Get account ID from URL parameter
 $account_id = isset($_GET['account']) ? intval($_GET['account']) : 0;
 $account = null;

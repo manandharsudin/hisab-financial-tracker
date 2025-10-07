@@ -37,58 +37,12 @@ if ($account_id > 0) {
 // Get all bank accounts for the selector
 $all_accounts = $bank_account->get_all_accounts(array('is_active' => 1));
 
-// Handle form submission
-if (isset($_POST['submit_bank_transaction'])) {
-    $nonce = sanitize_text_field($_POST['_wpnonce']);
-    if (!wp_verify_nonce($nonce, 'hisab_bank_transaction')) {
+// Handle error messages from redirects (success messages now go to bank transactions page)
+if (isset($_GET['error'])) {
+    if ($_GET['error'] === 'security') {
         $error_message = __('Security check failed. Please try again.', 'hisab-financial-tracker');
     } else {
-        // Get account ID from form if not already set
-        $form_account_id = isset($_POST['account_id']) ? intval($_POST['account_id']) : $account_id;
-        
-        if ($form_account_id > 0) {
-            $form_account = $bank_account->get_account($form_account_id);
-            if (!$form_account) {
-                $error_message = __('Selected bank account not found.', 'hisab-financial-tracker');
-            } else {
-                $data = array(
-                    'account_id' => $form_account->id,
-                    'transaction_type' => sanitize_text_field($_POST['transaction_type']),
-                    'amount' => floatval($_POST['amount']),
-                    'currency' => $form_account->currency, // Use account currency
-                    'description' => sanitize_textarea_field($_POST['description']),
-                    'reference_number' => sanitize_text_field($_POST['reference_number']),
-                    'phone_pay_reference' => sanitize_text_field($_POST['phone_pay_reference']),
-                    'transaction_date' => sanitize_text_field($_POST['transaction_date'])
-                );
-                
-                // Update account reference for the rest of the processing
-                $account = $form_account;
-                $account_id = $form_account->id;
-                
-                if ($is_edit) {
-                    $result = $bank_transaction->update_transaction($edit_transaction->id, $data);
-                    if (is_wp_error($result)) {
-                        $error_message = $result->get_error_message();
-                    } else {
-                        $success_message = __('Bank transaction updated successfully.', 'hisab-financial-tracker');
-                        $edit_transaction = $bank_transaction->get_transaction($edit_transaction->id); // Refresh data
-                    }
-                } else {
-                    $result = $bank_transaction->create_transaction($data);
-                    if (is_wp_error($result)) {
-                        $error_message = $result->get_error_message();
-                    } else {
-                        $success_message = __('Bank transaction created successfully.', 'hisab-financial-tracker');
-                        // Clear form data
-                        $edit_transaction = null;
-                        $is_edit = false;
-                    }
-                }
-            }
-        } else {
-            $error_message = __('Please select a bank account.', 'hisab-financial-tracker');
-        }
+        $error_message = sanitize_text_field($_GET['error']);
     }
 }
 
@@ -282,5 +236,3 @@ if ($edit_transaction) {
         </form>
     <?php endif; ?>
 </div>
-
-

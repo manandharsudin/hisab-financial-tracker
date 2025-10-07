@@ -325,6 +325,11 @@ class HisabAdminMenu {
         if (isset($_POST['submit_bank_account']) && $_GET['page'] === 'hisab-add-bank-account') {
             $this->handle_bank_account_submission();
         }
+        
+        // Handle bank transaction form submission
+        if (isset($_POST['submit_bank_transaction']) && $_GET['page'] === 'hisab-add-bank-transaction') {
+            $this->handle_bank_transaction_submission();
+        }
     }
     
     /**
@@ -370,6 +375,70 @@ class HisabAdminMenu {
                 wp_redirect(admin_url('admin.php?page=hisab-add-bank-account&error=' . urlencode($result->get_error_message())));
             } else {
                 wp_redirect(admin_url('admin.php?page=hisab-bank-accounts&created=1'));
+            }
+        }
+        exit;
+    }
+    
+    /**
+     * Handle bank transaction form submission
+     */
+    private function handle_bank_transaction_submission() {
+        if (!class_exists('HisabBankTransaction') || !class_exists('HisabBankAccount')) {
+            return;
+        }
+        
+        $bank_transaction = new HisabBankTransaction();
+        $bank_account = new HisabBankAccount();
+        
+        $nonce = sanitize_text_field($_POST['_wpnonce']);
+        if (!wp_verify_nonce($nonce, 'hisab_bank_transaction')) {
+            wp_redirect(admin_url('admin.php?page=hisab-add-bank-transaction&error=security'));
+            exit;
+        }
+        
+        // Get account ID from form
+        $account_id = isset($_POST['account_id']) ? intval($_POST['account_id']) : 0;
+        if ($account_id <= 0) {
+            wp_redirect(admin_url('admin.php?page=hisab-add-bank-transaction&error=' . urlencode('Please select a bank account.')));
+            exit;
+        }
+        
+        // Verify account exists
+        $account = $bank_account->get_account($account_id);
+        if (!$account) {
+            wp_redirect(admin_url('admin.php?page=hisab-add-bank-transaction&error=' . urlencode('Selected bank account not found.')));
+            exit;
+        }
+        
+        $data = array(
+            'account_id' => $account_id,
+            'transaction_type' => sanitize_text_field($_POST['transaction_type']),
+            'amount' => floatval($_POST['amount']),
+            'currency' => $account->currency, // Use account currency
+            'description' => sanitize_textarea_field($_POST['description']),
+            'reference_number' => sanitize_text_field($_POST['reference_number']),
+            'phone_pay_reference' => sanitize_text_field($_POST['phone_pay_reference']),
+            'transaction_date' => sanitize_text_field($_POST['transaction_date'])
+        );
+        
+        // Check if editing
+        $is_edit = isset($_GET['edit']) && !empty($_GET['edit']);
+        
+        if ($is_edit) {
+            $transaction_id = intval($_GET['edit']);
+            $result = $bank_transaction->update_transaction($transaction_id, $data);
+            if (is_wp_error($result)) {
+                wp_redirect(admin_url('admin.php?page=hisab-add-bank-transaction&edit=' . $transaction_id . '&error=' . urlencode($result->get_error_message())));
+            } else {
+                wp_redirect(admin_url('admin.php?page=hisab-bank-transactions&account=' . $account_id . '&updated=1'));
+            }
+        } else {
+            $result = $bank_transaction->create_transaction($data);
+            if (is_wp_error($result)) {
+                wp_redirect(admin_url('admin.php?page=hisab-add-bank-transaction&error=' . urlencode($result->get_error_message())));
+            } else {
+                wp_redirect(admin_url('admin.php?page=hisab-bank-transactions&account=' . $account_id . '&created=1'));
             }
         }
         exit;
