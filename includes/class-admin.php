@@ -50,9 +50,9 @@ class HisabAdmin {
         $current_year = date('Y');
         $yearly_data = $this->database->get_yearly_summary($current_year);
         
-        // Get category breakdowns
-        $income_categories = $this->database->get_category_summary('income', $current_year, date('n'));
-        $expense_categories = $this->database->get_category_summary('expense', $current_year, date('n'));
+        // Get category breakdowns for the entire year
+        $income_categories = $this->database->get_category_summary('income', $current_year, null);
+        $expense_categories = $this->database->get_category_summary('expense', $current_year, null);
         
         include HISAB_PLUGIN_PATH . 'admin/views/analytics.php';
     }

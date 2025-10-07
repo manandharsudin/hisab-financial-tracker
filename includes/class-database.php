@@ -494,8 +494,15 @@ class HisabDatabase {
     public function get_category_summary($type, $year, $month) {
         global $wpdb;
         
-        $start_date = sprintf('%04d-%02d-01', $year, $month);
-        $end_date = date('Y-m-t', strtotime($start_date));
+        if ($month === null) {
+            // Get yearly data
+            $start_date = sprintf('%04d-01-01', $year);
+            $end_date = sprintf('%04d-12-31', $year);
+        } else {
+            // Get monthly data
+            $start_date = sprintf('%04d-%02d-01', $year, $month);
+            $end_date = date('Y-m-t', strtotime($start_date));
+        }
         
         $sql = $wpdb->prepare("
             SELECT 
