@@ -258,8 +258,8 @@ if ($account) {
                 </div>
                 
                 <div>
-                    <input type="submit" class="button" value="<?php _e('Filter', 'hisab-financial-tracker'); ?>">
-                    <a href="<?php echo admin_url('admin.php?page=hisab-bank-transactions&account=' . $account->id); ?>" class="button"><?php _e('Clear', 'hisab-financial-tracker'); ?></a>
+                    <input type="submit" class="button button-primary" value="<?php _e('Filter', 'hisab-financial-tracker'); ?>">
+                    <a href="<?php echo admin_url('admin.php?page=hisab-bank-transactions&account=' . $account->id); ?>" class="button" style="margin-left: 10px;"><?php _e('Clear', 'hisab-financial-tracker'); ?></a>
                 </div>
             </form>
         </div>
