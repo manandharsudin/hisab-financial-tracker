@@ -19,11 +19,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     $is_edit = $edit_account ? true : false;
 }
 
-// Handle success/error messages from redirects
-if (isset($_GET['updated']) && $_GET['updated'] == '1') {
-    $success_message = __('Bank account updated successfully.', 'hisab-financial-tracker');
-}
-
+// Handle error messages from redirects (success messages now go to bank accounts page)
 if (isset($_GET['error'])) {
     if ($_GET['error'] === 'security') {
         $error_message = __('Security check failed. Please try again.', 'hisab-financial-tracker');

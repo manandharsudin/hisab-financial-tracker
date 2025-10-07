@@ -362,7 +362,7 @@ class HisabAdminMenu {
             if (is_wp_error($result)) {
                 wp_redirect(admin_url('admin.php?page=hisab-add-bank-account&edit=' . $account_id . '&error=' . urlencode($result->get_error_message())));
             } else {
-                wp_redirect(admin_url('admin.php?page=hisab-add-bank-account&edit=' . $account_id . '&updated=1'));
+                wp_redirect(admin_url('admin.php?page=hisab-bank-accounts&updated=1'));
             }
         } else {
             $result = $bank_account->create_account($data);

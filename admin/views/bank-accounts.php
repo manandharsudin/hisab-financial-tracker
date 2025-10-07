@@ -15,6 +15,10 @@ if (isset($_GET['created']) && $_GET['created'] == '1') {
     $success_message = __('Bank account created successfully.', 'hisab-financial-tracker');
 }
 
+if (isset($_GET['updated']) && $_GET['updated'] == '1') {
+    $success_message = __('Bank account updated successfully.', 'hisab-financial-tracker');
+}
+
 // Handle actions
 if (isset($_POST['action'])) {
     $action = sanitize_text_field($_POST['action']);
