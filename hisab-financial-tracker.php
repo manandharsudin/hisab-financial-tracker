@@ -111,76 +111,153 @@ class HisabFinancialTracker {
         wp_enqueue_script('hisab-admin', HISAB_PLUGIN_URL . 'assets/js/admin.js', array('jquery', 'chart-js'), HISAB_VERSION, true);
         wp_enqueue_style('hisab-admin', HISAB_PLUGIN_URL . 'assets/css/admin.css', array(), HISAB_VERSION);
         
-        wp_localize_script('hisab-admin', 'hisab_ajax', array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('hisab_transaction'),
-            'currency' => HISAB_CURRENCY_SYMBOL,
-            'insufficient_balance' => __('Insufficient balance for this transaction.', 'hisab-financial-tracker'),
-            'amount_required' => __('Amount must be greater than zero.', 'hisab-financial-tracker'),
-            'select_category' => __('Please select a category.', 'hisab-financial-tracker'),
-            'saving_transaction' => __('Saving transaction...', 'hisab-financial-tracker'),
-            'select_bs_date' => __('Please select BS year, month, and day', 'hisab-financial-tracker'),
-            'date_conversion_failed' => __('Date conversion failed. Please try again.', 'hisab-financial-tracker'),
-            'transaction_updated' => __('Transaction updated successfully!', 'hisab-financial-tracker'),
-            'error_saving' => __('An error occurred while saving the transaction.', 'hisab-financial-tracker'),
-            'add_itemized_details' => __('Add Itemized Details', 'hisab-financial-tracker'),
-            'select_owner_optional' => __('Select Owner (Optional)', 'hisab-financial-tracker'),
-            'select_category_placeholder' => __('Select Category', 'hisab-financial-tracker'),
-            'select_bill_image' => __('Select Bill Image', 'hisab-financial-tracker'),
-            'use_this_image' => __('Use This Image', 'hisab-financial-tracker'),
-            'add_at_least_one_item' => __('Please add at least one item.', 'hisab-financial-tracker'),
-            'error_saving_details' => __('An error occurred while saving details.', 'hisab-financial-tracker'),
-            'income' => __('Income', 'hisab-financial-tracker'),
-            'expenses' => __('Expenses', 'hisab-financial-tracker'),
-            'saving' => __('Saving...', 'hisab-financial-tracker'),
-            'save_category' => __('Save Category', 'hisab-financial-tracker'),
-            'update_category' => __('Update Category', 'hisab-financial-tracker'),
-            'error_saving_category' => __('An error occurred while saving the category.', 'hisab-financial-tracker'),
-            'confirm_delete_category' => __('Are you sure you want to delete this category?', 'hisab-financial-tracker'),
-            'select_ad_date' => __('Please select an AD date', 'hisab-financial-tracker'),
-            'select_bs_date_components' => __('Please select BS year, month, and day', 'hisab-financial-tracker'),
-            'conversion_failed' => __('Conversion failed', 'hisab-financial-tracker'),
-            'error_converting_date' => __('Error converting date', 'hisab-financial-tracker'),
-            'confirm_clear_history' => __('Are you sure you want to clear the conversion history?', 'hisab-financial-tracker'),
-            'no_conversion_history' => __('No conversion history yet', 'hisab-financial-tracker'),
-            'save_owner' => __('Save Owner', 'hisab-financial-tracker'),
-            'update_owner' => __('Update Owner', 'hisab-financial-tracker'),
-            'error_saving_owner' => __('An error occurred while saving the owner.', 'hisab-financial-tracker'),
-            'confirm_delete_owner' => __('Are you sure you want to delete this owner?', 'hisab-financial-tracker'),
-            'deleting' => __('Deleting...', 'hisab-financial-tracker'),
-            'error_deleting_owner' => __('An error occurred while deleting the owner.', 'hisab-financial-tracker'),
-            'projected_income' => __('Projected Income', 'hisab-financial-tracker'),
-            'projected_expenses' => __('Projected Expenses', 'hisab-financial-tracker'),
-            'projected_net' => __('Projected Net', 'hisab-financial-tracker'),
-            'enter_target_and_months' => __('Please enter both target amount and months to target.', 'hisab-financial-tracker'),
-            'goal_achievable' => __('Goal is achievable!', 'hisab-financial-tracker'),
-            'required_monthly_savings' => __('Required monthly savings:', 'hisab-financial-tracker'),
-            'current_monthly_savings' => __('Current monthly savings:', 'hisab-financial-tracker'),
-            'goal_difficult' => __('Goal may be difficult to achieve.', 'hisab-financial-tracker'),
-            'increase_savings_by' => __('You need to increase savings by:', 'hisab-financial-tracker'),
-            'error_calculating_savings' => __('An error occurred while calculating savings.', 'hisab-financial-tracker'),
+        wp_localize_script('hisab-admin', 'hisab_ajax', $this->get_localized_strings());
+    }
+    
+    /**
+     * Get localized strings for JavaScript
+     * Organized by category and with duplicates removed
+     */
+    private function get_localized_strings() {
+        return array_merge(
+            // Core AJAX settings
+            array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('hisab_transaction'),
+                'currency' => HISAB_CURRENCY_SYMBOL,
+            ),
+            // Transaction related strings
+            $this->get_transaction_strings(),
+            // Category related strings
+            $this->get_category_strings(),
+            // Owner related strings
+            $this->get_owner_strings(),
+            // Date conversion strings
+            $this->get_date_conversion_strings(),
+            // Projections and savings strings
+            $this->get_projections_strings(),
+            // Bank transaction strings
+            $this->get_bank_transaction_strings(),
+            // Common UI strings
+            $this->get_common_ui_strings()
+        );
+    }
+    
+    /**
+     * Transaction related strings
+     */
+    private function get_transaction_strings() {
+        return array(
+            'insufficient_balance'       => __('Insufficient balance for this transaction.', 'hisab-financial-tracker'),
+            'amount_required'            => __('Amount must be greater than zero.', 'hisab-financial-tracker'),
+            'saving_transaction'         => __('Saving transaction...', 'hisab-financial-tracker'),
+            'transaction_updated'        => __('Transaction updated successfully!', 'hisab-financial-tracker'),
+            'error_saving'               => __('An error occurred while saving the transaction.', 'hisab-financial-tracker'),
+            'add_itemized_details'       => __('Add Itemized Details', 'hisab-financial-tracker'),
+            'add_at_least_one_item'      => __('Please add at least one item.', 'hisab-financial-tracker'),
+            'error_saving_details'       => __('An error occurred while saving details.', 'hisab-financial-tracker'),
             'confirm_delete_transaction' => __('Are you sure you want to delete this transaction?', 'hisab-financial-tracker'),
-            'error_loading_details' => __('Error loading transaction details', 'hisab-financial-tracker'),
-            'no_description' => __('No Description', 'hisab-financial-tracker'),
-            'amount' => __('Amount', 'hisab-financial-tracker'),
-            'date' => __('Date', 'hisab-financial-tracker'),
-            'tax' => __('Tax', 'hisab-financial-tracker'),
-            'discount' => __('Discount', 'hisab-financial-tracker'),
-            'no_itemized_details' => __('No itemized details available', 'hisab-financial-tracker'),
-            'item_name' => __('Item name', 'hisab-financial-tracker'),
-            'rate' => __('Rate', 'hisab-financial-tracker'),
-            'quantity' => __('Qty', 'hisab-financial-tracker'),
-            'total' => __('Total', 'hisab-financial-tracker'),
+            'error_loading_details'      => __('Error loading transaction details', 'hisab-financial-tracker'),
             'error_deleting_transaction' => __('Error deleting transaction', 'hisab-financial-tracker'),
-            'available_balance' => __('Available Balance', 'hisab-financial-tracker'),
-            'current_balance' => __('Current Balance', 'hisab-financial-tracker'),
-            'insufficient_balance_text' => __('Insufficient balance. Available:', 'hisab-financial-tracker'),
-            'cannot_transfer_same_account' => __('Cannot transfer to the same account.', 'hisab-financial-tracker'),
-            'amount_must_be_greater_than_zero' => __('Amount must be greater than zero.', 'hisab-financial-tracker'),
+            'no_description'             => __('No Description', 'hisab-financial-tracker'),
+            'no_itemized_details'        => __('No itemized details available', 'hisab-financial-tracker'),
+        );
+    }
+    
+    /**
+     * Category related strings
+     */
+    private function get_category_strings() {
+        return array(
+            'select_category'             => __('Please select a category.', 'hisab-financial-tracker'),
+            'select_category_placeholder' => __('Select Category', 'hisab-financial-tracker'),
+            'save_category'               => __('Save Category', 'hisab-financial-tracker'),
+            'update_category'             => __('Update Category', 'hisab-financial-tracker'),
+            'error_saving_category'       => __('An error occurred while saving the category.', 'hisab-financial-tracker'),
+            'confirm_delete_category'     => __('Are you sure you want to delete this category?', 'hisab-financial-tracker'),
+        );
+    }
+    
+    /**
+     * Owner related strings
+     */
+    private function get_owner_strings() {
+        return array(
+            'select_owner_optional' => __('Select Owner (Optional)', 'hisab-financial-tracker'),
+            'save_owner'            => __('Save Owner', 'hisab-financial-tracker'),
+            'update_owner'          => __('Update Owner', 'hisab-financial-tracker'),
+            'error_saving_owner'    => __('An error occurred while saving the owner.', 'hisab-financial-tracker'),
+            'confirm_delete_owner'  => __('Are you sure you want to delete this owner?', 'hisab-financial-tracker'),
+            'error_deleting_owner'  => __('An error occurred while deleting the owner.', 'hisab-financial-tracker'),
+        );
+    }
+    
+    /**
+     * Date conversion related strings
+     */
+    private function get_date_conversion_strings() {
+        return array(
+            'select_bs_date'         => __('Please select BS year, month, and day', 'hisab-financial-tracker'),
+            'select_ad_date'         => __('Please select an AD date', 'hisab-financial-tracker'),
+            'date_conversion_failed' => __('Date conversion failed. Please try again.', 'hisab-financial-tracker'),
+            'conversion_failed'      => __('Conversion failed', 'hisab-financial-tracker'),
+            'error_converting_date'  => __('Error converting date', 'hisab-financial-tracker'),
+            'confirm_clear_history'  => __('Are you sure you want to clear the conversion history?', 'hisab-financial-tracker'),
+            'no_conversion_history'  => __('No conversion history yet', 'hisab-financial-tracker'),
+        );
+    }
+    
+    /**
+     * Projections and savings related strings
+     */
+    private function get_projections_strings() {
+        return array(
+            'projected_income'          => __('Projected Income', 'hisab-financial-tracker'),
+            'projected_expenses'        => __('Projected Expenses', 'hisab-financial-tracker'),
+            'projected_net'             => __('Projected Net', 'hisab-financial-tracker'),
+            'enter_target_and_months'   => __('Please enter both target amount and months to target.', 'hisab-financial-tracker'),
+            'goal_achievable'           => __('Goal is achievable!', 'hisab-financial-tracker'),
+            'required_monthly_savings'  => __('Required monthly savings:', 'hisab-financial-tracker'),
+            'current_monthly_savings'   => __('Current monthly savings:', 'hisab-financial-tracker'),
+            'goal_difficult'            => __('Goal may be difficult to achieve.', 'hisab-financial-tracker'),
+            'increase_savings_by'       => __('You need to increase savings by:', 'hisab-financial-tracker'),
+            'error_calculating_savings' => __('An error occurred while calculating savings.', 'hisab-financial-tracker'),
+        );
+    }
+    
+    /**
+     * Bank transaction related strings
+     */
+    private function get_bank_transaction_strings() {
+        return array(
+            'available_balance'                 => __('Available Balance', 'hisab-financial-tracker'),
+            'current_balance'                   => __('Current Balance', 'hisab-financial-tracker'),
+            'insufficient_balance_text'         => __('Insufficient balance. Available:', 'hisab-financial-tracker'),
+            'cannot_transfer_same_account'      => __('Cannot transfer to the same account.', 'hisab-financial-tracker'),
             'insufficient_balance_for_transfer' => __('Insufficient balance for this transfer.', 'hisab-financial-tracker'),
-            'income' => __('Income', 'hisab-financial-tracker'),
-            'expenses' => __('Expenses', 'hisab-financial-tracker')
-        ));
+        );
+    }
+    
+    /**
+     * Common UI strings
+     */
+    private function get_common_ui_strings() {
+        return array(
+            'income'            => __('Income', 'hisab-financial-tracker'),
+            'expenses'          => __('Expenses', 'hisab-financial-tracker'),
+            'saving'            => __('Saving...', 'hisab-financial-tracker'),
+            'deleting'          => __('Deleting...', 'hisab-financial-tracker'),
+            'select_bill_image' => __('Select Bill Image', 'hisab-financial-tracker'),
+            'use_this_image'    => __('Use This Image', 'hisab-financial-tracker'),
+            'amount'            => __('Amount', 'hisab-financial-tracker'),
+            'date'              => __('Date', 'hisab-financial-tracker'),
+            'tax'               => __('Tax', 'hisab-financial-tracker'),
+            'discount'          => __('Discount', 'hisab-financial-tracker'),
+            'item_name'         => __('Item name', 'hisab-financial-tracker'),
+            'rate'              => __('Rate', 'hisab-financial-tracker'),
+            'quantity'          => __('Qty', 'hisab-financial-tracker'),
+            'total'             => __('Total', 'hisab-financial-tracker'),
+        );
     }
     
     public function enqueue_frontend_scripts() {
