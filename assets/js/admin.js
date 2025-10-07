@@ -582,31 +582,6 @@ jQuery(document).ready(function($) {
             }
         }
         
-        // Show/hide bank account fields based on payment method
-        function toggleBankAccountFields() {
-            const paymentMethod = $('#transaction-payment-method').val();
-            const bankAccountRow = $('#bank-account-row');
-            const phonePayReferenceRow = $('#phone-pay-reference-row');
-            const bankAccountSelect = $('#bank-account-id');
-            const phonePayReferenceInput = $('#phone-pay-reference');
-            
-            // Hide all bank-related fields first
-            bankAccountRow.hide();
-            phonePayReferenceRow.hide();
-            bankAccountSelect.prop('required', false);
-            phonePayReferenceInput.prop('required', false);
-            
-            // Show relevant fields based on payment method
-            if (paymentMethod === 'bank_transfer' || paymentMethod === 'phone_pay') {
-                bankAccountRow.show();
-                bankAccountSelect.prop('required', true);
-            }
-            
-            if (paymentMethod === 'phone_pay') {
-                phonePayReferenceRow.show();
-                phonePayReferenceInput.prop('required', true);
-            }
-        }
         
         // Handle calendar type switching
         function switchCalendarType(calendarType) {
@@ -642,11 +617,6 @@ jQuery(document).ready(function($) {
         // Initialize owners dropdown
         populateOwners();
         
-        // Bind payment method change event
-        $('#transaction-payment-method').on('change', toggleBankAccountFields);
-        
-        // Initialize bank account fields visibility
-        toggleBankAccountFields();
         
         // Handle calendar type switching
         $('#date-calendar-type').on('change', function() {

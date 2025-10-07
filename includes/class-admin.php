@@ -43,11 +43,6 @@ class HisabAdmin {
         
         $owners = $this->database->get_owners();
         
-        // Load bank accounts for payment method integration
-        $bank_account = new HisabBankAccount();
-        $bank_accounts_npr = $bank_account->get_accounts_by_currency('NPR');
-        $bank_accounts_usd = $bank_account->get_accounts_by_currency('USD');
-        
         include HISAB_PLUGIN_PATH . 'admin/views/add-transaction.php';
     }
     

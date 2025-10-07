@@ -90,43 +90,6 @@ if (!defined('ABSPATH')) {
             </div>
         </div>
         
-        <!-- Bank Account Selection (shown for bank_transfer and phone_pay) -->
-        <div class="hisab-form-row" id="bank-account-row" style="display: none;">
-            <div class="hisab-form-group">
-                <label for="bank-account-id"><?php _e('Bank Account', 'hisab-financial-tracker'); ?></label>
-                <select id="bank-account-id" name="bank_account_id">
-                    <option value=""><?php _e('Select Bank Account', 'hisab-financial-tracker'); ?></option>
-                    <?php if (!empty($bank_accounts_npr)): ?>
-                        <optgroup label="<?php _e('NPR Accounts', 'hisab-financial-tracker'); ?>">
-                            <?php foreach ($bank_accounts_npr as $account): ?>
-                                <option value="<?php echo $account->id; ?>" data-currency="NPR" <?php selected($edit_transaction ? $edit_transaction->bank_account_id : '', $account->id); ?>>
-                                    <?php echo esc_html($account->account_name . ' (' . $account->bank_name . ')'); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </optgroup>
-                    <?php endif; ?>
-                    <?php if (!empty($bank_accounts_usd)): ?>
-                        <optgroup label="<?php _e('USD Accounts', 'hisab-financial-tracker'); ?>">
-                            <?php foreach ($bank_accounts_usd as $account): ?>
-                                <option value="<?php echo $account->id; ?>" data-currency="USD" <?php selected($edit_transaction ? $edit_transaction->bank_account_id : '', $account->id); ?>>
-                                    <?php echo esc_html($account->account_name . ' (' . $account->bank_name . ')'); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </optgroup>
-                    <?php endif; ?>
-                </select>
-                <p class="description"><?php _e('Select the bank account for this transaction', 'hisab-financial-tracker'); ?></p>
-            </div>
-        </div>
-        
-        <!-- Phone Pay Reference (shown for phone_pay only) -->
-        <div class="hisab-form-row" id="phone-pay-reference-row" style="display: none;">
-            <div class="hisab-form-group">
-                <label for="phone-pay-reference"><?php _e('Phone Pay Reference', 'hisab-financial-tracker'); ?></label>
-                <input type="text" id="phone-pay-reference" name="phone_pay_reference" value="<?php echo $edit_transaction ? esc_attr($edit_transaction->phone_pay_reference) : ''; ?>" placeholder="<?php _e('Enter phone pay transaction reference', 'hisab-financial-tracker'); ?>">
-                <p class="description"><?php _e('Enter the phone pay transaction reference number', 'hisab-financial-tracker'); ?></p>
-            </div>
-        </div>
         
         <div class="hisab-form-row">
             <div class="hisab-form-group">
