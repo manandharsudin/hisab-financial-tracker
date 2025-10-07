@@ -11,6 +11,7 @@ class HisabAdminMenu {
     
     public function __construct() {
         add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_action('admin_init', array($this, 'handle_form_submissions'));
     }
     
     public function add_admin_menu() {
@@ -309,5 +310,68 @@ class HisabAdminMenu {
             return;
         }
         include HISAB_PLUGIN_PATH . 'admin/settings.php';
+    }
+    
+    /**
+     * Handle form submissions before any output
+     */
+    public function handle_form_submissions() {
+        // Only process on our admin pages
+        if (!isset($_GET['page']) || strpos($_GET['page'], 'hisab-') !== 0) {
+            return;
+        }
+        
+        // Handle bank account form submission
+        if (isset($_POST['submit_bank_account']) && $_GET['page'] === 'hisab-add-bank-account') {
+            $this->handle_bank_account_submission();
+        }
+    }
+    
+    /**
+     * Handle bank account form submission
+     */
+    private function handle_bank_account_submission() {
+        if (!class_exists('HisabBankAccount')) {
+            return;
+        }
+        
+        $bank_account = new HisabBankAccount();
+        
+        $nonce = sanitize_text_field($_POST['_wpnonce']);
+        if (!wp_verify_nonce($nonce, 'hisab_bank_account')) {
+            wp_redirect(admin_url('admin.php?page=hisab-add-bank-account&error=security'));
+            exit;
+        }
+        
+        $data = array(
+            'account_name' => sanitize_text_field($_POST['account_name']),
+            'bank_name' => sanitize_text_field($_POST['bank_name']),
+            'account_number' => sanitize_text_field($_POST['account_number']),
+            'account_type' => sanitize_text_field($_POST['account_type']),
+            'currency' => sanitize_text_field($_POST['currency']),
+            'initial_balance' => floatval($_POST['initial_balance']),
+            'is_active' => isset($_POST['is_active']) ? 1 : 0
+        );
+        
+        // Check if editing
+        $is_edit = isset($_GET['edit']) && !empty($_GET['edit']);
+        
+        if ($is_edit) {
+            $account_id = intval($_GET['edit']);
+            $result = $bank_account->update_account($account_id, $data);
+            if (is_wp_error($result)) {
+                wp_redirect(admin_url('admin.php?page=hisab-add-bank-account&edit=' . $account_id . '&error=' . urlencode($result->get_error_message())));
+            } else {
+                wp_redirect(admin_url('admin.php?page=hisab-add-bank-account&edit=' . $account_id . '&updated=1'));
+            }
+        } else {
+            $result = $bank_account->create_account($data);
+            if (is_wp_error($result)) {
+                wp_redirect(admin_url('admin.php?page=hisab-add-bank-account&error=' . urlencode($result->get_error_message())));
+            } else {
+                wp_redirect(admin_url('admin.php?page=hisab-bank-accounts&created=1'));
+            }
+        }
+        exit;
     }
 }

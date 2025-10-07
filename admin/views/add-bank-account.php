@@ -19,41 +19,16 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     $is_edit = $edit_account ? true : false;
 }
 
-// Handle form submission
-if (isset($_POST['submit_bank_account'])) {
-    $nonce = sanitize_text_field($_POST['_wpnonce']);
-    if (!wp_verify_nonce($nonce, 'hisab_bank_account')) {
+// Handle success/error messages from redirects
+if (isset($_GET['updated']) && $_GET['updated'] == '1') {
+    $success_message = __('Bank account updated successfully.', 'hisab-financial-tracker');
+}
+
+if (isset($_GET['error'])) {
+    if ($_GET['error'] === 'security') {
         $error_message = __('Security check failed. Please try again.', 'hisab-financial-tracker');
     } else {
-        $data = array(
-            'account_name' => sanitize_text_field($_POST['account_name']),
-            'bank_name' => sanitize_text_field($_POST['bank_name']),
-            'account_number' => sanitize_text_field($_POST['account_number']),
-            'account_type' => sanitize_text_field($_POST['account_type']),
-            'currency' => sanitize_text_field($_POST['currency']),
-            'initial_balance' => floatval($_POST['initial_balance']),
-            'is_active' => isset($_POST['is_active']) ? 1 : 0
-        );
-        
-        if ($is_edit) {
-            $result = $bank_account->update_account($edit_account->id, $data);
-            if (is_wp_error($result)) {
-                $error_message = $result->get_error_message();
-            } else {
-                $success_message = __('Bank account updated successfully.', 'hisab-financial-tracker');
-                $edit_account = $bank_account->get_account($edit_account->id); // Refresh data
-            }
-        } else {
-            $result = $bank_account->create_account($data);
-            if (is_wp_error($result)) {
-                $error_message = $result->get_error_message();
-            } else {
-                $success_message = __('Bank account created successfully.', 'hisab-financial-tracker');
-                // Clear form data
-                $edit_account = null;
-                $is_edit = false;
-            }
-        }
+        $error_message = sanitize_text_field($_GET['error']);
     }
 }
 

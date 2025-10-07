@@ -10,6 +10,11 @@ if (!defined('ABSPATH')) {
 // Initialize bank account class
 $bank_account = new HisabBankAccount();
 
+// Check for success messages from redirects
+if (isset($_GET['created']) && $_GET['created'] == '1') {
+    $success_message = __('Bank account created successfully.', 'hisab-financial-tracker');
+}
+
 // Handle actions
 if (isset($_POST['action'])) {
     $action = sanitize_text_field($_POST['action']);
