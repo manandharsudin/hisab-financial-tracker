@@ -69,7 +69,7 @@ if (!defined('ABSPATH')) {
                     <input type="number" id="months-to-target" name="months_to_target" min="1" max="60" required>
                 </div>
                 <div class="hisab-form-group">
-                    <button type="submit" class="button button-primary">
+                    <button type="submit" class="button button-primary btn-saving-calculator">
                         <?php _e('Calculate', 'hisab-financial-tracker'); ?>
                     </button>
                 </div>

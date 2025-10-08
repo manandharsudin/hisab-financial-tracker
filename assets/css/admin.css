@@ -653,6 +653,11 @@
     margin-top: 15px;
 }
 
+.hisab-form-group .btn-saving-calculator {
+    margin-top: auto;
+    min-height: 46px;
+}
+
 /* Color picker styling */
 input[type="color"] {
     width: 60px;
