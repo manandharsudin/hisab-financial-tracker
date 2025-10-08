@@ -57,6 +57,7 @@ class HisabFinancialTracker {
         require_once HISAB_PLUGIN_PATH . 'includes/class-nepali-date.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-bank-account.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-bank-transaction.php';
+        require_once HISAB_PLUGIN_PATH . 'includes/class-import-export.php';
     }
     
     private function init_components() {
@@ -85,7 +86,7 @@ class HisabFinancialTracker {
             new HisabAjaxHandlers();
         }
     }
-    
+
     public function activate() {
         // Create database tables
         $database = new HisabDatabase();
@@ -99,9 +100,13 @@ class HisabFinancialTracker {
         // Clean up if needed
     }
     
-    
     public function enqueue_admin_scripts($hook) {
-        if (strpos($hook, 'hisab') === false && strpos($hook, 'date-converter') === false) {
+        // Check if this is one of our admin pages
+        $is_hisab_page = strpos($hook, 'hisab') !== false;
+        $is_date_converter = strpos($hook, 'date-converter') !== false;
+        $is_import_export = isset($_GET['page']) && $_GET['page'] === 'hisab-import-export';
+        
+        if (!$is_hisab_page && !$is_date_converter && !$is_import_export) {
             return;
         }
         
@@ -113,6 +118,7 @@ class HisabFinancialTracker {
         
         wp_localize_script('hisab-admin', 'hisab_ajax', $this->get_localized_strings());
     }
+    
     
     /**
      * Get localized strings for JavaScript
@@ -139,7 +145,9 @@ class HisabFinancialTracker {
             // Bank transaction strings
             $this->get_bank_transaction_strings(),
             // Common UI strings
-            $this->get_common_ui_strings()
+            $this->get_common_ui_strings(),
+            // Import/Export strings
+            $this->get_import_export_strings()
         );
     }
     
@@ -257,6 +265,24 @@ class HisabFinancialTracker {
             'rate'              => __('Rate', 'hisab-financial-tracker'),
             'quantity'          => __('Qty', 'hisab-financial-tracker'),
             'total'             => __('Total', 'hisab-financial-tracker'),
+        );
+    }
+
+    /**
+     * Import/Export related strings
+     */
+    private function get_import_export_strings() {
+        return array(
+            'exporting' => __('Exporting...', 'hisab-financial-tracker'),
+            'importing' => __('Importing...', 'hisab-financial-tracker'),
+            'export_success' => __('Data exported successfully!', 'hisab-financial-tracker'),
+            'import_success' => __('Data imported successfully!', 'hisab-financial-tracker'),
+            'export_failed' => __('Export failed', 'hisab-financial-tracker'),
+            'import_failed' => __('Import failed', 'hisab-financial-tracker'),
+            'select_file' => __('Please select a file to import', 'hisab-financial-tracker'),
+            'invalid_file' => __('Invalid file format. Please select a JSON file exported from this plugin.', 'hisab-financial-tracker'),
+            'file_too_large' => __('File is too large. Please select a smaller file.', 'hisab-financial-tracker'),
+            'network_error' => __('Network error. Please try again.', 'hisab-financial-tracker'),
         );
     }
     

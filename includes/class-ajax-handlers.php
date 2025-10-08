@@ -28,6 +28,7 @@ class HisabAjaxHandlers {
         // Dashboard AJAX handlers
         add_action('wp_ajax_hisab_get_dashboard_data', array($this, 'ajax_get_dashboard_data'));
         add_action('wp_ajax_hisab_export_data', array($this, 'ajax_export_data'));
+        add_action('wp_ajax_hisab_import_data', array($this, 'ajax_import_data'));
         
         // Frontend AJAX handlers (for non-logged in users)
         add_action('wp_ajax_nopriv_hisab_get_public_data', array($this, 'ajax_get_public_data'));
@@ -270,17 +271,84 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_export_data() {
+        // Check nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'hisab_transaction')) {
+            wp_send_json(array('success' => false, 'message' => 'Security check failed'));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json(array('success' => false, 'message' => 'Unauthorized'));
+        }
+        
+        if (!class_exists('HisabImportExport')) {
+            wp_send_json(array('success' => false, 'message' => 'Import/Export class not available'));
+        }
+        
+        $export_type = isset($_POST['export_type']) ? sanitize_text_field($_POST['export_type']) : 'all';
+        
+        try {
+            $import_export = new HisabImportExport();
+            $data = $import_export->export_all_data($export_type);
+            
+            // Export successful
+            
+            wp_send_json(array('success' => true, 'data' => $data));
+            
+        } catch (Exception $e) {
+            error_log('Export error: ' . $e->getMessage());
+            wp_send_json(array('success' => false, 'message' => 'Export failed: ' . $e->getMessage()));
+        }
+    }
+    
+    public function ajax_import_data() {
         check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
         }
         
-        $format = sanitize_text_field($_POST['format']);
-        $type = sanitize_text_field($_POST['type']);
+        if (!class_exists('HisabImportExport')) {
+            wp_send_json(array('success' => false, 'message' => 'Import/Export class not available'));
+        }
         
-        // This would be implemented based on export requirements
-        wp_send_json(array('success' => false, 'message' => 'Export functionality not yet implemented'));
+        if (!isset($_FILES['import_file']) || $_FILES['import_file']['error'] !== UPLOAD_ERR_OK) {
+            wp_send_json(array('success' => false, 'message' => 'No file uploaded or upload error'));
+        }
+        
+        $file = $_FILES['import_file'];
+        $file_content = file_get_contents($file['tmp_name']);
+        
+        if (!$file_content) {
+            wp_send_json(array('success' => false, 'message' => 'Could not read uploaded file'));
+        }
+        
+        // Parse JSON data
+        $json_data = json_decode($file_content, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json(array('success' => false, 'message' => 'Invalid JSON file: ' . json_last_error_msg()));
+        }
+        
+        // Get import options
+        $options = array(
+            'import_categories' => isset($_POST['import_categories']) ? (bool)$_POST['import_categories'] : true,
+            'import_owners' => isset($_POST['import_owners']) ? (bool)$_POST['import_owners'] : true,
+            'import_bank_accounts' => isset($_POST['import_bank_accounts']) ? (bool)$_POST['import_bank_accounts'] : true,
+            'import_transactions' => isset($_POST['import_transactions']) ? (bool)$_POST['import_transactions'] : true,
+            'import_bank_transactions' => isset($_POST['import_bank_transactions']) ? (bool)$_POST['import_bank_transactions'] : true,
+            'import_transaction_details' => isset($_POST['import_transaction_details']) ? (bool)$_POST['import_transaction_details'] : true,
+            'skip_duplicates' => isset($_POST['skip_duplicates']) ? (bool)$_POST['skip_duplicates'] : true,
+            'update_existing' => isset($_POST['update_existing']) ? (bool)$_POST['update_existing'] : false
+        );
+        
+        try {
+            $import_export = new HisabImportExport();
+            $results = $import_export->import_from_json($json_data, $options);
+            wp_send_json($results);
+            
+        } catch (Exception $e) {
+            wp_send_json(array('success' => false, 'message' => 'Import failed: ' . $e->getMessage()));
+        }
     }
     
     // Public AJAX Handlers (for frontend)

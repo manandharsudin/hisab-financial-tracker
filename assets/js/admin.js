@@ -307,24 +307,161 @@ jQuery(document).ready(function($) {
         const format = $(this).data('format');
         const type = $(this).data('type');
         
-        exportData(format, type);
+        // Get export type from select if available
+        const exportType = $('#export-type').val() || type;
+        
+        exportData(format, exportType);
     });
     
     function exportData(format, type) {
+        const $btn = $('.hisab-export-btn');
+        const originalText = $btn.html();
+        
+        // Show loading state
+        $btn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Exporting...');
+        
+        console.log('Starting export with format:', format, 'type:', type);
+        
         makeAjaxCall('hisab_export_data', {
             format: format,
-            type: type
+            export_type: type
         }, function(data) {
-            // Create download link
-            const link = document.createElement('a');
-            link.href = data.url;
-            link.download = data.filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // makeAjaxCall passes response.data to success callback
+            console.log('Export response data:', data);
+            if (data) {
+                try {
+                    // Create and download JSON file
+                    const dataStr = JSON.stringify(data, null, 2);
+                    const dataBlob = new Blob([dataStr], {
+                        type: 'application/json;charset=utf-8'
+                    });
+                    
+                    const currentDate = new Date().toISOString().slice(0,10);
+                    const fileName = 'hisab-export-' + type + '-' + currentDate + '.json';
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(dataBlob);
+                    link.href = url;
+                    link.download = fileName;
+                    link.style.display = 'none';
+                    
+                    // Add to DOM, click, and remove
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clean up
+                    setTimeout(function() {
+                        URL.revokeObjectURL(url);
+                    }, 1000);
+                    
+                    // Show success message
+                    showImportExportResult('success', 'Data exported successfully!');
+                } catch (e) {
+                    console.error('Download error:', e);
+                    showImportExportResult('error', 'Download failed: ' + e.message);
+                }
+            } else {
+                showImportExportResult('error', 'Export failed: No data received');
+            }
         }, function(message) {
-            showError('Export failed: ' + message);
+            showImportExportResult('error', 'Export failed: ' + message);
         });
+        
+        // Reset button
+        $btn.prop('disabled', false).html(originalText);
+    }
+    
+    // Import functionality
+    $('#hisab-import-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const $form = $(this);
+        const $btn = $form.find('.hisab-import-btn');
+        const originalText = $btn.html();
+        
+        // Show loading state
+        $btn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Importing...');
+        
+        const formData = new FormData();
+        formData.append('action', 'hisab_import_data');
+        formData.append('nonce', hisab_ajax.nonce);
+        formData.append('import_file', $('#import-file')[0].files[0]);
+        
+        // Add checkboxes
+        $form.find('input[type="checkbox"]:checked').each(function() {
+            formData.append($(this).attr('name'), $(this).val());
+        });
+        
+        // Add radio buttons
+        formData.append('skip_duplicates', $form.find('input[name="duplicate_handling"]:checked').val() === 'skip' ? '1' : '0');
+        formData.append('update_existing', $form.find('input[name="duplicate_handling"]:checked').val() === 'update' ? '1' : '0');
+        
+        $.ajax({
+            url: hisab_ajax.ajax_url,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    showImportResults(response);
+                } else {
+                    showImportExportResult('error', 'Import failed: ' + response.message);
+                }
+            },
+            error: function() {
+                showImportExportResult('error', 'Import failed due to network error.');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+    
+    function showImportExportResult(type, message) {
+        const $results = $('#hisab-import-export-results');
+        const $content = $('#hisab-results-content');
+        
+        $content.html('<div class="hisab-result-item ' + type + '">' + message + '</div>');
+        $results.show();
+    }
+    
+    function showImportResults(response) {
+        const $results = $('#hisab-import-export-results');
+        const $content = $('#hisab-results-content');
+        
+        let html = '<div class="hisab-result-item success">Import completed successfully!</div>';
+        
+        // Show statistics
+        if (response.imported) {
+            html += '<div class="hisab-result-stats">';
+            for (const type in response.imported) {
+                if (response.imported[type] > 0) {
+                    html += '<div class="hisab-stat-card">';
+                    html += '<div class="hisab-stat-number">' + response.imported[type] + '</div>';
+                    html += '<div class="hisab-stat-label">' + type + ' imported</div>';
+                    html += '</div>';
+                }
+            }
+            html += '</div>';
+        }
+        
+        // Show errors
+        if (response.errors) {
+            for (const type in response.errors) {
+                if (response.errors[type].length > 0) {
+                    html += '<div class="hisab-result-item warning">';
+                    html += '<strong>' + type + ' errors:</strong><br>';
+                    html += response.errors[type].join('<br>');
+                    html += '</div>';
+                }
+            }
+        }
+        
+        $content.html(html);
+        $results.show();
     }
     
     // Print functionality

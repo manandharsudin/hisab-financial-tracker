@@ -198,6 +198,16 @@ class HisabAdminMenu {
             'hisab-settings',
             array($this, 'admin_settings_page')
         );
+        
+        // Import/Export submenu under Tools
+        add_submenu_page(
+            'hisab-date-converter',
+            __('Import/Export', 'hisab-financial-tracker'),
+            __('Import/Export', 'hisab-financial-tracker'),
+            'manage_options',
+            'hisab-import-export',
+            array($this, 'admin_import_export_page')
+        );
     }
     
     public function admin_dashboard_page() {
@@ -310,6 +320,14 @@ class HisabAdminMenu {
             return;
         }
         include HISAB_PLUGIN_PATH . 'admin/settings.php';
+    }
+    
+    public function admin_import_export_page() {
+        if (!class_exists('HisabImportExport')) {
+            echo '<div class="wrap"><h1>Error</h1><p>Import/Export class not available. Please check if all plugin files are properly uploaded.</p></div>';
+            return;
+        }
+        include HISAB_PLUGIN_PATH . 'admin/views/import-export.php';
     }
     
     /**
