@@ -13,6 +13,12 @@ if (!defined('ABSPATH')) {
     
     <div class="hisab-import-export-container">
         
+        <!-- Results Section -->
+        <div id="hisab-import-export-results" class="hisab-results-section" style="display: none;">
+            <h3><?php _e('Results', 'hisab-financial-tracker'); ?></h3>
+            <div id="hisab-results-content"></div>
+        </div>
+        
         <!-- Export Section -->
         <div class="hisab-export-section">
             <h2><?php _e('Export Data', 'hisab-financial-tracker'); ?></h2>
@@ -111,12 +117,6 @@ if (!defined('ABSPATH')) {
                     </div>
                 </form>
             </div>
-        </div>
-        
-        <!-- Results Section -->
-        <div id="hisab-import-export-results" class="hisab-results-section" style="display: none;">
-            <h3><?php _e('Results', 'hisab-financial-tracker'); ?></h3>
-            <div id="hisab-results-content"></div>
         </div>
         
     </div>

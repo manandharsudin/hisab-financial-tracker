@@ -79,6 +79,8 @@ class HisabImportExport {
         );
         
         $options = wp_parse_args($options, $default_options);
+        
+        
         $results = array(
             'success' => true,
             'imported' => array(),
@@ -237,6 +239,7 @@ class HisabImportExport {
         $results = array('imported' => 0, 'skipped' => 0, 'errors' => array());
         $existing_categories = $this->get_existing_categories();
         
+        
         foreach ($categories as $category) {
             try {
                 // Check if category already exists
@@ -263,7 +266,16 @@ class HisabImportExport {
                 if ($result !== false) {
                     $results['imported']++;
                 } else {
-                    $results['errors'][] = 'Failed to import category: ' . $category['name'];
+                    // Check if it's a duplicate key error
+                    if ($wpdb->last_error && strpos($wpdb->last_error, 'Duplicate entry') !== false) {
+                        if ($options['skip_duplicates']) {
+                            $results['skipped']++;
+                        } else {
+                            $results['errors'][] = 'Category already exists: ' . $category['name'];
+                        }
+                    } else {
+                        $results['errors'][] = 'Failed to import category: ' . $category['name'] . ' - ' . $wpdb->last_error;
+                    }
                 }
                 
             } catch (Exception $e) {
@@ -308,7 +320,16 @@ class HisabImportExport {
                 if ($result !== false) {
                     $results['imported']++;
                 } else {
-                    $results['errors'][] = 'Failed to import owner: ' . $owner['name'];
+                    // Check if it's a duplicate key error
+                    if ($wpdb->last_error && strpos($wpdb->last_error, 'Duplicate entry') !== false) {
+                        if ($options['skip_duplicates']) {
+                            $results['skipped']++;
+                        } else {
+                            $results['errors'][] = 'Owner already exists: ' . $owner['name'];
+                        }
+                    } else {
+                        $results['errors'][] = 'Failed to import owner: ' . $owner['name'] . ' - ' . $wpdb->last_error;
+                    }
                 }
                 
             } catch (Exception $e) {
@@ -378,12 +399,19 @@ class HisabImportExport {
         global $wpdb;
         
         $results = array('imported' => 0, 'skipped' => 0, 'errors' => array());
+        $existing_transactions = $this->get_existing_transactions();
         $category_map = $this->get_category_map();
         $owner_map = $this->get_owner_map();
         $bank_account_map = $this->get_bank_account_map();
         
         foreach ($transactions as $transaction) {
             try {
+                // Check if transaction already exists
+                if ($options['skip_duplicates'] && $this->transaction_exists($transaction, $existing_transactions)) {
+                    $results['skipped']++;
+                    continue;
+                }
+                
                 // Map category ID
                 $category_id = null;
                 if (!empty($transaction['category_name'])) {
@@ -449,10 +477,17 @@ class HisabImportExport {
         global $wpdb;
         
         $results = array('imported' => 0, 'skipped' => 0, 'errors' => array());
+        $existing_bank_transactions = $this->get_existing_bank_transactions();
         $bank_account_map = $this->get_bank_account_map();
         
         foreach ($bank_transactions as $transaction) {
             try {
+                // Check if bank transaction already exists
+                if ($options['skip_duplicates'] && $this->bank_transaction_exists($transaction, $existing_bank_transactions)) {
+                    $results['skipped']++;
+                    continue;
+                }
+                
                 // Map bank account ID
                 $account_id = $this->find_bank_account_id($transaction['account_name'], $bank_account_map);
                 
@@ -514,13 +549,14 @@ class HisabImportExport {
                     continue;
                 }
                 
+                
                 // Prepare detail data
                 $detail_data = array(
                     'transaction_id' => $transaction_id,
                     'item_name' => sanitize_text_field($detail['item_name']),
                     'rate' => floatval($detail['rate']),
                     'quantity' => floatval($detail['quantity']),
-                    'total' => floatval($detail['total']),
+                    'item_total' => floatval($detail['item_total'] ?? $detail['total'] ?? 0),
                     'created_at' => current_time('mysql')
                 );
                 
@@ -534,7 +570,11 @@ class HisabImportExport {
                 if ($result !== false) {
                     $results['imported']++;
                 } else {
-                    $results['errors'][] = 'Failed to import transaction detail: ' . $detail['item_name'];
+                    $error_msg = 'Failed to import transaction detail: ' . $detail['item_name'];
+                    if ($wpdb->last_error) {
+                        $error_msg .= ' - ' . $wpdb->last_error;
+                    }
+                    $results['errors'][] = $error_msg;
                 }
                 
             } catch (Exception $e) {
@@ -565,6 +605,18 @@ class HisabImportExport {
         return $wpdb->get_results($sql, ARRAY_A);
     }
     
+    private function get_existing_transactions() {
+        global $wpdb;
+        $sql = "SELECT description, amount, transaction_date, type FROM {$wpdb->prefix}hisab_transactions";
+        return $wpdb->get_results($sql, ARRAY_A);
+    }
+    
+    private function get_existing_bank_transactions() {
+        global $wpdb;
+        $sql = "SELECT description, amount, transaction_date, transaction_type FROM {$wpdb->prefix}hisab_bank_transactions";
+        return $wpdb->get_results($sql, ARRAY_A);
+    }
+    
     private function category_exists($category, $existing) {
         foreach ($existing as $existing_category) {
             if ($existing_category['name'] === $category['name'] && $existing_category['type'] === $category['type']) {
@@ -587,6 +639,30 @@ class HisabImportExport {
         foreach ($existing as $existing_account) {
             if ($existing_account['account_name'] === $account['account_name'] && 
                 $existing_account['bank_name'] === $account['bank_name']) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private function transaction_exists($transaction, $existing) {
+        foreach ($existing as $existing_transaction) {
+            if ($existing_transaction['description'] === $transaction['description'] && 
+                $existing_transaction['amount'] == $transaction['amount'] && 
+                $existing_transaction['transaction_date'] === $transaction['transaction_date'] &&
+                $existing_transaction['type'] === $transaction['type']) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private function bank_transaction_exists($transaction, $existing) {
+        foreach ($existing as $existing_transaction) {
+            if ($existing_transaction['description'] === $transaction['description'] && 
+                $existing_transaction['amount'] == $transaction['amount'] && 
+                $existing_transaction['transaction_date'] === $transaction['transaction_date'] &&
+                $existing_transaction['transaction_type'] === $transaction['transaction_type']) {
                 return true;
             }
         }
@@ -651,7 +727,24 @@ class HisabImportExport {
     }
     
     private function find_transaction_id($detail, $map) {
-        $key = $detail['transaction_description'] . '|' . $detail['transaction_amount'] . '|' . $detail['transaction_date'];
-        return isset($map[$key]) ? $map[$key] : null;
+        // Check if the detail has the required fields for mapping
+        if (!isset($detail['transaction_type']) || !isset($detail['transaction_date'])) {
+            return null;
+        }
+        
+        // For transaction details, we need to find the transaction by type and date
+        // Since transaction details don't have description and amount, we'll use a different approach
+        // We'll look for transactions that match the type and date
+        global $wpdb;
+        
+        $sql = $wpdb->prepare("
+            SELECT id FROM {$wpdb->prefix}hisab_transactions 
+            WHERE type = %s AND transaction_date = %s 
+            ORDER BY id DESC 
+            LIMIT 1
+        ", $detail['transaction_type'], $detail['transaction_date']);
+        
+        $transaction_id = $wpdb->get_var($sql);
+        return $transaction_id ? intval($transaction_id) : null;
     }
 }

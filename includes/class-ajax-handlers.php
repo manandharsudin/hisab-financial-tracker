@@ -330,6 +330,7 @@ class HisabAjaxHandlers {
         }
         
         // Get import options
+        $duplicate_handling = isset($_POST['duplicate_handling']) ? $_POST['duplicate_handling'] : 'skip';
         $options = array(
             'import_categories' => isset($_POST['import_categories']) ? (bool)$_POST['import_categories'] : true,
             'import_owners' => isset($_POST['import_owners']) ? (bool)$_POST['import_owners'] : true,
@@ -337,8 +338,8 @@ class HisabAjaxHandlers {
             'import_transactions' => isset($_POST['import_transactions']) ? (bool)$_POST['import_transactions'] : true,
             'import_bank_transactions' => isset($_POST['import_bank_transactions']) ? (bool)$_POST['import_bank_transactions'] : true,
             'import_transaction_details' => isset($_POST['import_transaction_details']) ? (bool)$_POST['import_transaction_details'] : true,
-            'skip_duplicates' => isset($_POST['skip_duplicates']) ? (bool)$_POST['skip_duplicates'] : true,
-            'update_existing' => isset($_POST['update_existing']) ? (bool)$_POST['update_existing'] : false
+            'skip_duplicates' => ($duplicate_handling === 'skip'),
+            'update_existing' => ($duplicate_handling === 'update')
         );
         
         try {
