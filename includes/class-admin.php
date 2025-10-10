@@ -85,7 +85,8 @@ class HisabAdmin {
             'BANK_ACCOUNT_CREATE', 'BANK_ACCOUNT_UPDATE', 'BANK_ACCOUNT_DELETE',
             'CATEGORY_CREATE', 'CATEGORY_UPDATE', 'CATEGORY_DELETE',
             'OWNER_CREATE', 'OWNER_UPDATE', 'OWNER_DELETE',
-            'IMPORT', 'EXPORT', 'SETTINGS_UPDATE'
+            'IMPORT', 'EXPORT', 'SETTINGS_UPDATE',
+            'TRANSACTION_DETAILS_SAVE', 'TRANSACTION_DETAILS_DELETE'
         ));
         $log_retention_days = get_option('hisab_log_retention_days', 30);
         

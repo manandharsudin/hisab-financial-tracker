@@ -135,6 +135,14 @@ if (!defined('ABSPATH')) {
                                 <input type="checkbox" name="log_actions[]" value="SETTINGS_UPDATE" <?php checked(in_array('SETTINGS_UPDATE', $log_actions)); ?>>
                                 <?php _e('Settings Update', 'hisab-financial-tracker'); ?>
                             </label>
+                            <label>
+                                <input type="checkbox" name="log_actions[]" value="TRANSACTION_DETAILS_SAVE" <?php checked(in_array('TRANSACTION_DETAILS_SAVE', $log_actions)); ?>>
+                                <?php _e('Transaction Details Save', 'hisab-financial-tracker'); ?>
+                            </label>
+                            <label>
+                                <input type="checkbox" name="log_actions[]" value="TRANSACTION_DETAILS_DELETE" <?php checked(in_array('TRANSACTION_DETAILS_DELETE', $log_actions)); ?>>
+                                <?php _e('Transaction Details Delete', 'hisab-financial-tracker'); ?>
+                            </label>
                         </div>
                     </fieldset>
                     <p class="description"><?php _e('Select which actions should be logged. All actions are logged by default when logging is enabled.', 'hisab-financial-tracker'); ?></p>

@@ -1018,6 +1018,7 @@ jQuery(document).ready(function($) {
         // Transaction Details Modal functionality
         let currentTransactionId = null;
         let currentTransactionData = null;
+        let currentAction = 'add'; // 'add' or 'update'
         
         // Open modal when "Add Details" button is clicked
         $(document).on('click', '#add-transaction-details', function() {
@@ -1064,23 +1065,45 @@ jQuery(document).ready(function($) {
         });
         
         function openDetailsModal() {
-        // Load transaction data
-        makeAjaxCall('hisab_get_transaction', {
-            transaction_id: currentTransactionId
-        }, function(data) {
-            currentTransactionData = data;
-            displayTransactionInfo();
-            loadExistingDetails();
-            $('#transaction-details-modal').show();
-        });
+            // Set modal title based on action
+            const modalTitle = currentAction === 'add' ? 
+                'Add Transaction Details' : 'Update Transaction Details';
+            $('#modal-title').text(modalTitle);
+            
+            // Load transaction data
+            makeAjaxCall('hisab_get_transaction', {
+                transaction_id: currentTransactionId
+            }, function(data) {
+                currentTransactionData = data;
+                displayTransactionInfo();
+                loadExistingDetails();
+                $('#transaction-details-modal').show();
+            });
         }
         
         function closeDetailsModal() {
             $('#transaction-details-modal').hide();
             currentTransactionId = null;
             currentTransactionData = null;
+            currentAction = 'add';
             $('#details-items').empty();
             updateSummary();
+        }
+        
+        function updateTransactionDetailsSection() {
+            // Find the transaction details section
+            const detailsSection = $('.hisab-edit-details-section');
+            
+            if (detailsSection.length > 0) {
+                // Update the text and button
+                detailsSection.find('p').text('This transaction has itemized details. You can view or update them.');
+                
+                // Change the button from "Add" to "Update"
+                const button = detailsSection.find('button');
+                button.removeClass('button-primary').addClass('button-secondary');
+                button.attr('id', 'edit-transaction-details');
+                button.text('Update Transaction Details');
+            }
         }
         
         function displayTransactionInfo() {
@@ -1175,7 +1198,13 @@ jQuery(document).ready(function($) {
                 transaction_id: currentTransactionId,
                 details: details
             }, function(data) {
-                showMessage('#details-messages', 'success', data.message || 'Details saved successfully');
+                showMessage('#details-messages', 'success', 'Details saved successfully');
+                
+                // Update the transaction details section to show "Update" instead of "Add"
+                setTimeout(function() {
+                    updateTransactionDetailsSection();
+                }, 500);
+                
                 setTimeout(function() {
                     closeDetailsModal();
                 }, 1500);
@@ -1188,6 +1217,15 @@ jQuery(document).ready(function($) {
         $(document).on('click', '#edit-transaction-details', function() {
             const transactionId = $(this).data('transaction-id');
             currentTransactionId = transactionId;
+            currentAction = 'update';
+            openDetailsModal();
+        });
+        
+        // Handle Add Transaction Details button
+        $(document).on('click', '#add-transaction-details', function() {
+            const transactionId = $(this).data('transaction-id');
+            currentTransactionId = transactionId;
+            currentAction = 'add';
             openDetailsModal();
         });
         

@@ -694,6 +694,24 @@ class HisabAjaxHandlers {
         }
         
         $result = $database->save_transaction_details($transaction_id, $details);
+        
+        // Log transaction details save operation
+        if (class_exists('HisabLogger')) {
+            $logger = new HisabLogger();
+            if ($result['success']) {
+                $logger->info('TRANSACTION_DETAILS_SAVE', 'Transaction details saved successfully', array(
+                    'transaction_id' => $transaction_id,
+                    'details_count' => count($details),
+                    'details' => $details
+                ));
+            } else {
+                $logger->error('TRANSACTION_DETAILS_SAVE', 'Transaction details save failed: ' . $result['message'], array(
+                    'transaction_id' => $transaction_id,
+                    'details' => $details
+                ));
+            }
+        }
+        
         wp_send_json($result);
     }
     
@@ -710,7 +728,26 @@ class HisabAjaxHandlers {
         
         $transaction_id = intval($_POST['transaction_id']);
         $database = new HisabDatabase();
+        
+        // Get transaction details before deletion for logging
+        $details_before = $database->get_transaction_details($transaction_id);
+        
         $result = $database->delete_transaction_details($transaction_id);
+        
+        // Log transaction details deletion
+        if (class_exists('HisabLogger')) {
+            $logger = new HisabLogger();
+            if ($result['success']) {
+                $logger->info('TRANSACTION_DETAILS_DELETE', 'Transaction details deleted successfully', array(
+                    'transaction_id' => $transaction_id,
+                    'deleted_details' => $details_before
+                ));
+            } else {
+                $logger->error('TRANSACTION_DETAILS_DELETE', 'Transaction details deletion failed: ' . $result['message'], array(
+                    'transaction_id' => $transaction_id
+                ));
+            }
+        }
         
         wp_send_json($result);
     }

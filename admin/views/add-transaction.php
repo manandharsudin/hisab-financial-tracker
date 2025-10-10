@@ -207,16 +207,21 @@ if (!defined('ABSPATH')) {
     // Check if transaction has details
     $database = new HisabDatabase();
     $transaction_details = $database->get_transaction_details($edit_transaction->id);
-    if (!empty($transaction_details)): 
     ?>
     <div class="hisab-edit-details-section" style="margin-top: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
         <h3><?php _e('Transaction Details', 'hisab-financial-tracker'); ?></h3>
-        <p><?php _e('This transaction has itemized details. You can view or update them.', 'hisab-financial-tracker'); ?></p>
-        <button type="button" class="button button-secondary" id="edit-transaction-details" data-transaction-id="<?php echo $edit_transaction->id; ?>">
-            <?php _e('Update Transaction Details', 'hisab-financial-tracker'); ?>
-        </button>
+        <?php if (!empty($transaction_details)): ?>
+            <p><?php _e('This transaction has itemized details. You can view or update them.', 'hisab-financial-tracker'); ?></p>
+            <button type="button" class="button button-secondary" id="edit-transaction-details" data-transaction-id="<?php echo $edit_transaction->id; ?>">
+                <?php _e('Update Transaction Details', 'hisab-financial-tracker'); ?>
+            </button>
+        <?php else: ?>
+            <p><?php _e('This transaction does not have itemized details. You can add them to break down the transaction into specific items.', 'hisab-financial-tracker'); ?></p>
+            <button type="button" class="button button-primary" id="add-transaction-details" data-transaction-id="<?php echo $edit_transaction->id; ?>">
+                <?php _e('Add Transaction Details', 'hisab-financial-tracker'); ?>
+            </button>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
     <?php endif; ?>
     
     <div id="hisab-form-messages"></div>

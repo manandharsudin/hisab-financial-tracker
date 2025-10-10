@@ -40,6 +40,8 @@ class HisabLogger {
     const ACTION_LOGIN = 'LOGIN';
     const ACTION_LOGOUT = 'LOGOUT';
     const ACTION_SETTINGS_UPDATE = 'SETTINGS_UPDATE';
+    const ACTION_TRANSACTION_DETAILS_SAVE = 'TRANSACTION_DETAILS_SAVE';
+    const ACTION_TRANSACTION_DETAILS_DELETE = 'TRANSACTION_DETAILS_DELETE';
     
     public function __construct() {
         $upload_dir = wp_upload_dir();
