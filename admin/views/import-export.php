@@ -54,6 +54,7 @@ if (!defined('ABSPATH')) {
         <div class="hisab-import-section">
             <h2><?php _e('Import Data', 'hisab-financial-tracker'); ?></h2>
             <p><?php _e('Import financial data from a previously exported JSON file.', 'hisab-financial-tracker'); ?></p>
+            <p class="description"><strong><?php _e('Note:', 'hisab-financial-tracker'); ?></strong> <?php _e('Existing records with the same ID and date will be automatically updated. New records will be added.', 'hisab-financial-tracker'); ?></p>
             
             <div class="hisab-import-options">
                 <form id="hisab-import-form" class="hisab-form" enctype="multipart/form-data">
@@ -95,19 +96,6 @@ if (!defined('ABSPATH')) {
                         </div>
                     </div>
                     
-                    <div class="hisab-form-row">
-                        <h3><?php _e('Duplicate Handling', 'hisab-financial-tracker'); ?></h3>
-                        <div class="hisab-import-options">
-                            <label>
-                                <input type="radio" name="duplicate_handling" value="skip" checked>
-                                <?php _e('Skip Duplicates', 'hisab-financial-tracker'); ?>
-                            </label>
-                            <label>
-                                <input type="radio" name="duplicate_handling" value="update">
-                                <?php _e('Update Existing', 'hisab-financial-tracker'); ?>
-                            </label>
-                        </div>
-                    </div>
                     
                     <div class="hisab-form-row">
                         <button type="submit" class="button button-primary hisab-import-btn">

@@ -74,8 +74,7 @@ class HisabImportExport {
             'import_transactions' => true,
             'import_bank_transactions' => true,
             'import_transaction_details' => true,
-            'skip_duplicates' => true,
-            'update_existing' => false
+            'auto_handle_duplicates' => true  // Automatically handle duplicates
         );
         
         $options = wp_parse_args($options, $default_options);
@@ -243,36 +242,47 @@ class HisabImportExport {
         foreach ($categories as $category) {
             try {
                 // Check if category already exists
-                if ($options['skip_duplicates'] && $this->category_exists($category, $existing_categories)) {
-                    $results['skipped']++;
-                    continue;
-                }
+                $existing_category = $this->find_existing_category($category, $existing_categories);
                 
-                // Prepare category data
-                $category_data = array(
-                    'name' => sanitize_text_field($category['name']),
-                    'type' => sanitize_text_field($category['type']),
-                    'color' => sanitize_hex_color($category['color']),
-                    'created_at' => current_time('mysql')
-                );
-                
-                // Insert category
-                $result = $wpdb->insert(
-                    $wpdb->prefix . 'hisab_categories',
-                    $category_data,
-                    array('%s', '%s', '%s', '%s')
-                );
-                
-                if ($result !== false) {
-                    $results['imported']++;
+                if ($existing_category) {
+                    // Update existing category
+                    $category_data = array(
+                        'name' => sanitize_text_field($category['name']),
+                        'type' => sanitize_text_field($category['type']),
+                        'color' => sanitize_hex_color($category['color']),
+                        'updated_at' => current_time('mysql')
+                    );
+                    
+                    $result = $wpdb->update(
+                        $wpdb->prefix . 'hisab_categories',
+                        $category_data,
+                        array('id' => $existing_category['id']),
+                        array('%s', '%s', '%s', '%s'),
+                        array('%d')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $results['errors'][] = 'Failed to update category: ' . $category['name'] . ' - ' . $wpdb->last_error;
+                    }
                 } else {
-                    // Check if it's a duplicate key error
-                    if ($wpdb->last_error && strpos($wpdb->last_error, 'Duplicate entry') !== false) {
-                        if ($options['skip_duplicates']) {
-                            $results['skipped']++;
-                        } else {
-                            $results['errors'][] = 'Category already exists: ' . $category['name'];
-                        }
+                    // Insert new category
+                    $category_data = array(
+                        'name' => sanitize_text_field($category['name']),
+                        'type' => sanitize_text_field($category['type']),
+                        'color' => sanitize_hex_color($category['color']),
+                        'created_at' => current_time('mysql')
+                    );
+                    
+                    $result = $wpdb->insert(
+                        $wpdb->prefix . 'hisab_categories',
+                        $category_data,
+                        array('%s', '%s', '%s', '%s')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
                     } else {
                         $results['errors'][] = 'Failed to import category: ' . $category['name'] . ' - ' . $wpdb->last_error;
                     }
@@ -298,35 +308,45 @@ class HisabImportExport {
         foreach ($owners as $owner) {
             try {
                 // Check if owner already exists
-                if ($options['skip_duplicates'] && $this->owner_exists($owner, $existing_owners)) {
-                    $results['skipped']++;
-                    continue;
-                }
+                $existing_owner = $this->find_existing_owner($owner, $existing_owners);
                 
-                // Prepare owner data
-                $owner_data = array(
-                    'name' => sanitize_text_field($owner['name']),
-                    'color' => sanitize_hex_color($owner['color']),
-                    'created_at' => current_time('mysql')
-                );
-                
-                // Insert owner
-                $result = $wpdb->insert(
-                    $wpdb->prefix . 'hisab_owners',
-                    $owner_data,
-                    array('%s', '%s', '%s')
-                );
-                
-                if ($result !== false) {
-                    $results['imported']++;
+                if ($existing_owner) {
+                    // Update existing owner
+                    $owner_data = array(
+                        'name' => sanitize_text_field($owner['name']),
+                        'color' => sanitize_hex_color($owner['color']),
+                        'updated_at' => current_time('mysql')
+                    );
+                    
+                    $result = $wpdb->update(
+                        $wpdb->prefix . 'hisab_owners',
+                        $owner_data,
+                        array('id' => $existing_owner['id']),
+                        array('%s', '%s', '%s'),
+                        array('%d')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $results['errors'][] = 'Failed to update owner: ' . $owner['name'] . ' - ' . $wpdb->last_error;
+                    }
                 } else {
-                    // Check if it's a duplicate key error
-                    if ($wpdb->last_error && strpos($wpdb->last_error, 'Duplicate entry') !== false) {
-                        if ($options['skip_duplicates']) {
-                            $results['skipped']++;
-                        } else {
-                            $results['errors'][] = 'Owner already exists: ' . $owner['name'];
-                        }
+                    // Insert new owner
+                    $owner_data = array(
+                        'name' => sanitize_text_field($owner['name']),
+                        'color' => sanitize_hex_color($owner['color']),
+                        'created_at' => current_time('mysql')
+                    );
+                    
+                    $result = $wpdb->insert(
+                        $wpdb->prefix . 'hisab_owners',
+                        $owner_data,
+                        array('%s', '%s', '%s')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
                     } else {
                         $results['errors'][] = 'Failed to import owner: ' . $owner['name'] . ' - ' . $wpdb->last_error;
                     }
@@ -352,36 +372,61 @@ class HisabImportExport {
         foreach ($bank_accounts as $account) {
             try {
                 // Check if account already exists
-                if ($options['skip_duplicates'] && $this->bank_account_exists($account, $existing_accounts)) {
-                    $results['skipped']++;
-                    continue;
-                }
+                $existing_account = $this->find_existing_bank_account($account, $existing_accounts);
                 
-                // Prepare account data
-                $account_data = array(
-                    'account_name' => sanitize_text_field($account['account_name']),
-                    'bank_name' => sanitize_text_field($account['bank_name']),
-                    'account_number' => sanitize_text_field($account['account_number']),
-                    'account_type' => sanitize_text_field($account['account_type']),
-                    'currency' => sanitize_text_field($account['currency']),
-                    'initial_balance' => floatval($account['initial_balance']),
-                    'current_balance' => floatval($account['current_balance']),
-                    'is_active' => intval($account['is_active']),
-                    'user_id' => get_current_user_id(),
-                    'created_at' => current_time('mysql')
-                );
-                
-                // Insert bank account
-                $result = $wpdb->insert(
-                    $wpdb->prefix . 'hisab_bank_accounts',
-                    $account_data,
-                    array('%s', '%s', '%s', '%s', '%s', '%f', '%f', '%d', '%d', '%s')
-                );
-                
-                if ($result !== false) {
-                    $results['imported']++;
+                if ($existing_account) {
+                    // Update existing bank account
+                    $account_data = array(
+                        'account_name' => sanitize_text_field($account['account_name']),
+                        'bank_name' => sanitize_text_field($account['bank_name']),
+                        'account_number' => sanitize_text_field($account['account_number']),
+                        'account_type' => sanitize_text_field($account['account_type']),
+                        'currency' => sanitize_text_field($account['currency']),
+                        'initial_balance' => floatval($account['initial_balance']),
+                        'current_balance' => floatval($account['current_balance']),
+                        'is_active' => intval($account['is_active']),
+                        'updated_at' => current_time('mysql')
+                    );
+                    
+                    $result = $wpdb->update(
+                        $wpdb->prefix . 'hisab_bank_accounts',
+                        $account_data,
+                        array('id' => $existing_account['id']),
+                        array('%s', '%s', '%s', '%s', '%s', '%f', '%f', '%d', '%s'),
+                        array('%d')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $results['errors'][] = 'Failed to update bank account: ' . $account['account_name'] . ' - ' . $wpdb->last_error;
+                    }
                 } else {
-                    $results['errors'][] = 'Failed to import bank account: ' . $account['account_name'];
+                    // Insert new bank account
+                    $account_data = array(
+                        'account_name' => sanitize_text_field($account['account_name']),
+                        'bank_name' => sanitize_text_field($account['bank_name']),
+                        'account_number' => sanitize_text_field($account['account_number']),
+                        'account_type' => sanitize_text_field($account['account_type']),
+                        'currency' => sanitize_text_field($account['currency']),
+                        'initial_balance' => floatval($account['initial_balance']),
+                        'current_balance' => floatval($account['current_balance']),
+                        'is_active' => intval($account['is_active']),
+                        'user_id' => get_current_user_id(),
+                        'created_at' => current_time('mysql')
+                    );
+                    
+                    $result = $wpdb->insert(
+                        $wpdb->prefix . 'hisab_bank_accounts',
+                        $account_data,
+                        array('%s', '%s', '%s', '%s', '%s', '%f', '%f', '%d', '%d', '%s')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $results['errors'][] = 'Failed to import bank account: ' . $account['account_name'] . ' - ' . $wpdb->last_error;
+                    }
                 }
                 
             } catch (Exception $e) {
@@ -407,10 +452,7 @@ class HisabImportExport {
         foreach ($transactions as $transaction) {
             try {
                 // Check if transaction already exists
-                if ($options['skip_duplicates'] && $this->transaction_exists($transaction, $existing_transactions)) {
-                    $results['skipped']++;
-                    continue;
-                }
+                $existing_transaction = $this->find_existing_transaction($transaction, $existing_transactions);
                 
                 // Map category ID
                 $category_id = null;
@@ -445,21 +487,41 @@ class HisabImportExport {
                     'transaction_date' => sanitize_text_field($transaction['transaction_date']),
                     'bs_year' => intval($transaction['bs_year']),
                     'bs_month' => intval($transaction['bs_month']),
-                    'bs_day' => intval($transaction['bs_day']),
-                    'created_at' => current_time('mysql')
+                    'bs_day' => intval($transaction['bs_day'])
                 );
                 
-                // Insert transaction
-                $result = $wpdb->insert(
-                    $wpdb->prefix . 'hisab_transactions',
-                    $transaction_data,
-                    array('%s', '%f', '%s', '%d', '%d', '%s', '%d', '%s', '%f', '%f', '%s', '%d', '%d', '%d', '%s')
-                );
-                
-                if ($result !== false) {
-                    $results['imported']++;
+                if ($existing_transaction) {
+                    // Update existing transaction
+                    $transaction_data['updated_at'] = current_time('mysql');
+                    
+                    $result = $wpdb->update(
+                        $wpdb->prefix . 'hisab_transactions',
+                        $transaction_data,
+                        array('id' => $existing_transaction['id']),
+                        array('%s', '%f', '%s', '%d', '%d', '%s', '%d', '%s', '%f', '%f', '%s', '%d', '%d', '%d', '%s'),
+                        array('%d')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $results['errors'][] = 'Failed to update transaction: ' . $transaction['description'] . ' - ' . $wpdb->last_error;
+                    }
                 } else {
-                    $results['errors'][] = 'Failed to import transaction: ' . $transaction['description'];
+                    // Insert new transaction
+                    $transaction_data['created_at'] = current_time('mysql');
+                    
+                    $result = $wpdb->insert(
+                        $wpdb->prefix . 'hisab_transactions',
+                        $transaction_data,
+                        array('%s', '%f', '%s', '%d', '%d', '%s', '%d', '%s', '%f', '%f', '%s', '%d', '%d', '%d', '%s')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $results['errors'][] = 'Failed to import transaction: ' . $transaction['description'] . ' - ' . $wpdb->last_error;
+                    }
                 }
                 
             } catch (Exception $e) {
@@ -483,10 +545,7 @@ class HisabImportExport {
         foreach ($bank_transactions as $transaction) {
             try {
                 // Check if bank transaction already exists
-                if ($options['skip_duplicates'] && $this->bank_transaction_exists($transaction, $existing_bank_transactions)) {
-                    $results['skipped']++;
-                    continue;
-                }
+                $existing_transaction = $this->find_existing_bank_transaction($transaction, $existing_bank_transactions);
                 
                 // Map bank account ID
                 $account_id = $this->find_bank_account_id($transaction['account_name'], $bank_account_map);
@@ -505,21 +564,41 @@ class HisabImportExport {
                     'description' => sanitize_textarea_field($transaction['description']),
                     'reference_number' => sanitize_text_field($transaction['reference_number']),
                     'phone_pay_reference' => sanitize_text_field($transaction['phone_pay_reference']),
-                    'transaction_date' => sanitize_text_field($transaction['transaction_date']),
-                    'created_at' => current_time('mysql')
+                    'transaction_date' => sanitize_text_field($transaction['transaction_date'])
                 );
                 
-                // Insert bank transaction
-                $result = $wpdb->insert(
-                    $wpdb->prefix . 'hisab_bank_transactions',
-                    $transaction_data,
-                    array('%d', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s')
-                );
-                
-                if ($result !== false) {
-                    $results['imported']++;
+                if ($existing_transaction) {
+                    // Update existing bank transaction
+                    $transaction_data['updated_at'] = current_time('mysql');
+                    
+                    $result = $wpdb->update(
+                        $wpdb->prefix . 'hisab_bank_transactions',
+                        $transaction_data,
+                        array('id' => $existing_transaction['id']),
+                        array('%d', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s'),
+                        array('%d')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $results['errors'][] = 'Failed to update bank transaction: ' . $transaction['description'] . ' - ' . $wpdb->last_error;
+                    }
                 } else {
-                    $results['errors'][] = 'Failed to import bank transaction: ' . $transaction['description'];
+                    // Insert new bank transaction
+                    $transaction_data['created_at'] = current_time('mysql');
+                    
+                    $result = $wpdb->insert(
+                        $wpdb->prefix . 'hisab_bank_transactions',
+                        $transaction_data,
+                        array('%d', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $results['errors'][] = 'Failed to import bank transaction: ' . $transaction['description'] . ' - ' . $wpdb->last_error;
+                    }
                 }
                 
             } catch (Exception $e) {
@@ -589,84 +668,104 @@ class HisabImportExport {
     
     private function get_existing_categories() {
         global $wpdb;
-        $sql = "SELECT name, type FROM {$wpdb->prefix}hisab_categories";
+        $sql = "SELECT id, name, type FROM {$wpdb->prefix}hisab_categories";
         return $wpdb->get_results($sql, ARRAY_A);
     }
     
     private function get_existing_owners() {
         global $wpdb;
-        $sql = "SELECT name FROM {$wpdb->prefix}hisab_owners";
+        $sql = "SELECT id, name FROM {$wpdb->prefix}hisab_owners";
         return $wpdb->get_results($sql, ARRAY_A);
     }
     
     private function get_existing_bank_accounts() {
         global $wpdb;
-        $sql = "SELECT account_name, bank_name FROM {$wpdb->prefix}hisab_bank_accounts";
+        $sql = "SELECT id, account_name, bank_name FROM {$wpdb->prefix}hisab_bank_accounts";
         return $wpdb->get_results($sql, ARRAY_A);
     }
     
     private function get_existing_transactions() {
         global $wpdb;
-        $sql = "SELECT description, amount, transaction_date, type FROM {$wpdb->prefix}hisab_transactions";
+        $sql = "SELECT id, description, amount, transaction_date, type FROM {$wpdb->prefix}hisab_transactions";
         return $wpdb->get_results($sql, ARRAY_A);
     }
     
     private function get_existing_bank_transactions() {
         global $wpdb;
-        $sql = "SELECT description, amount, transaction_date, transaction_type FROM {$wpdb->prefix}hisab_bank_transactions";
+        $sql = "SELECT id, description, amount, transaction_date, transaction_type FROM {$wpdb->prefix}hisab_bank_transactions";
         return $wpdb->get_results($sql, ARRAY_A);
     }
     
-    private function category_exists($category, $existing) {
+    private function find_existing_category($category, $existing) {
         foreach ($existing as $existing_category) {
             if ($existing_category['name'] === $category['name'] && $existing_category['type'] === $category['type']) {
-                return true;
+                return $existing_category;
             }
         }
-        return false;
+        return null;
+    }
+    
+    private function category_exists($category, $existing) {
+        return $this->find_existing_category($category, $existing) !== null;
+    }
+    
+    private function find_existing_owner($owner, $existing) {
+        foreach ($existing as $existing_owner) {
+            if ($existing_owner['name'] === $owner['name']) {
+                return $existing_owner;
+            }
+        }
+        return null;
     }
     
     private function owner_exists($owner, $existing) {
-        foreach ($existing as $existing_owner) {
-            if ($existing_owner['name'] === $owner['name']) {
-                return true;
-            }
-        }
-        return false;
+        return $this->find_existing_owner($owner, $existing) !== null;
     }
     
-    private function bank_account_exists($account, $existing) {
+    private function find_existing_bank_account($account, $existing) {
         foreach ($existing as $existing_account) {
             if ($existing_account['account_name'] === $account['account_name'] && 
                 $existing_account['bank_name'] === $account['bank_name']) {
-                return true;
+                return $existing_account;
             }
         }
-        return false;
+        return null;
     }
     
-    private function transaction_exists($transaction, $existing) {
+    private function bank_account_exists($account, $existing) {
+        return $this->find_existing_bank_account($account, $existing) !== null;
+    }
+    
+    private function find_existing_transaction($transaction, $existing) {
         foreach ($existing as $existing_transaction) {
             if ($existing_transaction['description'] === $transaction['description'] && 
                 $existing_transaction['amount'] == $transaction['amount'] && 
                 $existing_transaction['transaction_date'] === $transaction['transaction_date'] &&
                 $existing_transaction['type'] === $transaction['type']) {
-                return true;
+                return $existing_transaction;
             }
         }
-        return false;
+        return null;
     }
     
-    private function bank_transaction_exists($transaction, $existing) {
+    private function transaction_exists($transaction, $existing) {
+        return $this->find_existing_transaction($transaction, $existing) !== null;
+    }
+    
+    private function find_existing_bank_transaction($transaction, $existing) {
         foreach ($existing as $existing_transaction) {
             if ($existing_transaction['description'] === $transaction['description'] && 
                 $existing_transaction['amount'] == $transaction['amount'] && 
                 $existing_transaction['transaction_date'] === $transaction['transaction_date'] &&
                 $existing_transaction['transaction_type'] === $transaction['transaction_type']) {
-                return true;
+                return $existing_transaction;
             }
         }
-        return false;
+        return null;
+    }
+    
+    private function bank_transaction_exists($transaction, $existing) {
+        return $this->find_existing_bank_transaction($transaction, $existing) !== null;
     }
     
     private function get_category_map() {
@@ -748,3 +847,7 @@ class HisabImportExport {
         return $transaction_id ? intval($transaction_id) : null;
     }
 }
+
+
+
+

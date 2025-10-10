@@ -394,10 +394,6 @@ jQuery(document).ready(function($) {
             formData.append($(this).attr('name'), $(this).val());
         });
         
-        // Add radio buttons
-        formData.append('skip_duplicates', $form.find('input[name="duplicate_handling"]:checked').val() === 'skip' ? '1' : '0');
-        formData.append('update_existing', $form.find('input[name="duplicate_handling"]:checked').val() === 'update' ? '1' : '0');
-        
         $.ajax({
             url: hisab_ajax.ajax_url,
             type: 'POST',
