@@ -739,11 +739,66 @@ jQuery(document).ready(function($) {
                 bsYearSelect.prop('required', false);
                 bsMonthSelect.prop('required', false);
                 bsDaySelect.prop('required', false);
+            }
+        }
+        
+        function convertDateOnSwitch(calendarType) {
+            const adDateInput = $('#transaction-date');
+            const bsYearSelect = $('#bs-year');
+            const bsMonthSelect = $('#bs-month');
+            const bsDaySelect = $('#bs-day');
+            
+            if (calendarType === 'bs') {
+                // Converting from AD to BS
+                const adDate = adDateInput.val();
+                if (adDate) {
+                    $.ajax({
+                        url: hisab_ajax.ajax_url,
+                        type: 'POST',
+                        data: {
+                            action: 'hisab_convert_ad_to_bs',
+                            ad_date: adDate,
+                            nonce: hisab_ajax.nonce
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                bsYearSelect.val(response.data.year);
+                                bsMonthSelect.val(response.data.month);
+                                bsDaySelect.val(response.data.day);
+                            }
+                        },
+                        error: function() {
+                            console.log('Date conversion failed');
+                        }
+                    });
+                }
+            } else {
+                // Converting from BS to AD
+                const bsYear = bsYearSelect.val();
+                const bsMonth = bsMonthSelect.val();
+                const bsDay = bsDaySelect.val();
                 
-                // Clear BS date fields when using AD calendar
-                bsYearSelect.val('');
-                bsMonthSelect.val('');
-                bsDaySelect.val('');
+                if (bsYear && bsMonth && bsDay) {
+                    $.ajax({
+                        url: hisab_ajax.ajax_url,
+                        type: 'POST',
+                        data: {
+                            action: 'hisab_convert_bs_to_ad',
+                            bs_year: bsYear,
+                            bs_month: bsMonth,
+                            bs_day: bsDay,
+                            nonce: hisab_ajax.nonce
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                adDateInput.val(response.data.ad_date);
+                            }
+                        },
+                        error: function() {
+                            console.log('Date conversion failed');
+                        }
+                    });
+                }
             }
         }
         
@@ -753,7 +808,11 @@ jQuery(document).ready(function($) {
         
         // Handle calendar type switching
         $('#date-calendar-type').on('change', function() {
-            switchCalendarType($(this).val());
+            const calendarType = $(this).val();
+            switchCalendarType(calendarType);
+            
+            // Convert dates when switching calendar types
+            convertDateOnSwitch(calendarType);
         });
         
         // Update categories based on transaction type
@@ -1132,18 +1191,52 @@ jQuery(document).ready(function($) {
             openDetailsModal();
         });
         
+        // Initialize with default calendar type first
+        const defaultCalendarType = $('#date-calendar-type').data('default') || 'ad';
+        $('#date-calendar-type').val(defaultCalendarType);
+        switchCalendarType(defaultCalendarType);
+        
         // Initialize edit mode if editing
         const editTransactionId = $('#edit-transaction-id').val();
         if (editTransactionId) {
-            // Set the correct calendar type based on BS date data
-            if ($('#bs-year').val() && $('#bs-month').val() && $('#bs-day').val()) {
+            // Check if we have BS date data and respect default calendar type
+            const hasBSDate = $('#bs-year').val() && $('#bs-month').val() && $('#bs-day').val();
+            const hasADDate = $('#transaction-date').val();
+            
+            // If default is BS and we have BS data, use BS
+            // If default is AD or we don't have BS data, use AD
+            if (defaultCalendarType === 'bs' && hasBSDate) {
                 $('#date-calendar-type').val('bs');
-                $('#ad-date-row').hide();
-                $('#bs-date-row').show();
+                switchCalendarType('bs');
             } else {
                 $('#date-calendar-type').val('ad');
-                $('#ad-date-row').show();
-                $('#bs-date-row').hide();
+                switchCalendarType('ad');
+                
+                // If we have BS data but default is AD, convert BS to AD
+                if (hasBSDate && !hasADDate) {
+                    const bsYear = $('#bs-year').val();
+                    const bsMonth = $('#bs-month').val();
+                    const bsDay = $('#bs-day').val();
+                    
+                    if (bsYear && bsMonth && bsDay) {
+                        $.ajax({
+                            url: hisab_ajax.ajax_url,
+                            type: 'POST',
+                            data: {
+                                action: 'hisab_convert_bs_to_ad',
+                                bs_year: bsYear,
+                                bs_month: bsMonth,
+                                bs_day: bsDay,
+                                nonce: hisab_ajax.nonce
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    $('#transaction-date').val(response.data.ad_date);
+                                }
+                            }
+                        });
+                    }
+                }
             }
             
             // Update categories based on transaction type and select the correct one
@@ -1167,10 +1260,6 @@ jQuery(document).ready(function($) {
                 }
             }, 100);
         }
-        
-        // Initialize with default calendar type
-        const defaultCalendarType = $('#date-calendar-type').data('default') || 'ad';
-        switchCalendarType(defaultCalendarType);
     }
     
     // Initialize transaction form if on the add transaction page
