@@ -48,6 +48,7 @@ class HisabFinancialTracker {
     private function include_files() {
         require_once HISAB_PLUGIN_PATH . 'includes/class-database.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-admin.php';
+        require_once HISAB_PLUGIN_PATH . 'includes/class-logger.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-frontend.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-analytics.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-projection.php';

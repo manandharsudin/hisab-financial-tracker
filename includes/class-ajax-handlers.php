@@ -82,6 +82,25 @@ class HisabAjaxHandlers {
         $database = new HisabDatabase();
         $result = $database->save_transaction($_POST);
         
+        // Log transaction creation/update
+        if (class_exists('HisabLogger')) {
+            $logger = new HisabLogger();
+            $action = isset($_POST['transaction_id']) && $_POST['transaction_id'] > 0 ? 
+                HisabLogger::ACTION_TRANSACTION_UPDATE : HisabLogger::ACTION_TRANSACTION_CREATE;
+            
+            if ($result['success']) {
+                $logger->info($action, 'Transaction saved successfully', array(
+                    'transaction_id' => $result['transaction_id'] ?? null,
+                    'type' => $_POST['type'],
+                    'amount' => $_POST['amount'],
+                    'description' => $_POST['description'],
+                    'category_id' => $_POST['category_id']
+                ));
+            } else {
+                $logger->error($action, 'Transaction save failed: ' . $result['message'], $_POST);
+            }
+        }
+        
         wp_send_json($result);
     }
     
@@ -121,7 +140,26 @@ class HisabAjaxHandlers {
         }
         
         $database = new HisabDatabase();
+        
+        // Get transaction data before deletion for logging
+        $transaction_data = $database->get_transaction($transaction_id);
+        
         $result = $database->delete_transaction($transaction_id);
+        
+        // Log transaction deletion
+        if (class_exists('HisabLogger')) {
+            $logger = new HisabLogger();
+            if ($result) {
+                $logger->info(HisabLogger::ACTION_TRANSACTION_DELETE, 'Transaction deleted successfully', array(
+                    'transaction_id' => $transaction_id,
+                    'deleted_transaction' => $transaction_data
+                ));
+            } else {
+                $logger->error(HisabLogger::ACTION_TRANSACTION_DELETE, 'Transaction deletion failed', array(
+                    'transaction_id' => $transaction_id
+                ));
+            }
+        }
         
         if ($result) {
             wp_send_json_success(array('message' => __('Transaction deleted successfully', 'hisab-financial-tracker')));
@@ -290,11 +328,26 @@ class HisabAjaxHandlers {
             $import_export = new HisabImportExport();
             $data = $import_export->export_all_data($export_type);
             
-            // Export successful
+            // Log export operation
+            if (class_exists('HisabLogger')) {
+                $logger = new HisabLogger();
+                $logger->info(HisabLogger::ACTION_EXPORT, 'Data exported successfully', array(
+                    'export_type' => $export_type,
+                    'data_count' => array_sum(array_map('count', $data))
+                ));
+            }
             
             wp_send_json(array('success' => true, 'data' => $data));
             
         } catch (Exception $e) {
+            // Log export error
+            if (class_exists('HisabLogger')) {
+                $logger = new HisabLogger();
+                $logger->error(HisabLogger::ACTION_EXPORT, 'Export failed: ' . $e->getMessage(), array(
+                    'export_type' => $export_type
+                ));
+            }
+            
             error_log('Export error: ' . $e->getMessage());
             wp_send_json(array('success' => false, 'message' => 'Export failed: ' . $e->getMessage()));
         }
@@ -343,9 +396,34 @@ class HisabAjaxHandlers {
         try {
             $import_export = new HisabImportExport();
             $results = $import_export->import_from_json($json_data, $options);
+            
+            // Log import operation
+            if (class_exists('HisabLogger')) {
+                $logger = new HisabLogger();
+                if ($results['success']) {
+                    $logger->info(HisabLogger::ACTION_IMPORT, 'Data imported successfully', array(
+                        'import_options' => $options,
+                        'results' => $results
+                    ));
+                } else {
+                    $logger->error(HisabLogger::ACTION_IMPORT, 'Import failed', array(
+                        'import_options' => $options,
+                        'results' => $results
+                    ));
+                }
+            }
+            
             wp_send_json($results);
             
         } catch (Exception $e) {
+            // Log import error
+            if (class_exists('HisabLogger')) {
+                $logger = new HisabLogger();
+                $logger->error(HisabLogger::ACTION_IMPORT, 'Import failed: ' . $e->getMessage(), array(
+                    'import_options' => $options
+                ));
+            }
+            
             wp_send_json(array('success' => false, 'message' => 'Import failed: ' . $e->getMessage()));
         }
     }
@@ -382,6 +460,24 @@ class HisabAjaxHandlers {
         
         $database = new HisabDatabase();
         $result = $database->save_category($_POST);
+        
+        // Log category creation/update
+        if (class_exists('HisabLogger')) {
+            $logger = new HisabLogger();
+            $action = isset($_POST['category_id']) && $_POST['category_id'] > 0 ? 
+                HisabLogger::ACTION_CATEGORY_UPDATE : HisabLogger::ACTION_CATEGORY_CREATE;
+            
+            if ($result['success']) {
+                $logger->info($action, 'Category saved successfully', array(
+                    'category_id' => $result['category_id'] ?? null,
+                    'name' => $_POST['name'],
+                    'type' => $_POST['type'],
+                    'color' => $_POST['color']
+                ));
+            } else {
+                $logger->error($action, 'Category save failed: ' . $result['message'], $_POST);
+            }
+        }
         
         wp_send_json($result);
     }
@@ -655,6 +751,21 @@ class HisabAjaxHandlers {
             wp_send_json(array('success' => false, 'message' => $result->get_error_message()));
         }
         
+        // Log bank account creation/update
+        if (class_exists('HisabLogger')) {
+            $logger = new HisabLogger();
+            $action = $account_id > 0 ? 
+                HisabLogger::ACTION_BANK_ACCOUNT_UPDATE : HisabLogger::ACTION_BANK_ACCOUNT_CREATE;
+            
+            $logger->info($action, 'Bank account saved successfully', array(
+                'account_id' => $result,
+                'account_name' => $data['account_name'],
+                'bank_name' => $data['bank_name'],
+                'account_type' => $data['account_type'],
+                'currency' => $data['currency']
+            ));
+        }
+        
         wp_send_json(array('success' => true, 'message' => 'Bank account saved successfully', 'account_id' => $result));
     }
     
@@ -764,6 +875,22 @@ class HisabAjaxHandlers {
         
         if (is_wp_error($result)) {
             wp_send_json(array('success' => false, 'message' => $result->get_error_message()));
+        }
+        
+        // Log bank transaction creation/update
+        if (class_exists('HisabLogger')) {
+            $logger = new HisabLogger();
+            $action = $transaction_id > 0 ? 
+                HisabLogger::ACTION_BANK_TRANSACTION_UPDATE : HisabLogger::ACTION_BANK_TRANSACTION_CREATE;
+            
+            $logger->info($action, 'Bank transaction saved successfully', array(
+                'transaction_id' => $result,
+                'account_id' => $data['account_id'],
+                'transaction_type' => $data['transaction_type'],
+                'amount' => $data['amount'],
+                'currency' => $data['currency'],
+                'description' => $data['description']
+            ));
         }
         
         wp_send_json(array('success' => true, 'message' => 'Bank transaction saved successfully', 'transaction_id' => $result));

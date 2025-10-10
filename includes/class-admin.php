@@ -65,12 +65,29 @@ class HisabAdmin {
     }
     
     public function render_settings() {
-        $default_calendar = get_option('hisab_default_calendar', 'ad');
-        $show_dual_dates = get_option('hisab_show_dual_dates', 1);
-        
+        // Process form submission first
         if (isset($_POST['save_settings'])) {
             $this->save_settings();
         }
+        
+        // Show success message if settings were just saved
+        if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
+            echo '<div class="notice notice-success is-dismissible"><p><strong>Settings saved successfully!</strong></p></div>';
+        }
+        
+        // Load settings after processing (to show updated values)
+        $default_calendar = get_option('hisab_default_calendar', 'ad');
+        $show_dual_dates = get_option('hisab_show_dual_dates', 1);
+        $enable_logging = get_option('hisab_enable_logging', false);
+        $log_actions = get_option('hisab_log_actions', array(
+            'TRANSACTION_CREATE', 'TRANSACTION_UPDATE', 'TRANSACTION_DELETE',
+            'BANK_TRANSACTION_CREATE', 'BANK_TRANSACTION_UPDATE', 'BANK_TRANSACTION_DELETE',
+            'BANK_ACCOUNT_CREATE', 'BANK_ACCOUNT_UPDATE', 'BANK_ACCOUNT_DELETE',
+            'CATEGORY_CREATE', 'CATEGORY_UPDATE', 'CATEGORY_DELETE',
+            'OWNER_CREATE', 'OWNER_UPDATE', 'OWNER_DELETE',
+            'IMPORT', 'EXPORT', 'SETTINGS_UPDATE'
+        ));
+        $log_retention_days = get_option('hisab_log_retention_days', 30);
         
         include HISAB_PLUGIN_PATH . 'admin/views/settings.php';
     }
@@ -80,12 +97,29 @@ class HisabAdmin {
             wp_die('Security check failed');
         }
         
+        // Save basic settings
         update_option('hisab_default_calendar', sanitize_text_field($_POST['default_calendar']));
         update_option('hisab_show_dual_dates', isset($_POST['show_dual_dates']) ? 1 : 0);
         
-        add_action('admin_notices', function() {
-            echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
-        });
+        // Save logging settings
+        update_option('hisab_enable_logging', isset($_POST['enable_logging']) ? 1 : 0);
+        update_option('hisab_log_actions', isset($_POST['log_actions']) ? array_map('sanitize_text_field', $_POST['log_actions']) : array());
+        update_option('hisab_log_retention_days', intval($_POST['log_retention_days']));
+        
+        // Log settings update if logging is enabled
+        if (class_exists('HisabLogger')) {
+            $logger = new HisabLogger();
+            $logger->info(HisabLogger::ACTION_SETTINGS_UPDATE, 'Settings updated', array(
+                'default_calendar' => sanitize_text_field($_POST['default_calendar']),
+                'show_dual_dates' => isset($_POST['show_dual_dates']) ? 1 : 0,
+                'enable_logging' => isset($_POST['enable_logging']) ? 1 : 0,
+                'log_actions' => isset($_POST['log_actions']) ? $_POST['log_actions'] : array(),
+                'log_retention_days' => intval($_POST['log_retention_days'])
+            ));
+        }
+        
+        // Set a flag to show success message
+        $_GET['settings-updated'] = 'true';
     }
     
     public function render_categories() {
