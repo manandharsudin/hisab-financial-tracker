@@ -617,6 +617,7 @@ class HisabImportExport {
         
         $results = array('imported' => 0, 'skipped' => 0, 'errors' => array());
         $transaction_map = $this->get_transaction_map();
+        $existing_details = $this->get_existing_transaction_details();
         
         foreach ($details as $detail) {
             try {
@@ -628,6 +629,8 @@ class HisabImportExport {
                     continue;
                 }
                 
+                // Check if transaction detail already exists
+                $existing_detail = $this->find_existing_transaction_detail($detail, $existing_details, $transaction_id);
                 
                 // Prepare detail data
                 $detail_data = array(
@@ -635,25 +638,49 @@ class HisabImportExport {
                     'item_name' => sanitize_text_field($detail['item_name']),
                     'rate' => floatval($detail['rate']),
                     'quantity' => floatval($detail['quantity']),
-                    'item_total' => floatval($detail['item_total'] ?? $detail['total'] ?? 0),
-                    'created_at' => current_time('mysql')
+                    'item_total' => floatval($detail['item_total'] ?? $detail['total'] ?? 0)
                 );
                 
-                // Insert transaction detail
-                $result = $wpdb->insert(
-                    $wpdb->prefix . 'hisab_transaction_details',
-                    $detail_data,
-                    array('%d', '%s', '%f', '%f', '%f', '%s')
-                );
-                
-                if ($result !== false) {
-                    $results['imported']++;
-                } else {
-                    $error_msg = 'Failed to import transaction detail: ' . $detail['item_name'];
-                    if ($wpdb->last_error) {
-                        $error_msg .= ' - ' . $wpdb->last_error;
+                if ($existing_detail) {
+                    // Update existing transaction detail
+                    $detail_data['updated_at'] = current_time('mysql');
+                    
+                    $result = $wpdb->update(
+                        $wpdb->prefix . 'hisab_transaction_details',
+                        $detail_data,
+                        array('id' => $existing_detail['id']),
+                        array('%d', '%s', '%f', '%f', '%f', '%s'),
+                        array('%d')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $error_msg = 'Failed to update transaction detail: ' . $detail['item_name'];
+                        if ($wpdb->last_error) {
+                            $error_msg .= ' - ' . $wpdb->last_error;
+                        }
+                        $results['errors'][] = $error_msg;
                     }
-                    $results['errors'][] = $error_msg;
+                } else {
+                    // Insert new transaction detail
+                    $detail_data['created_at'] = current_time('mysql');
+                    
+                    $result = $wpdb->insert(
+                        $wpdb->prefix . 'hisab_transaction_details',
+                        $detail_data,
+                        array('%d', '%s', '%f', '%f', '%f', '%s')
+                    );
+                    
+                    if ($result !== false) {
+                        $results['imported']++;
+                    } else {
+                        $error_msg = 'Failed to import transaction detail: ' . $detail['item_name'];
+                        if ($wpdb->last_error) {
+                            $error_msg .= ' - ' . $wpdb->last_error;
+                        }
+                        $results['errors'][] = $error_msg;
+                    }
                 }
                 
             } catch (Exception $e) {
@@ -693,6 +720,12 @@ class HisabImportExport {
     private function get_existing_bank_transactions() {
         global $wpdb;
         $sql = "SELECT id, description, amount, transaction_date, transaction_type FROM {$wpdb->prefix}hisab_bank_transactions";
+        return $wpdb->get_results($sql, ARRAY_A);
+    }
+    
+    private function get_existing_transaction_details() {
+        global $wpdb;
+        $sql = "SELECT id, transaction_id, item_name, rate, quantity, item_total FROM {$wpdb->prefix}hisab_transaction_details";
         return $wpdb->get_results($sql, ARRAY_A);
     }
     
@@ -766,6 +799,22 @@ class HisabImportExport {
     
     private function bank_transaction_exists($transaction, $existing) {
         return $this->find_existing_bank_transaction($transaction, $existing) !== null;
+    }
+    
+    private function find_existing_transaction_detail($detail, $existing, $transaction_id) {
+        foreach ($existing as $existing_detail) {
+            if ($existing_detail['transaction_id'] == $transaction_id &&
+                $existing_detail['item_name'] === $detail['item_name'] &&
+                $existing_detail['rate'] == $detail['rate'] &&
+                $existing_detail['quantity'] == $detail['quantity']) {
+                return $existing_detail;
+            }
+        }
+        return null;
+    }
+    
+    private function transaction_detail_exists($detail, $existing, $transaction_id) {
+        return $this->find_existing_transaction_detail($detail, $existing, $transaction_id) !== null;
     }
     
     private function get_category_map() {
