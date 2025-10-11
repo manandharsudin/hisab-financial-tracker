@@ -562,7 +562,10 @@ class HisabImportExport {
                     'description' => sanitize_textarea_field($transaction['description']),
                     'reference_number' => sanitize_text_field($transaction['reference_number']),
                     'phone_pay_reference' => sanitize_text_field($transaction['phone_pay_reference']),
-                    'transaction_date' => sanitize_text_field($transaction['transaction_date'])
+                    'transaction_date' => sanitize_text_field($transaction['transaction_date']),
+                    'bs_year' => isset($transaction['bs_year']) ? intval($transaction['bs_year']) : null,
+                    'bs_month' => isset($transaction['bs_month']) ? intval($transaction['bs_month']) : null,
+                    'bs_day' => isset($transaction['bs_day']) ? intval($transaction['bs_day']) : null
                 );
                 
                 if ($existing_transaction) {
@@ -573,7 +576,7 @@ class HisabImportExport {
                         $wpdb->prefix . 'hisab_bank_transactions',
                         $transaction_data,
                         array('id' => $existing_transaction['id']),
-                        array('%d', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s'),
+                        array('%d', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%s'),
                         array('%d')
                     );
                     
@@ -589,7 +592,7 @@ class HisabImportExport {
                     $result = $wpdb->insert(
                         $wpdb->prefix . 'hisab_bank_transactions',
                         $transaction_data,
-                        array('%d', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s')
+                        array('%d', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%s')
                     );
                     
                     if ($result !== false) {
