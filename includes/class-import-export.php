@@ -249,15 +249,14 @@ class HisabImportExport {
                     $category_data = array(
                         'name' => sanitize_text_field($category['name']),
                         'type' => sanitize_text_field($category['type']),
-                        'color' => sanitize_hex_color($category['color']),
-                        'updated_at' => current_time('mysql')
+                        'color' => sanitize_hex_color($category['color'])
                     );
                     
                     $result = $wpdb->update(
                         $wpdb->prefix . 'hisab_categories',
                         $category_data,
                         array('id' => $existing_category['id']),
-                        array('%s', '%s', '%s', '%s'),
+                        array('%s', '%s', '%s'),
                         array('%d')
                     );
                     
@@ -314,15 +313,14 @@ class HisabImportExport {
                     // Update existing owner
                     $owner_data = array(
                         'name' => sanitize_text_field($owner['name']),
-                        'color' => sanitize_hex_color($owner['color']),
-                        'updated_at' => current_time('mysql')
+                        'color' => sanitize_hex_color($owner['color'])
                     );
                     
                     $result = $wpdb->update(
                         $wpdb->prefix . 'hisab_owners',
                         $owner_data,
                         array('id' => $existing_owner['id']),
-                        array('%s', '%s', '%s'),
+                        array('%s', '%s'),
                         array('%d')
                     );
                     
@@ -642,14 +640,12 @@ class HisabImportExport {
                 );
                 
                 if ($existing_detail) {
-                    // Update existing transaction detail
-                    $detail_data['updated_at'] = current_time('mysql');
-                    
+                    // Update existing transaction detail                    
                     $result = $wpdb->update(
                         $wpdb->prefix . 'hisab_transaction_details',
                         $detail_data,
                         array('id' => $existing_detail['id']),
-                        array('%d', '%s', '%f', '%f', '%f', '%s'),
+                        array('%d', '%s', '%f', '%f', '%f'),
                         array('%d')
                     );
                     
