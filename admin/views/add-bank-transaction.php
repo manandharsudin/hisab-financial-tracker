@@ -63,7 +63,10 @@ if ($edit_transaction) {
         'description' => $edit_transaction->description,
         'reference_number' => $edit_transaction->reference_number,
         'phone_pay_reference' => $edit_transaction->phone_pay_reference,
-        'transaction_date' => $edit_transaction->transaction_date
+        'transaction_date' => $edit_transaction->transaction_date,
+        'bs_year' => $edit_transaction->bs_year,
+        'bs_month' => $edit_transaction->bs_month,
+        'bs_day' => $edit_transaction->bs_day
     );
 } else {
     $form_data = $defaults;
@@ -172,15 +175,15 @@ if ($edit_transaction) {
     <?php endif; ?>
     
     <?php if ($account): ?>
-        <form method="post" class="hisab-form" 
+        <form id="hisab-bank-transaction-form" class="hisab-form" 
               data-is-edit="<?php echo $is_edit ? 'true' : 'false'; ?>"
               data-original-amount="<?php echo $is_edit ? esc_attr($edit_transaction->amount) : '0'; ?>"
               data-original-type="<?php echo $is_edit ? esc_attr($edit_transaction->transaction_type) : ''; ?>"
               data-effective-balance="<?php echo $is_edit ? esc_attr($bank_transaction->calculate_effective_balance($account->id, $edit_transaction)) : '0'; ?>">
-            <?php wp_nonce_field('hisab_bank_transaction', '_wpnonce'); ?>
+            <?php wp_nonce_field('hisab_bank_transaction', 'nonce'); ?>
             <input type="hidden" name="account_id" value="<?php echo $account->id; ?>">
             <?php if ($is_edit): ?>
-                <input type="hidden" name="transaction_id" value="<?php echo $edit_transaction->id; ?>">
+                <input type="hidden" id="edit-bank-transaction-id" name="transaction_id" value="<?php echo $edit_transaction->id; ?>">
             <?php endif; ?>
             
             <div class="hisab-form-row">
@@ -204,10 +207,87 @@ if ($edit_transaction) {
             </div>
             
             <div class="hisab-form-row">
+                <?php $default_calendar = get_option('hisab_default_calendar', 'ad'); ?>
                 <div class="hisab-form-group">
-                    <label for="transaction_date"><?php _e('Transaction Date', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
+                    <label for="bank-date-calendar-type"><?php _e('Calendar Type', 'hisab-financial-tracker'); ?></label>
+                    <select id="bank-date-calendar-type" name="calendar_type" data-default="<?php echo esc_attr($default_calendar); ?>">
+                        <option value="ad" <?php selected($default_calendar, 'ad'); ?>><?php _e('AD (Gregorian)', 'hisab-financial-tracker'); ?></option>
+                        <option value="bs" <?php selected($default_calendar, 'bs'); ?>><?php _e('BS (Bikram Sambat)', 'hisab-financial-tracker'); ?></option>
+                    </select>
+                </div>
+
+                <div class="hisab-form-group" id="bank-ad-date-row">
+                    <label for="transaction_date"><?php _e('Transaction Date (AD)', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
                     <input type="date" id="transaction_date" name="transaction_date" value="<?php echo esc_attr($form_data['transaction_date']); ?>" required>
                 </div>
+        
+                <div class="hisab-form-group" id="bank-bs-date-row">
+                    <label><?php _e('Transaction Date (BS)', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
+                    <div class="bs-date-inputs">
+                        <select id="bs-year" name="bs_year">
+                            <option value=""><?php _e('Year', 'hisab-financial-tracker'); ?></option>
+                            <?php
+                                $current_bs = HisabNepaliDate::get_current_bs_date();
+                                if ($current_bs) {
+                                    $bs_years = HisabNepaliDate::get_bs_year_range($current_bs['year'], 5);
+                                    foreach ($bs_years as $year) {
+                                        $selected = '';
+                                        if ($edit_transaction && $edit_transaction->bs_year) {
+                                            $selected = ($year == $edit_transaction->bs_year) ? 'selected' : '';
+                                        } elseif (!$edit_transaction) {
+                                            $selected = ($year == $current_bs['year']) ? 'selected' : '';
+                                        }
+                                        echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
+                                    }
+                                } else {
+                                    for ($year = 2075; $year <= 2085; $year++) {
+                                        $selected = '';
+                                        if ($edit_transaction && $edit_transaction->bs_year) {
+                                            $selected = ($year == $edit_transaction->bs_year) ? 'selected' : '';
+                                        } elseif (!$edit_transaction) {
+                                            $selected = ($year == 2081) ? 'selected' : '';
+                                        }
+                                        echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
+                                    }
+                                }
+                            ?>
+                        </select>
+                        <select id="bs-month" name="bs_month">
+                            <option value=""><?php _e('Month', 'hisab-financial-tracker'); ?></option>
+                            <?php
+                                $bs_months = HisabNepaliDate::get_bs_months();
+                                $current_bs = HisabNepaliDate::get_current_bs_date();
+                                foreach ($bs_months as $month) {
+                                    $selected = '';
+                                    if ($edit_transaction && $edit_transaction->bs_month) {
+                                        $selected = ($month['number'] == $edit_transaction->bs_month) ? 'selected' : '';
+                                    } elseif (!$edit_transaction && $current_bs) {
+                                        $selected = ($month['number'] == $current_bs['month']) ? 'selected' : '';
+                                    }
+                                    echo '<option value="' . $month['number'] . '" ' . $selected . '>' . $month['number'] . ' - ' . $month['name_en'] . '</option>';
+                                }
+                            ?>
+                        </select>
+                        <select id="bs-day" name="bs_day">
+                            <option value=""><?php _e('Day', 'hisab-financial-tracker'); ?></option>
+                            <?php
+                                $current_bs = HisabNepaliDate::get_current_bs_date();
+                                for ($day = 1; $day <= 32; $day++) {
+                                    $selected = '';
+                                    if ($edit_transaction && $edit_transaction->bs_day) {
+                                        $selected = ($day == $edit_transaction->bs_day) ? 'selected' : '';
+                                    } elseif (!$edit_transaction && $current_bs) {
+                                        $selected = ($day == $current_bs['day']) ? 'selected' : '';
+                                    }
+                                    echo '<option value="' . $day . '" ' . $selected . '>' . $day . '</option>';
+                                }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hisab-form-row">
                 <div class="hisab-form-group">
                     <label for="reference_number"><?php _e('Reference Number', 'hisab-financial-tracker'); ?></label>
                     <input type="text" id="reference_number" name="reference_number" value="<?php echo esc_attr($form_data['reference_number']); ?>" placeholder="<?php _e('Optional reference number', 'hisab-financial-tracker'); ?>">
@@ -230,9 +310,13 @@ if ($edit_transaction) {
             </div>
             
             <div class="hisab-form-actions">
-                <input type="submit" name="submit_bank_transaction" class="button button-primary" value="<?php echo $is_edit ? __('Update Transaction', 'hisab-financial-tracker') : __('Add Transaction', 'hisab-financial-tracker'); ?>">
+                <button type="submit" class="button button-primary">
+                    <?php echo $is_edit ? __('Update Transaction', 'hisab-financial-tracker') : __('Add Transaction', 'hisab-financial-tracker'); ?>
+                </button>
                 <a href="<?php echo admin_url('admin.php?page=hisab-bank-transactions&account=' . $account->id); ?>" class="button"><?php _e('Cancel', 'hisab-financial-tracker'); ?></a>
             </div>
         </form>
+        
+        <div id="hisab-bank-form-messages"></div>
     <?php endif; ?>
 </div>

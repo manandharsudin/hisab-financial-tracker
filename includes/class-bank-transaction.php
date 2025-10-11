@@ -36,6 +36,9 @@ class HisabBankTransaction {
             'reference_number' => '',
             'phone_pay_reference' => '',
             'transaction_date' => current_time('Y-m-d'),
+            'bs_year' => null,
+            'bs_month' => null,
+            'bs_day' => null,
             'created_by' => get_current_user_id()
         );
         
@@ -79,6 +82,30 @@ class HisabBankTransaction {
             }
         }
         
+        // Handle BS date conversion if needed
+        if (!empty($data['bs_year']) && !empty($data['bs_month']) && !empty($data['bs_day'])) {
+            $bs_year = intval($data['bs_year']);
+            $bs_month = intval($data['bs_month']);
+            $bs_day = intval($data['bs_day']);
+            
+            $data['bs_year'] = $bs_year;
+            $data['bs_month'] = $bs_month;
+            $data['bs_day'] = $bs_day;
+        } else {
+            // Convert AD to BS
+            if (!empty($data['transaction_date'])) {
+                $ad_parts = explode('-', $data['transaction_date']);
+                if (count($ad_parts) === 3) {
+                    $bs_date = HisabNepaliDate::ad_to_bs($ad_parts[0], $ad_parts[1], $ad_parts[2]);
+                    if ($bs_date) {
+                        $data['bs_year'] = $bs_date['year'];
+                        $data['bs_month'] = $bs_date['month'];
+                        $data['bs_day'] = $bs_date['day'];
+                    }
+                }
+            }
+        }
+        
         $result = $wpdb->insert(
             $this->table_bank_transactions,
             $data,
@@ -91,6 +118,9 @@ class HisabBankTransaction {
                 '%s', // reference_number
                 '%s', // phone_pay_reference
                 '%s', // transaction_date
+                '%d', // bs_year
+                '%d', // bs_month
+                '%d', // bs_day
                 '%d'  // created_by
             )
         );
@@ -320,6 +350,30 @@ class HisabBankTransaction {
                             $original_transaction->currency
                         )
                     );
+                }
+            }
+        }
+        
+        // Handle BS date conversion if needed
+        if (isset($data['bs_year']) || isset($data['bs_month']) || isset($data['bs_day'])) {
+            if (!empty($data['bs_year']) && !empty($data['bs_month']) && !empty($data['bs_day'])) {
+                $bs_year = intval($data['bs_year']);
+                $bs_month = intval($data['bs_month']);
+                $bs_day = intval($data['bs_day']);
+                
+                $data['bs_year'] = $bs_year;
+                $data['bs_month'] = $bs_month;
+                $data['bs_day'] = $bs_day;
+            }
+        } else if (isset($data['transaction_date'])) {
+            // Convert AD to BS if transaction_date is updated
+            $ad_parts = explode('-', $data['transaction_date']);
+            if (count($ad_parts) === 3) {
+                $bs_date = HisabNepaliDate::ad_to_bs($ad_parts[0], $ad_parts[1], $ad_parts[2]);
+                if ($bs_date) {
+                    $data['bs_year'] = $bs_date['year'];
+                    $data['bs_month'] = $bs_date['month'];
+                    $data['bs_day'] = $bs_date['day'];
                 }
             }
         }

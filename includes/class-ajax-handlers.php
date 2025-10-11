@@ -891,15 +891,32 @@ class HisabAjaxHandlers {
         
         $bank_transaction = new HisabBankTransaction();
         
+        // Get account details to get the currency
+        $account_id = intval($_POST['account_id']);
+        if (!class_exists('HisabBankAccount')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Account class not available'));
+        }
+        
+        $bank_account = new HisabBankAccount();
+        $account = $bank_account->get_account($account_id);
+        
+        if (!$account) {
+            wp_send_json(array('success' => false, 'message' => 'Bank account not found'));
+        }
+        
+        
         $data = array(
-            'account_id' => intval($_POST['account_id']),
+            'account_id' => $account_id,
             'transaction_type' => sanitize_text_field($_POST['transaction_type']),
             'amount' => floatval($_POST['amount']),
-            'currency' => sanitize_text_field($_POST['currency']),
+            'currency' => $account->currency, // Use account currency
             'description' => sanitize_textarea_field($_POST['description']),
             'reference_number' => sanitize_text_field($_POST['reference_number']),
             'phone_pay_reference' => sanitize_text_field($_POST['phone_pay_reference']),
-            'transaction_date' => sanitize_text_field($_POST['transaction_date'])
+            'transaction_date' => sanitize_text_field($_POST['transaction_date']),
+            'bs_year' => isset($_POST['bs_year']) ? intval($_POST['bs_year']) : null,
+            'bs_month' => isset($_POST['bs_month']) ? intval($_POST['bs_month']) : null,
+            'bs_day' => isset($_POST['bs_day']) ? intval($_POST['bs_day']) : null
         );
         
         $transaction_id = isset($_POST['transaction_id']) ? intval($_POST['transaction_id']) : 0;

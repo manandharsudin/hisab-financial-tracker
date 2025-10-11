@@ -128,6 +128,9 @@ class HisabDatabase {
             reference_number varchar(100) DEFAULT NULL,
             phone_pay_reference varchar(100) DEFAULT NULL,
             transaction_date date NOT NULL,
+            bs_year int(4) DEFAULT NULL,
+            bs_month int(2) DEFAULT NULL,
+            bs_day int(2) DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             created_by int(11) DEFAULT NULL,
@@ -135,6 +138,7 @@ class HisabDatabase {
             KEY account_id (account_id),
             KEY transaction_type (transaction_type),
             KEY transaction_date (transaction_date),
+            KEY bs_date (bs_year, bs_month, bs_day),
             KEY currency (currency),
             KEY created_by (created_by)
         ) $charset_collate;";

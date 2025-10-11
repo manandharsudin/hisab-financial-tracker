@@ -344,10 +344,7 @@ class HisabAdminMenu {
             $this->handle_bank_account_submission();
         }
         
-        // Handle bank transaction form submission
-        if (isset($_POST['submit_bank_transaction']) && $_GET['page'] === 'hisab-add-bank-transaction') {
-            $this->handle_bank_transaction_submission();
-        }
+        // Bank transaction form submission is now handled via AJAX
     }
     
     /**
@@ -400,9 +397,14 @@ class HisabAdminMenu {
     
     /**
      * Handle bank transaction form submission
+     * NOTE: This method is no longer used - bank transactions now use AJAX submission
      */
     private function handle_bank_transaction_submission() {
+        // Debug: Log that the handler is being called
+        error_log('Bank transaction form submission handler called');
+        
         if (!class_exists('HisabBankTransaction') || !class_exists('HisabBankAccount')) {
+            error_log('Bank transaction classes not available');
             return;
         }
         
@@ -415,9 +417,13 @@ class HisabAdminMenu {
             exit;
         }
         
+        // Debug: Log POST data
+        error_log('Bank transaction POST data: ' . print_r($_POST, true));
+        
         // Get account ID from form
         $account_id = isset($_POST['account_id']) ? intval($_POST['account_id']) : 0;
         if ($account_id <= 0) {
+            error_log('No account ID found in POST data');
             wp_redirect(admin_url('admin.php?page=hisab-add-bank-transaction&error=' . urlencode('Please select a bank account.')));
             exit;
         }
@@ -437,7 +443,10 @@ class HisabAdminMenu {
             'description' => sanitize_textarea_field($_POST['description']),
             'reference_number' => sanitize_text_field($_POST['reference_number']),
             'phone_pay_reference' => sanitize_text_field($_POST['phone_pay_reference']),
-            'transaction_date' => sanitize_text_field($_POST['transaction_date'])
+            'transaction_date' => sanitize_text_field($_POST['transaction_date']),
+            'bs_year' => isset($_POST['bs_year']) ? intval($_POST['bs_year']) : null,
+            'bs_month' => isset($_POST['bs_month']) ? intval($_POST['bs_month']) : null,
+            'bs_day' => isset($_POST['bs_day']) ? intval($_POST['bs_day']) : null
         );
         
         // Check if editing
@@ -449,6 +458,17 @@ class HisabAdminMenu {
             if (is_wp_error($result)) {
                 wp_redirect(admin_url('admin.php?page=hisab-add-bank-transaction&edit=' . $transaction_id . '&error=' . urlencode($result->get_error_message())));
             } else {
+                // Log bank transaction update
+                if (class_exists('HisabLogger')) {
+                    $logger = new HisabLogger();
+                    $logger->info(HisabLogger::ACTION_BANK_TRANSACTION_UPDATE, 'Bank transaction updated successfully', array(
+                        'transaction_id' => $transaction_id,
+                        'account_id' => $data['account_id'],
+                        'transaction_type' => $data['transaction_type'],
+                        'amount' => $data['amount'],
+                        'currency' => $data['currency']
+                    ));
+                }
                 wp_redirect(admin_url('admin.php?page=hisab-bank-transactions&account=' . $account_id . '&updated=1'));
             }
         } else {
@@ -456,6 +476,17 @@ class HisabAdminMenu {
             if (is_wp_error($result)) {
                 wp_redirect(admin_url('admin.php?page=hisab-add-bank-transaction&error=' . urlencode($result->get_error_message())));
             } else {
+                // Log bank transaction creation
+                if (class_exists('HisabLogger')) {
+                    $logger = new HisabLogger();
+                    $logger->info(HisabLogger::ACTION_BANK_TRANSACTION_CREATE, 'Bank transaction created successfully', array(
+                        'transaction_id' => $result,
+                        'account_id' => $data['account_id'],
+                        'transaction_type' => $data['transaction_type'],
+                        'amount' => $data['amount'],
+                        'currency' => $data['currency']
+                    ));
+                }
                 wp_redirect(admin_url('admin.php?page=hisab-bank-transactions&account=' . $account_id . '&created=1'));
             }
         }

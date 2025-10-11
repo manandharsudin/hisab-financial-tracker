@@ -130,6 +130,7 @@ class HisabFinancialTracker {
             // Core AJAX settings
             array(
                 'ajax_url' => admin_url('admin-ajax.php'),
+                'admin_url' => admin_url(),
                 'nonce' => wp_create_nonce('hisab_transaction'),
                 'currency' => HISAB_CURRENCY_SYMBOL,
             ),

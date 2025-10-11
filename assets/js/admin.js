@@ -597,48 +597,231 @@ jQuery(document).ready(function($) {
             }
         }
         
+        // Calendar type switching functionality
+        function switchCalendarType(calendarType) {
+            const adDateRow = $('#bank-ad-date-row');
+            const bsDateRow = $('#bank-bs-date-row');
+            const adDateInput = $('#transaction_date');
+            const bsYearSelect = $('#bs-year');
+            const bsMonthSelect = $('#bs-month');
+            const bsDaySelect = $('#bs-day');
+
+            if (calendarType === 'bs') {
+                adDateRow.hide();
+                bsDateRow.show();
+                adDateInput.prop('required', false);
+                bsYearSelect.prop('required', true);
+                bsMonthSelect.prop('required', true);
+                bsDaySelect.prop('required', true);
+            } else {
+                adDateRow.show();
+                bsDateRow.hide();
+                adDateInput.prop('required', true);
+                bsYearSelect.prop('required', false);
+                bsMonthSelect.prop('required', false);
+                bsDaySelect.prop('required', false);
+            }
+        }
+        
+        function convertDateOnSwitch(calendarType) {
+            const adDateInput = $('#transaction_date');
+            const bsYearSelect = $('#bs-year');
+            const bsMonthSelect = $('#bs-month');
+            const bsDaySelect = $('#bs-day');
+            
+            if (calendarType === 'bs') {
+                // Converting from AD to BS
+                const adDate = adDateInput.val();
+                if (adDate) {
+                    $.ajax({
+                        url: hisab_ajax.ajax_url,
+                        type: 'POST',
+                        data: {
+                            action: 'hisab_convert_ad_to_bs',
+                            ad_date: adDate,
+                            nonce: hisab_ajax.nonce
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                bsYearSelect.val(response.data.bs_year);
+                                bsMonthSelect.val(response.data.bs_month);
+                                bsDaySelect.val(response.data.bs_day);
+                            }
+                        },
+                        error: function() {
+                            console.log('Date conversion failed');
+                        }
+                    });
+                }
+            } else {
+                // Converting from BS to AD
+                const bsYear = bsYearSelect.val();
+                const bsMonth = bsMonthSelect.val();
+                const bsDay = bsDaySelect.val();
+                
+                if (bsYear && bsMonth && bsDay) {
+                    $.ajax({
+                        url: hisab_ajax.ajax_url,
+                        type: 'POST',
+                        data: {
+                            action: 'hisab_convert_bs_to_ad',
+                            bs_year: bsYear,
+                            bs_month: bsMonth,
+                            bs_day: bsDay,
+                            nonce: hisab_ajax.nonce
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                adDateInput.val(response.data.ad_date);
+                            }
+                        },
+                        error: function() {
+                            console.log('Date conversion failed');
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Initialize calendar type based on default
+        const defaultCalendar = $('#bank-date-calendar-type').data('default') || 'ad';
+        switchCalendarType(defaultCalendar);
+        
+        // Handle calendar type switching
+        $('#bank-date-calendar-type').on('change', function() {
+            const calendarType = $(this).val();
+            switchCalendarType(calendarType);
+            
+            // Convert dates when switching calendar types
+            convertDateOnSwitch(calendarType);
+        });
+        
         // Initial call
         togglePhonePayField();
         
         // Bind to change event
         $('#transaction_type').on('change', togglePhonePayField);
         
-        // Form validation - only for bank transaction forms
-        $('form').has('#transaction_type').has('#amount').on('submit', function(e) {
-            var $form = $(this);
-            var transactionType = $('#transaction_type').val();
-            var amount = parseFloat($('#amount').val());
-            var accountBalance = parseFloat($('#account-balance').data('balance') || 0);
+        // Bank Transaction Form AJAX Submission
+        $('#hisab-bank-transaction-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const messagesDiv = $('#hisab-bank-form-messages');
+            const calendarType = $('#bank-date-calendar-type').val();
+            const $form = $(this);
+            const transactionType = $('#transaction_type').val();
+            const amount = parseFloat($('#amount').val());
+            const accountBalance = parseFloat($('#account-balance').data('balance') || 0);
             
             // Check if this is an edit operation
-            var isEdit = $form.data('is-edit') === 'true' || $form.data('is-edit') === true;
-            var transactionId = $form.find('input[name="transaction_id"]').val();
+            const isEdit = $form.data('is-edit') === 'true' || $form.data('is-edit') === true;
+            const transactionId = $form.find('input[name="transaction_id"]').val();
             
-            // Check for zero or negative amount first
+            // Clear previous messages
+            messagesDiv.empty();
+            
+            // Validate required fields
             if (amount <= 0) {
-                e.preventDefault();
-                alert(hisab_ajax.amount_required);
-                return false;
+                messagesDiv.html('<div class="notice notice-error"><p>' + hisab_ajax.amount_required + '</p></div>');
+                return;
             }
             
             // Check for withdrawal/phone pay/transfer out with insufficient balance
             if (['withdrawal', 'phone_pay', 'transfer_out'].includes(transactionType)) {
                 // For edit operations, use effective balance
                 if (isEdit && transactionId) {
-                    var effectiveBalance = parseFloat($form.data('effective-balance') || 0);
+                    const effectiveBalance = parseFloat($form.data('effective-balance') || 0);
                     if (amount > effectiveBalance) {
-                        e.preventDefault();
-                        alert('Insufficient balance for this transaction. Available: ' + effectiveBalance.toFixed(2) + ', Required: ' + amount.toFixed(2));
-                        return false;
+                        messagesDiv.html('<div class="notice notice-error"><p>Insufficient balance for this transaction. Available: ' + effectiveBalance.toFixed(2) + ', Required: ' + amount.toFixed(2) + '</p></div>');
+                        return;
                     }
                 } else {
                     // For new transactions, use current balance
                     if (amount > accountBalance) {
-                        e.preventDefault();
-                        alert(hisab_ajax.insufficient_balance);
-                        return false;
+                        messagesDiv.html('<div class="notice notice-error"><p>' + hisab_ajax.insufficient_balance + '</p></div>');
+                        return;
                     }
                 }
+            }
+            
+            // Show loading
+            messagesDiv.html('<div class="notice notice-info"><p>Saving bank transaction...</p></div>');
+            
+            // If BS calendar is selected, convert to AD first
+            if (calendarType === 'bs') {
+                const bsYear = $('#bs-year').val();
+                const bsMonth = $('#bs-month').val();
+                const bsDay = $('#bs-day').val();
+                
+                if (!bsYear || !bsMonth || !bsDay) {
+                    messagesDiv.html('<div class="notice notice-error"><p>Please select a complete BS date (year, month, and day).</p></div>');
+                    return;
+                }
+                
+                // Convert BS to AD via AJAX
+                $.ajax({
+                    url: hisab_ajax.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'hisab_convert_bs_to_ad',
+                        bs_year: bsYear,
+                        bs_month: bsMonth,
+                        bs_day: bsDay,
+                        nonce: hisab_ajax.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Set the AD date and submit form
+                            $('#transaction_date').val(response.data.ad_date);
+                            submitBankTransactionForm();
+                        } else {
+                            messagesDiv.html('<div class="notice notice-error"><p>Date conversion failed. Please try again.</p></div>');
+                        }
+                    },
+                    error: function() {
+                        messagesDiv.html('<div class="notice notice-error"><p>Date conversion failed. Please try again.</p></div>');
+                    }
+                });
+            } else {
+                // AD calendar selected, submit directly
+                submitBankTransactionForm();
+            }
+            
+            function submitBankTransactionForm() {
+                const formData = new FormData($('#hisab-bank-transaction-form')[0]);
+                
+                // Check if we're in edit mode
+                const editTransactionId = $('#edit-bank-transaction-id').val();
+                if (editTransactionId) {
+                    formData.append('action', 'hisab_save_bank_transaction');
+                    formData.append('transaction_id', editTransactionId);
+                } else {
+                    formData.append('action', 'hisab_save_bank_transaction');
+                }
+                
+                $.ajax({
+                    url: hisab_ajax.ajax_url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            messagesDiv.html('<div class="notice notice-success"><p>Bank transaction saved successfully!</p></div>');
+                            
+                            // Redirect after a short delay
+                            setTimeout(function() {
+                                const accountId = $form.find('input[name="account_id"]').val();
+                                window.location.href = hisab_ajax.admin_url + 'admin.php?page=hisab-bank-transactions&account=' + accountId + '&created=1';
+                            }, 1500);
+                        } else {
+                            messagesDiv.html('<div class="notice notice-error"><p>' + response.message + '</p></div>');
+                        }
+                    },
+                    error: function() {
+                        messagesDiv.html('<div class="notice notice-error"><p>Error saving bank transaction. Please try again.</p></div>');
+                    }
+                });
             }
         });
     }

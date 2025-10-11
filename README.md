@@ -397,7 +397,8 @@ Stores bank-specific transactions.
 - `description` - Transaction description
 - `reference_number` - Bank reference number
 - `phone_pay_reference` - Phone pay reference
-- `transaction_date` - Transaction date
+- `transaction_date` - Date of transaction
+- `bs_year`, `bs_month`, `bs_day` - Nepali date components
 - `created_at`, `updated_at` - Timestamps
 - `created_by` - WordPress user ID
 
