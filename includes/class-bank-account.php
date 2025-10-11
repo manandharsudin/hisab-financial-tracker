@@ -52,7 +52,7 @@ class HisabBankAccount {
         }
         
         // Validate account type
-        if (!in_array($data['account_type'], ['savings', 'current', 'credit_card', 'fixed_deposit'])) {
+        if (!in_array($data['account_type'], ['savings', 'current', 'credit_card', 'fixed_deposit', 'loan'])) {
             return new WP_Error('invalid_account_type', __('Invalid account type.', 'hisab-financial-tracker'));
         }
         
@@ -154,7 +154,7 @@ class HisabBankAccount {
         }
         
         // Validate account type if provided
-        if (isset($data['account_type']) && !in_array($data['account_type'], ['savings', 'current', 'credit_card', 'fixed_deposit'])) {
+        if (isset($data['account_type']) && !in_array($data['account_type'], ['savings', 'current', 'credit_card', 'fixed_deposit', 'loan'])) {
             return new WP_Error('invalid_account_type', __('Invalid account type.', 'hisab-financial-tracker'));
         }
         

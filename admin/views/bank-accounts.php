@@ -153,6 +153,7 @@ foreach ($accounts as $account) {
                     <option value="current" <?php selected($type_filter, 'current'); ?>><?php _e('Current', 'hisab-financial-tracker'); ?></option>
                     <option value="credit_card" <?php selected($type_filter, 'credit_card'); ?>><?php _e('Credit Card', 'hisab-financial-tracker'); ?></option>
                     <option value="fixed_deposit" <?php selected($type_filter, 'fixed_deposit'); ?>><?php _e('Fixed Deposit', 'hisab-financial-tracker'); ?></option>
+                    <option value="loan" <?php selected($type_filter, 'loan'); ?>><?php _e('Loan', 'hisab-financial-tracker'); ?></option>
                 </select>
             </div>
             

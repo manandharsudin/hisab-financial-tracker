@@ -104,6 +104,7 @@ if ($edit_account) {
                     <option value="current" <?php selected($form_data['account_type'], 'current'); ?>><?php _e('Current Account', 'hisab-financial-tracker'); ?></option>
                     <option value="credit_card" <?php selected($form_data['account_type'], 'credit_card'); ?>><?php _e('Credit Card', 'hisab-financial-tracker'); ?></option>
                     <option value="fixed_deposit" <?php selected($form_data['account_type'], 'fixed_deposit'); ?>><?php _e('Fixed Deposit', 'hisab-financial-tracker'); ?></option>
+                    <option value="loan" <?php selected($form_data['account_type'], 'loan'); ?>><?php _e('Loan Account', 'hisab-financial-tracker'); ?></option>
                 </select>
             </div>
             <div class="hisab-form-group">

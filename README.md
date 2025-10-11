@@ -145,7 +145,7 @@ Access these pages from the WordPress admin menu:
    - Account Name
    - Bank Name
    - Account Number
-   - Account Type (Savings/Current/Credit Card/Fixed Deposit)
+   - Account Type (Savings/Current/Credit Card/Fixed Deposit/Loan)
    - Currency (NPR/USD)
    - Initial Balance
 4. Click **Save Bank Account**
@@ -377,7 +377,7 @@ Stores bank account information.
 - `account_name` - Account name
 - `bank_name` - Bank name
 - `account_number` - Account number
-- `account_type` - Account type (savings, current, etc.)
+- `account_type` - Account type (savings, current, credit_card, fixed_deposit, loan)
 - `currency` - NPR or USD
 - `initial_balance` - Starting balance
 - `current_balance` - Current balance

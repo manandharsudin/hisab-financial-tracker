@@ -102,7 +102,7 @@ class HisabDatabase {
             account_name varchar(255) NOT NULL,
             bank_name varchar(255) NOT NULL,
             account_number varchar(100) DEFAULT NULL,
-            account_type enum('savings','current','credit_card','fixed_deposit') NOT NULL DEFAULT 'savings',
+            account_type enum('savings','current','credit_card','fixed_deposit','loan') NOT NULL DEFAULT 'savings',
             currency enum('NPR','USD') NOT NULL DEFAULT 'NPR',
             initial_balance decimal(15,2) NOT NULL DEFAULT 0.00,
             current_balance decimal(15,2) NOT NULL DEFAULT 0.00,
