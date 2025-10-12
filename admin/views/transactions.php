@@ -150,12 +150,28 @@ $owners = $database->get_owners();
                             <td><?php echo $transaction->id; ?></td>
                             <td>
                                 <div class="hisab-date-display">
-                                    <div class="ad-date"><?php echo date(HISAB_DATE_FORMAT, strtotime($transaction->transaction_date)); ?></div>
                                     <?php 
+                                    $default_calendar = get_option('hisab_default_calendar', 'ad');
                                     $show_dual_dates = get_option('hisab_show_dual_dates', 1);
-                                    if ($show_dual_dates && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
+                                    
+                                    if ($default_calendar === 'bs' && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
+                                        // Show BS date first when BS is default
                                         $bs_month_name = HisabNepaliDate::get_bs_months($transaction->bs_month);
                                         echo '<div class="bs-date">' . $bs_month_name . ' ' . $transaction->bs_day . ', ' . $transaction->bs_year . '</div>';
+                                        
+                                        // Show AD date as secondary if dual dates enabled
+                                        if ($show_dual_dates) {
+                                            echo '<div class="ad-date">' . date(HISAB_DATE_FORMAT, strtotime($transaction->transaction_date)) . '</div>';
+                                        }
+                                    } else {
+                                        // Show AD date first when AD is default or BS data not available
+                                        echo '<div class="ad-date">' . date(HISAB_DATE_FORMAT, strtotime($transaction->transaction_date)) . '</div>';
+                                        
+                                        // Show BS date as secondary if dual dates enabled and BS data available
+                                        if ($show_dual_dates && isset($transaction->bs_year) && isset($transaction->bs_month) && isset($transaction->bs_day)) {
+                                            $bs_month_name = HisabNepaliDate::get_bs_months($transaction->bs_month);
+                                            echo '<div class="bs-date">' . $bs_month_name . ' ' . $transaction->bs_day . ', ' . $transaction->bs_year . '</div>';
+                                        }
                                     }
                                     ?>
                                 </div>

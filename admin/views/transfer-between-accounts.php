@@ -124,9 +124,18 @@ $default_date = current_time('Y-m-d');
                         <select id="transfer-bs-year" name="bs_year">
                             <option value=""><?php _e('Year', 'hisab-financial-tracker'); ?></option>
                             <?php
-                                $bs_years = HisabNepaliDate::get_bs_year_range(null, 20);
-                                foreach ($bs_years as $year) {
-                                    echo '<option value="' . $year . '">' . $year . '</option>';
+                                $current_bs = HisabNepaliDate::get_current_bs_date();
+                                if ($current_bs) {
+                                    $bs_years = HisabNepaliDate::get_bs_year_range($current_bs['year'], 5);
+                                    foreach ($bs_years as $year) {
+                                        $selected = ($year == $current_bs['year']) ? 'selected' : '';
+                                        echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
+                                    }
+                                } else {
+                                    for ($year = 2075; $year <= 2085; $year++) {
+                                        $selected = ($year == 2081) ? 'selected' : '';
+                                        echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
+                                    }
                                 }
                             ?>
                         </select>
@@ -134,16 +143,28 @@ $default_date = current_time('Y-m-d');
                             <option value=""><?php _e('Month', 'hisab-financial-tracker'); ?></option>
                             <?php
                                 $bs_months = HisabNepaliDate::get_bs_months();
+                                $current_bs = HisabNepaliDate::get_current_bs_date();
                                 foreach ($bs_months as $month) {
-                                    echo '<option value="' . $month['number'] . '">' . $month['name_en'] . '</option>';
+                                    $selected = '';
+                                    if ($current_bs) {
+                                        $selected = ($month['number'] == $current_bs['month']) ? 'selected' : '';
+                                    }
+                                    echo '<option value="' . $month['number'] . '" ' . $selected . '>' . $month['number'] . ' - ' . $month['name_en'] . '</option>';
                                 }
                             ?>
                         </select>
                         <select id="transfer-bs-day" name="bs_day">
                             <option value=""><?php _e('Day', 'hisab-financial-tracker'); ?></option>
-                            <?php for ($day = 1; $day <= 32; $day++): ?>
-                                <option value="<?php echo $day; ?>"><?php echo $day; ?></option>
-                            <?php endfor; ?>
+                            <?php
+                                $current_bs = HisabNepaliDate::get_current_bs_date();
+                                for ($day = 1; $day <= 32; $day++) {
+                                    $selected = '';
+                                    if ($current_bs) {
+                                        $selected = ($day == $current_bs['day']) ? 'selected' : '';
+                                    }
+                                    echo '<option value="' . $day . '" ' . $selected . '>' . $day . '</option>';
+                                }
+                            ?>
                         </select>
                     </div>
                 </div>

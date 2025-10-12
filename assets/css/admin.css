@@ -1913,3 +1913,20 @@ input[type="color"] {
     text-transform: uppercase;
     margin-top: 5px;
 }
+
+/* Dual Date Display Styles */
+.hisab-date-display {
+    line-height: 1.3;
+}
+
+.hisab-date-display .ad-date {
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.hisab-date-display .bs-date {
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 2px;
+    font-style: italic;
+}

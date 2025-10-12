@@ -2415,16 +2415,160 @@ jQuery(document).ready(function($) {
             if (selectedType === 'bs') {
                 adDateRow.hide();
                 bsDateRow.show();
+                // Convert AD date to BS when switching
+                convertADToBSTransfer();
             } else {
                 adDateRow.show();
                 bsDateRow.hide();
+                // Convert BS date to AD when switching
+                convertBSToADTransfer();
             }
         });
+    }
+    
+    
+    function convertADToBSTransfer() {
+        const adDate = $('#transaction_date').val();
+        if (adDate) {
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_convert_ad_to_bs',
+                    ad_date: adDate,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#transfer-bs-year').val(response.data.year);
+                        $('#transfer-bs-month').val(response.data.month);
+                        $('#transfer-bs-day').val(response.data.day);
+                    }
+                },
+                error: function() {
+                    console.log('Failed to convert AD to BS date');
+                }
+            });
+        }
+    }
+    
+    function convertBSToADTransfer() {
+        const bsYear = $('#transfer-bs-year').val();
+        const bsMonth = $('#transfer-bs-month').val();
+        const bsDay = $('#transfer-bs-day').val();
+        
+        if (bsYear && bsMonth && bsDay) {
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_convert_bs_to_ad',
+                    bs_year: bsYear,
+                    bs_month: bsMonth,
+                    bs_day: bsDay,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#transaction_date').val(response.data.ad_date);
+                    }
+                },
+                error: function() {
+                    console.log('Failed to convert BS to AD date');
+                }
+            });
+        }
     }
     
     // Initialize transfer between accounts if on the transfer page
     if ($('#from_account_id').length && $('#to_account_id').length) {
         initTransferBetweenAccounts();
+    }
+    
+    // Bank Transaction Date Handling Functions
+    function initBankTransactionCalendarSwitching() {
+        const calendarTypeSelect = $('#bank-date-calendar-type');
+        const adDateRow = $('#bank-ad-date-row');
+        const bsDateRow = $('#bank-bs-date-row');
+        
+        // Set initial state based on default
+        const defaultCalendar = calendarTypeSelect.data('default');
+        if (defaultCalendar === 'bs') {
+            calendarTypeSelect.val('bs');
+            adDateRow.hide();
+            bsDateRow.show();
+        } else {
+            calendarTypeSelect.val('ad');
+            adDateRow.show();
+            bsDateRow.hide();
+        }
+        
+        // Handle calendar type switching
+        calendarTypeSelect.on('change', function() {
+            const selectedType = $(this).val();
+            
+            if (selectedType === 'bs') {
+                adDateRow.hide();
+                bsDateRow.show();
+                convertADToBSBank(); // Convert AD date to BS when switching
+            } else {
+                adDateRow.show();
+                bsDateRow.hide();
+                convertBSToADBank(); // Convert BS date to AD when switching
+            }
+        });
+    }
+    
+    function convertADToBSBank() {
+        const adDate = $('#transaction_date').val();
+        if (adDate) {
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_convert_ad_to_bs',
+                    ad_date: adDate,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#bs-year').val(response.data.year);
+                        $('#bs-month').val(response.data.month);
+                        $('#bs-day').val(response.data.day);
+                    }
+                }
+            });
+        }
+    }
+    
+    function convertBSToADBank() {
+        const bsYear = $('#bs-year').val();
+        const bsMonth = $('#bs-month').val();
+        const bsDay = $('#bs-day').val();
+        
+        if (bsYear && bsMonth && bsDay) {
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'hisab_convert_bs_to_ad',
+                    bs_year: bsYear,
+                    bs_month: bsMonth,
+                    bs_day: bsDay,
+                    nonce: hisab_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#transaction_date').val(response.data.ad_date);
+                    }
+                }
+            });
+        }
+    }
+    
+    // Initialize bank transaction calendar switching if on the bank transaction page
+    if ($('#bank-date-calendar-type').length) {
+        initBankTransactionCalendarSwitching();
     }
     
     // Dashboard Charts Functionality

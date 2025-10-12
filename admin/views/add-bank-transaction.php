@@ -216,12 +216,12 @@ if ($edit_transaction) {
                     </select>
                 </div>
 
-                <div class="hisab-form-group" id="bank-ad-date-row">
+                <div class="hisab-form-group" id="bank-ad-date-row" <?php echo ($default_calendar === 'bs') ? 'style="display: none;"' : ''; ?>>
                     <label for="transaction_date"><?php _e('Transaction Date (AD)', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
                     <input type="date" id="transaction_date" name="transaction_date" value="<?php echo esc_attr($form_data['transaction_date']); ?>" required>
                 </div>
         
-                <div class="hisab-form-group" id="bank-bs-date-row">
+                <div class="hisab-form-group" id="bank-bs-date-row" <?php echo ($default_calendar === 'ad') ? 'style="display: none;"' : ''; ?>>
                     <label><?php _e('Transaction Date (BS)', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
                     <div class="bs-date-inputs">
                         <select id="bs-year" name="bs_year">
