@@ -492,18 +492,21 @@ class HisabBankTransaction {
     }
     
     /**
-     * Create transfer between accounts
+     * Create transfer between accounts with additional data (including BS dates)
      */
-    public function create_transfer($from_account_id, $to_account_id, $amount, $description, $transaction_date = null) {
-        $transaction_date = $transaction_date ?: current_time('Y-m-d');
+    public function create_transfer_with_data($data) {
+        $transaction_date = $data['transaction_date'] ?: current_time('Y-m-d');
         
         // Create withdrawal from source account
         $withdrawal_data = array(
-            'account_id' => $from_account_id,
+            'account_id' => $data['from_account_id'],
             'transaction_type' => 'transfer_out',
-            'amount' => $amount,
-            'description' => $description . ' (Transfer Out)',
-            'transaction_date' => $transaction_date
+            'amount' => $data['amount'],
+            'description' => $data['description'] . ' (Transfer Out)',
+            'transaction_date' => $transaction_date,
+            'bs_year' => isset($data['bs_year']) ? $data['bs_year'] : null,
+            'bs_month' => isset($data['bs_month']) ? $data['bs_month'] : null,
+            'bs_day' => isset($data['bs_day']) ? $data['bs_day'] : null
         );
         
         $withdrawal_id = $this->create_transaction($withdrawal_data);
@@ -513,11 +516,14 @@ class HisabBankTransaction {
         
         // Create deposit to destination account
         $deposit_data = array(
-            'account_id' => $to_account_id,
+            'account_id' => $data['to_account_id'],
             'transaction_type' => 'transfer_in',
-            'amount' => $amount,
-            'description' => $description . ' (Transfer In)',
-            'transaction_date' => $transaction_date
+            'amount' => $data['amount'],
+            'description' => $data['description'] . ' (Transfer In)',
+            'transaction_date' => $transaction_date,
+            'bs_year' => isset($data['bs_year']) ? $data['bs_year'] : null,
+            'bs_month' => isset($data['bs_month']) ? $data['bs_month'] : null,
+            'bs_day' => isset($data['bs_day']) ? $data['bs_day'] : null
         );
         
         $deposit_id = $this->create_transaction($deposit_data);

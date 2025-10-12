@@ -2192,6 +2192,9 @@ jQuery(document).ready(function($) {
     
     // Transfer Between Accounts Functionality
     function initTransferBetweenAccounts() {
+        // Initialize calendar type switching
+        initTransferCalendarSwitching();
+        
         // Update currency symbol and account balances when from account changes
         $('#from_account_id').on('change', function() {
             const selectedOption = $(this).find('option:selected');
@@ -2282,20 +2285,22 @@ jQuery(document).ready(function($) {
             }
         }
         
-        // Form submission validation
+        // Form submission validation with date conversion
         $('.hisab-form').has('#from_account_id').on('submit', function(e) {
+            e.preventDefault();
+            
             const fromAccountId = $('#from_account_id').val();
             const toAccountId = $('#to_account_id').val();
             const amount = parseFloat($('#amount').val()) || 0;
+            const calendarType = $('#transfer-date-calendar-type').val();
             
+            // Basic validation
             if (fromAccountId === toAccountId) {
-                e.preventDefault();
                 alert(hisab_ajax.cannot_transfer_same_account);
                 return false;
             }
             
             if (amount <= 0) {
-                e.preventDefault();
                 alert(hisab_ajax.amount_must_be_greater_than_zero);
                 return false;
             }
@@ -2304,9 +2309,115 @@ jQuery(document).ready(function($) {
             const balance = selectedOption.data('balance');
             
             if (amount > balance) {
-                e.preventDefault();
                 alert(hisab_ajax.insufficient_balance_for_transfer);
                 return false;
+            }
+            
+            // Currency validation - ensure both accounts have same currency
+            const fromCurrency = selectedOption.data('currency');
+            const toCurrency = $('#to_account_id').find('option:selected').data('currency');
+            
+            if (fromCurrency !== toCurrency) {
+                alert('Cannot transfer between accounts with different currencies. Please select accounts with the same currency.');
+                return false;
+            }
+            
+            // Handle date conversion if BS calendar is selected
+            if (calendarType === 'bs') {
+                const bsYear = $('#transfer-bs-year').val();
+                const bsMonth = $('#transfer-bs-month').val();
+                const bsDay = $('#transfer-bs-day').val();
+                
+                if (!bsYear || !bsMonth || !bsDay) {
+                    alert('Please select a valid BS date');
+                    return false;
+                }
+                
+                // Convert BS to AD via AJAX
+                $.ajax({
+                    url: hisab_ajax.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'hisab_convert_bs_to_ad',
+                        bs_year: bsYear,
+                        bs_month: bsMonth,
+                        bs_day: bsDay,
+                        nonce: hisab_ajax.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Set the AD date and submit form
+                            $('#transaction_date').val(response.data.ad_date);
+                            submitTransferForm();
+                        } else {
+                            alert('Date conversion failed. Please try again.');
+                        }
+                    },
+                    error: function() {
+                        alert('Date conversion failed. Please try again.');
+                    }
+                });
+            } else {
+                // AD calendar selected, submit directly
+                submitTransferForm();
+            }
+            
+            function submitTransferForm() {
+                // Create FormData and submit via AJAX
+                const formData = new FormData($('.hisab-form').has('#from_account_id')[0]);
+                formData.append('action', 'hisab_transfer_between_accounts');
+                formData.append('nonce', hisab_ajax.nonce);
+                
+                $.ajax({
+                    url: hisab_ajax.ajax_url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Transfer completed successfully!');
+                            // Redirect to bank transactions page
+                            window.location.href = 'admin.php?page=hisab-bank-transactions';
+                        } else {
+                            alert('Transfer failed: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Transfer failed. Please try again.');
+                    }
+                });
+            }
+        });
+    }
+    
+    function initTransferCalendarSwitching() {
+        const calendarTypeSelect = $('#transfer-date-calendar-type');
+        const adDateRow = $('#transfer-ad-date-row');
+        const bsDateRow = $('#transfer-bs-date-row');
+        
+        // Set initial state based on default
+        const defaultCalendar = calendarTypeSelect.data('default');
+        if (defaultCalendar === 'bs') {
+            calendarTypeSelect.val('bs');
+            adDateRow.hide();
+            bsDateRow.show();
+        } else {
+            calendarTypeSelect.val('ad');
+            adDateRow.show();
+            bsDateRow.hide();
+        }
+        
+        // Handle calendar type switching
+        calendarTypeSelect.on('change', function() {
+            const selectedType = $(this).val();
+            
+            if (selectedType === 'bs') {
+                adDateRow.hide();
+                bsDateRow.show();
+            } else {
+                adDateRow.show();
+                bsDateRow.hide();
             }
         });
     }

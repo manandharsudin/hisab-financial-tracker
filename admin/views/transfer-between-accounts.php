@@ -11,53 +11,7 @@ if (!defined('ABSPATH')) {
 $bank_account = new HisabBankAccount();
 $bank_transaction = new HisabBankTransaction();
 
-// Handle form submission
-if (isset($_POST['submit_transfer'])) {
-    $nonce = sanitize_text_field($_POST['_wpnonce']);
-    if (!wp_verify_nonce($nonce, 'hisab_transfer')) {
-        $error_message = __('Security check failed. Please try again.', 'hisab-financial-tracker');
-    } else {
-        $from_account_id = intval($_POST['from_account_id']);
-        $to_account_id = intval($_POST['to_account_id']);
-        $amount = floatval($_POST['amount']);
-        $description = sanitize_textarea_field($_POST['description']);
-        $transaction_date = sanitize_text_field($_POST['transaction_date']);
-        
-        // Validate accounts
-        if ($from_account_id === $to_account_id) {
-            $error_message = __('Cannot transfer to the same account.', 'hisab-financial-tracker');
-        } else {
-            // Get source account
-            $from_account = $bank_account->get_account($from_account_id);
-            $to_account = $bank_account->get_account($to_account_id);
-            
-            if (!$from_account || !$to_account) {
-                $error_message = __('One or both accounts not found.', 'hisab-financial-tracker');
-            } elseif ($from_account->currency !== $to_account->currency) {
-                $error_message = __('Cannot transfer between accounts with different currencies.', 'hisab-financial-tracker');
-            } elseif ($from_account->current_balance < $amount) {
-                $error_message = __('Insufficient balance in source account.', 'hisab-financial-tracker');
-            } else {
-                // Create transfer
-                $result = $bank_transaction->create_transfer(
-                    $from_account_id,
-                    $to_account_id,
-                    $amount,
-                    $description,
-                    $transaction_date
-                );
-                
-                if (is_wp_error($result)) {
-                    $error_message = $result->get_error_message();
-                } else {
-                    $success_message = __('Transfer completed successfully.', 'hisab-financial-tracker');
-                    // Clear form data
-                    $_POST = array();
-                }
-            }
-        }
-    }
-}
+// Form is now handled via AJAX - no server-side processing needed
 
 // Get all active bank accounts
 $all_accounts = $bank_account->get_all_accounts(array('is_active' => 1));
@@ -68,38 +22,14 @@ $usd_accounts = array_filter($all_accounts, function($account) {
     return $account->currency === 'USD';
 });
 
-// Set default values
-$defaults = array(
-    'from_account_id' => '',
-    'to_account_id' => '',
-    'amount' => 0.00,
-    'description' => '',
-    'transaction_date' => current_time('Y-m-d')
-);
-
-$form_data = array(
-    'from_account_id' => isset($_POST['from_account_id']) ? intval($_POST['from_account_id']) : $defaults['from_account_id'],
-    'to_account_id' => isset($_POST['to_account_id']) ? intval($_POST['to_account_id']) : $defaults['to_account_id'],
-    'amount' => isset($_POST['amount']) ? floatval($_POST['amount']) : $defaults['amount'],
-    'description' => isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : $defaults['description'],
-    'transaction_date' => isset($_POST['transaction_date']) ? sanitize_text_field($_POST['transaction_date']) : $defaults['transaction_date']
-);
+// Set default values for form
+$default_date = current_time('Y-m-d');
 ?>
 
 <div class="wrap">
     <h1><?php _e('Transfer Between Accounts', 'hisab-financial-tracker'); ?></h1>
     
-    <?php if (isset($success_message)): ?>
-        <div class="notice notice-success is-dismissible">
-            <p><?php echo esc_html($success_message); ?></p>
-        </div>
-    <?php endif; ?>
-    
-    <?php if (isset($error_message)): ?>
-        <div class="notice notice-error is-dismissible">
-            <p><?php echo esc_html($error_message); ?></p>
-        </div>
-    <?php endif; ?>
+    <!-- Success/Error messages are now handled via AJAX -->
     
     <?php if (empty($all_accounts)): ?>
         <div class="hisab-no-accounts" style="background: #fff; border: 1px solid #ccd0d4; border-radius: 4px; padding: 40px; text-align: center; color: #666;">
@@ -109,7 +39,7 @@ $form_data = array(
         </div>
     <?php else: ?>
         <form method="post" class="hisab-form">
-            <?php wp_nonce_field('hisab_transfer', '_wpnonce'); ?>
+            <?php wp_nonce_field('hisab_transaction', '_wpnonce'); ?>
             
             <div class="hisab-form-row">
                 <div class="hisab-form-group">
@@ -119,7 +49,7 @@ $form_data = array(
                         <?php if (!empty($npr_accounts)): ?>
                             <optgroup label="<?php _e('NPR Accounts', 'hisab-financial-tracker'); ?>">
                                 <?php foreach ($npr_accounts as $account): ?>
-                                    <option value="<?php echo $account->id; ?>" data-currency="NPR" data-balance="<?php echo $account->current_balance; ?>" <?php selected($form_data['from_account_id'], $account->id); ?>>
+                                    <option value="<?php echo $account->id; ?>" data-currency="NPR" data-balance="<?php echo $account->current_balance; ?>">
                                         <?php echo esc_html($account->account_name . ' (' . $account->bank_name . ') - ₹' . number_format($account->current_balance, 2)); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -128,7 +58,7 @@ $form_data = array(
                         <?php if (!empty($usd_accounts)): ?>
                             <optgroup label="<?php _e('USD Accounts', 'hisab-financial-tracker'); ?>">
                                 <?php foreach ($usd_accounts as $account): ?>
-                                    <option value="<?php echo $account->id; ?>" data-currency="USD" data-balance="<?php echo $account->current_balance; ?>" <?php selected($form_data['from_account_id'], $account->id); ?>>
+                                    <option value="<?php echo $account->id; ?>" data-currency="USD" data-balance="<?php echo $account->current_balance; ?>">
                                         <?php echo esc_html($account->account_name . ' (' . $account->bank_name . ') - $' . number_format($account->current_balance, 2)); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -144,7 +74,7 @@ $form_data = array(
                         <?php if (!empty($npr_accounts)): ?>
                             <optgroup label="<?php _e('NPR Accounts', 'hisab-financial-tracker'); ?>">
                                 <?php foreach ($npr_accounts as $account): ?>
-                                    <option value="<?php echo $account->id; ?>" data-currency="NPR" data-balance="<?php echo $account->current_balance; ?>" <?php selected($form_data['to_account_id'], $account->id); ?>>
+                                    <option value="<?php echo $account->id; ?>" data-currency="NPR" data-balance="<?php echo $account->current_balance; ?>">
                                         <?php echo esc_html($account->account_name . ' (' . $account->bank_name . ') - ₹' . number_format($account->current_balance, 2)); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -153,7 +83,7 @@ $form_data = array(
                         <?php if (!empty($usd_accounts)): ?>
                             <optgroup label="<?php _e('USD Accounts', 'hisab-financial-tracker'); ?>">
                                 <?php foreach ($usd_accounts as $account): ?>
-                                    <option value="<?php echo $account->id; ?>" data-currency="USD" data-balance="<?php echo $account->current_balance; ?>" <?php selected($form_data['to_account_id'], $account->id); ?>>
+                                    <option value="<?php echo $account->id; ?>" data-currency="USD" data-balance="<?php echo $account->current_balance; ?>">
                                         <?php echo esc_html($account->account_name . ' (' . $account->bank_name . ') - $' . number_format($account->current_balance, 2)); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -169,20 +99,60 @@ $form_data = array(
                     <label for="amount"><?php _e('Transfer Amount', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
                     <div style="display: flex; align-items: center;">
                         <span id="currency-symbol" style="margin-right: 5px; font-weight: bold;">₹</span>
-                        <input type="number" id="amount" name="amount" step="0.01" min="0" value="<?php echo esc_attr($form_data['amount']); ?>" required style="flex: 1;">
+                        <input type="number" id="amount" name="amount" step="0.01" min="0" value="" required style="flex: 1;">
                     </div>
                     <div id="amount-validation" style="margin-top: 5px; font-size: 12px; color: #d63638;"></div>
                 </div>
                 <div class="hisab-form-group">
-                    <label for="transaction_date"><?php _e('Transfer Date', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
-                    <input type="date" id="transaction_date" name="transaction_date" value="<?php echo esc_attr($form_data['transaction_date']); ?>" required>
+                    <label for="transfer-date-calendar-type"><?php _e('Calendar Type', 'hisab-financial-tracker'); ?></label>
+                    <select id="transfer-date-calendar-type" name="calendar_type" data-default="<?php echo esc_attr(get_option('hisab_default_calendar', 'ad')); ?>">
+                        <option value="ad" <?php selected(get_option('hisab_default_calendar', 'ad'), 'ad'); ?>><?php _e('AD (Gregorian)', 'hisab-financial-tracker'); ?></option>
+                        <option value="bs" <?php selected(get_option('hisab_default_calendar', 'ad'), 'bs'); ?>><?php _e('BS (Bikram Sambat)', 'hisab-financial-tracker'); ?></option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="hisab-form-row">
+                <div class="hisab-form-group" id="transfer-ad-date-row">
+                    <label for="transaction_date"><?php _e('Transfer Date (AD)', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
+                    <input type="date" id="transaction_date" name="transaction_date" value="<?php echo esc_attr($default_date); ?>" required>
+                </div>
+        
+                <div class="hisab-form-group" id="transfer-bs-date-row" style="display: none;">
+                    <label><?php _e('Transfer Date (BS)', 'hisab-financial-tracker'); ?> <span class="required">*</span></label>
+                    <div class="bs-date-inputs">
+                        <select id="transfer-bs-year" name="bs_year">
+                            <option value=""><?php _e('Year', 'hisab-financial-tracker'); ?></option>
+                            <?php
+                                $bs_years = HisabNepaliDate::get_bs_year_range(null, 20);
+                                foreach ($bs_years as $year) {
+                                    echo '<option value="' . $year . '">' . $year . '</option>';
+                                }
+                            ?>
+                        </select>
+                        <select id="transfer-bs-month" name="bs_month">
+                            <option value=""><?php _e('Month', 'hisab-financial-tracker'); ?></option>
+                            <?php
+                                $bs_months = HisabNepaliDate::get_bs_months();
+                                foreach ($bs_months as $month) {
+                                    echo '<option value="' . $month['number'] . '">' . $month['name_en'] . '</option>';
+                                }
+                            ?>
+                        </select>
+                        <select id="transfer-bs-day" name="bs_day">
+                            <option value=""><?php _e('Day', 'hisab-financial-tracker'); ?></option>
+                            <?php for ($day = 1; $day <= 32; $day++): ?>
+                                <option value="<?php echo $day; ?>"><?php echo $day; ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
                 </div>
             </div>
             
             <div class="hisab-form-row">
                 <div class="hisab-form-group">
                     <label for="description"><?php _e('Transfer Description', 'hisab-financial-tracker'); ?></label>
-                    <textarea id="description" name="description" rows="3" placeholder="<?php _e('Enter transfer description', 'hisab-financial-tracker'); ?>"><?php echo esc_textarea($form_data['description']); ?></textarea>
+                    <textarea id="description" name="description" rows="3" placeholder="<?php _e('Enter transfer description', 'hisab-financial-tracker'); ?>"></textarea>
                 </div>
             </div>
             

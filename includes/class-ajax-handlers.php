@@ -1031,14 +1031,14 @@ class HisabAjaxHandlers {
     }
     
     public function ajax_transfer_between_accounts() {
-        check_ajax_referer('hisab_transfer', 'nonce');
+        check_ajax_referer('hisab_transaction', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized');
         }
         
-        if (!class_exists('HisabBankTransaction')) {
-            wp_send_json(array('success' => false, 'message' => 'Bank Transaction class not available'));
+        if (!class_exists('HisabBankTransaction') || !class_exists('HisabBankAccount')) {
+            wp_send_json(array('success' => false, 'message' => 'Required classes not available'));
         }
         
         $from_account_id = intval($_POST['from_account_id']);
@@ -1047,12 +1047,48 @@ class HisabAjaxHandlers {
         $description = sanitize_textarea_field($_POST['description']);
         $transaction_date = sanitize_text_field($_POST['transaction_date']);
         
+        // Basic validation
         if ($from_account_id === $to_account_id) {
             wp_send_json(array('success' => false, 'message' => 'Cannot transfer to the same account'));
         }
         
+        if ($amount <= 0) {
+            wp_send_json(array('success' => false, 'message' => 'Amount must be greater than zero'));
+        }
+        
+        // Get account details for currency validation
+        $bank_account = new HisabBankAccount();
+        $from_account = $bank_account->get_account($from_account_id);
+        $to_account = $bank_account->get_account($to_account_id);
+        
+        if (!$from_account || !$to_account) {
+            wp_send_json(array('success' => false, 'message' => 'One or both accounts not found'));
+        }
+        
+        // Currency validation
+        if ($from_account->currency !== $to_account->currency) {
+            wp_send_json(array('success' => false, 'message' => 'Cannot transfer between accounts with different currencies'));
+        }
+        
+        // Balance validation
+        if ($from_account->current_balance < $amount) {
+            wp_send_json(array('success' => false, 'message' => 'Insufficient balance in source account'));
+        }
+        
+        // Create transfer with additional data
+        $transfer_data = array(
+            'from_account_id' => $from_account_id,
+            'to_account_id' => $to_account_id,
+            'amount' => $amount,
+            'description' => $description,
+            'transaction_date' => $transaction_date,
+            'bs_year' => isset($_POST['bs_year']) ? intval($_POST['bs_year']) : null,
+            'bs_month' => isset($_POST['bs_month']) ? intval($_POST['bs_month']) : null,
+            'bs_day' => isset($_POST['bs_day']) ? intval($_POST['bs_day']) : null
+        );
+        
         $bank_transaction = new HisabBankTransaction();
-        $result = $bank_transaction->create_transfer($from_account_id, $to_account_id, $amount, $description, $transaction_date);
+        $result = $bank_transaction->create_transfer_with_data($transfer_data);
         
         if (is_wp_error($result)) {
             wp_send_json(array('success' => false, 'message' => $result->get_error_message()));
