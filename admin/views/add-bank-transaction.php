@@ -240,7 +240,7 @@ if ($edit_transaction) {
                                         echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
                                     }
                                 } else {
-                                    for ($year = 2075; $year <= 2085; $year++) {
+                                    for ($year = HISAB_BS_START_YEAR; $year <= HISAB_BS_END_YEAR; $year++) {
                                         $selected = '';
                                         if ($edit_transaction && $edit_transaction->bs_year) {
                                             $selected = ($year == $edit_transaction->bs_year) ? 'selected' : '';

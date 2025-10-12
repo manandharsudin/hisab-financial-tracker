@@ -22,6 +22,10 @@ define('HISAB_VERSION', '1.0.0');
 define('HISAB_CURRENCY_SYMBOL', '₹');
 define('HISAB_DATE_FORMAT', 'M j, Y');
 
+// Define BS (Bikram Sambat) year range constants
+define('HISAB_BS_START_YEAR', 2062);
+define('HISAB_BS_END_YEAR', 2085);
+
 class HisabFinancialTracker {
     
     public function __construct() {

@@ -132,7 +132,7 @@ $default_date = current_time('Y-m-d');
                                         echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
                                     }
                                 } else {
-                                    for ($year = 2075; $year <= 2085; $year++) {
+                                    for ($year = HISAB_BS_START_YEAR; $year <= HISAB_BS_END_YEAR; $year++) {
                                         $selected = ($year == 2081) ? 'selected' : '';
                                         echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
                                     }
