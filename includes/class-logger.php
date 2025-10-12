@@ -111,6 +111,9 @@ class HisabLogger {
         
         // Write to log file with file locking
         file_put_contents($log_file, $log_line, FILE_APPEND | LOCK_EX);
+        
+        // Run cleanup periodically (every 100 log entries or once per day)
+        $this->maybe_cleanup_old_logs();
     }
     
     /**
@@ -213,6 +216,38 @@ class HisabLogger {
     }
     
     /**
+     * Maybe cleanup old logs (called periodically during logging)
+     */
+    private function maybe_cleanup_old_logs() {
+        // Get the last cleanup time
+        $last_cleanup = get_option('hisab_last_log_cleanup', 0);
+        $current_time = time();
+        
+        // Run cleanup once per day (24 hours = 86400 seconds)
+        if (($current_time - $last_cleanup) > 86400) {
+            $retention_days = get_option('hisab_log_retention_days', 30);
+            if ($retention_days > 0) {
+                $deleted_count = $this->clean_old_logs($retention_days);
+                
+                // Update last cleanup time
+                update_option('hisab_last_log_cleanup', $current_time);
+                
+                // Log the cleanup action if logging is enabled
+                if ($this->is_logging_enabled(self::ACTION_SETTINGS_UPDATE)) {
+                    $this->info(
+                        self::ACTION_SETTINGS_UPDATE, 
+                        'Log cleanup completed', 
+                        array(
+                            'deleted_files' => $deleted_count,
+                            'retention_days' => $retention_days
+                        )
+                    );
+                }
+            }
+        }
+    }
+    
+    /**
      * Clean old log files
      */
     public function clean_old_logs($days_to_keep = 30) {
@@ -227,6 +262,19 @@ class HisabLogger {
                 }
             }
         }
+        
+        return $deleted_count;
+    }
+    
+    /**
+     * Force cleanup of old logs (manual trigger)
+     */
+    public function force_cleanup_old_logs() {
+        $retention_days = get_option('hisab_log_retention_days', 30);
+        $deleted_count = $this->clean_old_logs($retention_days);
+        
+        // Update last cleanup time
+        update_option('hisab_last_log_cleanup', time());
         
         return $deleted_count;
     }
