@@ -61,8 +61,7 @@ if (!defined('ABSPATH')) {
                             <select id="bs-year-input" name="bs_year" required>
                                 <option value=""><?php _e('Year', 'hisab-financial-tracker'); ?></option>
                                 <?php
-                                    $bs_years = HisabNepaliDate::get_bs_year_range( null, 20 );
-                                    foreach ($bs_years as $year) {
+                                    for ($year = HISAB_BS_START_YEAR; $year <= HISAB_BS_END_YEAR; $year++) {
                                         echo '<option value="' . $year . '">' . $year . '</option>';
                                     }
                                 ?>

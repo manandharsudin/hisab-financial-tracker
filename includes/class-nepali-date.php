@@ -194,27 +194,5 @@ if (!class_exists('HisabNepaliDate')) {
         
         
         
-        /**
-         * Get BS year range for dropdowns
-         * 
-         * @param int $center_year Center year
-         * @param int $range Range in years
-         * @return array Array of years
-         */
-        public static function get_bs_year_range($center_year = null, $range = 10) {
-            if (!$center_year) {
-                // Use approximate BS year (AD + 57)
-                $current_ad = getdate();
-                $center_year = $current_ad['year'] + 57;
-            }
-            
-            $years = array();
-            for ($year = $center_year - $range; $year <= $center_year + $range; $year++) {
-                $years[] = $year;
-            }
-            
-            return $years;
-        }
-        
     }
 }

@@ -126,8 +126,7 @@ $default_date = current_time('Y-m-d');
                             <?php
                                 $current_bs = HisabNepaliDate::get_current_bs_date();
                                 if ($current_bs) {
-                                    $bs_years = HisabNepaliDate::get_bs_year_range($current_bs['year'], 5);
-                                    foreach ($bs_years as $year) {
+                                    for ($year = HISAB_BS_START_YEAR; $year <= HISAB_BS_END_YEAR; $year++) {
                                         $selected = ($year == $current_bs['year']) ? 'selected' : '';
                                         echo '<option value="' . $year . '" ' . $selected . '>' . $year . '</option>';
                                     }
