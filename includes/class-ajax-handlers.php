@@ -21,6 +21,14 @@ class HisabAjaxHandlers {
         add_action('wp_ajax_hisab_get_trend_data', array($this, 'ajax_get_trend_data'));
         add_action('wp_ajax_hisab_get_category_data', array($this, 'ajax_get_category_data'));
         
+        // Bank Analytics AJAX handlers
+        add_action('wp_ajax_hisab_get_bank_analytics_data', array($this, 'ajax_get_bank_analytics_data'));
+        add_action('wp_ajax_hisab_get_bank_trend_data', array($this, 'ajax_get_bank_trend_data'));
+        add_action('wp_ajax_hisab_get_bank_transaction_summary', array($this, 'ajax_get_bank_transaction_summary'));
+        add_action('wp_ajax_hisab_get_account_balance_trends', array($this, 'ajax_get_account_balance_trends'));
+        add_action('wp_ajax_hisab_get_available_years', array($this, 'ajax_get_available_years'));
+        add_action('wp_ajax_hisab_get_available_months', array($this, 'ajax_get_available_months'));
+        
         // Projection AJAX handlers
         add_action('wp_ajax_hisab_calculate_savings', array($this, 'ajax_calculate_savings'));
         add_action('wp_ajax_hisab_get_projections', array($this, 'ajax_get_projections'));
@@ -1095,5 +1103,120 @@ class HisabAjaxHandlers {
         }
         
         wp_send_json(array('success' => true, 'message' => 'Transfer completed successfully', 'data' => $result));
+    }
+    
+    // Bank Analytics AJAX Handlers
+    public function ajax_get_bank_analytics_data() {
+        check_ajax_referer('hisab_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAnalytics')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Analytics class not available'));
+        }
+        
+        $bank_analytics = new HisabBankAnalytics();
+        $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
+        $month = isset($_POST['month']) ? intval($_POST['month']) : null;
+        
+        $data = array(
+            'transaction_summary' => $bank_analytics->get_bank_transaction_summary($year, $month),
+            'account_summary' => $bank_analytics->get_account_transaction_summary($year, $month),
+            'monthly_summary' => $bank_analytics->get_monthly_summary($year, $month)
+        );
+        
+        wp_send_json(array('success' => true, 'data' => $data));
+    }
+    
+    public function ajax_get_bank_trend_data() {
+        check_ajax_referer('hisab_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAnalytics')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Analytics class not available'));
+        }
+        
+        $bank_analytics = new HisabBankAnalytics();
+        $months = isset($_POST['months']) ? intval($_POST['months']) : 12;
+        $data = $bank_analytics->get_bank_trend_data($months);
+        
+        wp_send_json(array('success' => true, 'data' => $data));
+    }
+    
+    public function ajax_get_bank_transaction_summary() {
+        check_ajax_referer('hisab_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAnalytics')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Analytics class not available'));
+        }
+        
+        $bank_analytics = new HisabBankAnalytics();
+        $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
+        $month = isset($_POST['month']) ? intval($_POST['month']) : null;
+        $data = $bank_analytics->get_bank_transaction_summary($year, $month);
+        
+        wp_send_json(array('success' => true, 'data' => $data));
+    }
+    
+    public function ajax_get_account_balance_trends() {
+        check_ajax_referer('hisab_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAnalytics')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Analytics class not available'));
+        }
+        
+        $bank_analytics = new HisabBankAnalytics();
+        $months = isset($_POST['months']) ? intval($_POST['months']) : 12;
+        $data = $bank_analytics->get_account_balance_trends($months);
+        
+        wp_send_json(array('success' => true, 'data' => $data));
+    }
+    
+    public function ajax_get_available_years() {
+        check_ajax_referer('hisab_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAnalytics')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Analytics class not available'));
+        }
+        
+        $bank_analytics = new HisabBankAnalytics();
+        $years = $bank_analytics->get_available_years();
+        
+        wp_send_json(array('success' => true, 'data' => $years));
+    }
+    
+    public function ajax_get_available_months() {
+        check_ajax_referer('hisab_transaction', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        if (!class_exists('HisabBankAnalytics')) {
+            wp_send_json(array('success' => false, 'message' => 'Bank Analytics class not available'));
+        }
+        
+        $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
+        $bank_analytics = new HisabBankAnalytics();
+        $months = $bank_analytics->get_available_months($year);
+        
+        wp_send_json(array('success' => true, 'data' => $months));
     }
 }

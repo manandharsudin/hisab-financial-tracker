@@ -62,6 +62,7 @@ class HisabFinancialTracker {
         require_once HISAB_PLUGIN_PATH . 'includes/class-nepali-date.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-bank-account.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-bank-transaction.php';
+        require_once HISAB_PLUGIN_PATH . 'includes/class-bank-analytics.php';
         require_once HISAB_PLUGIN_PATH . 'includes/class-import-export.php';
     }
     

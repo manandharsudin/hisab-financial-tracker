@@ -138,4 +138,84 @@ class HisabAdmin {
     public function render_owners() {
         include HISAB_PLUGIN_PATH . 'admin/views/owners.php';
     }
+    
+    public function render_bank_analytics() {
+        // Initialize bank analytics
+        if (!class_exists('HisabBankAnalytics')) {
+            echo '<div class="wrap"><h1>Error</h1><p>Bank Analytics class not available.</p></div>';
+            return;
+        }
+        
+        $bank_analytics = new HisabBankAnalytics();
+        
+        // Get filter parameters
+        $selected_year = isset($_GET['year']) ? intval($_GET['year']) : null;
+        $selected_month = isset($_GET['month']) ? intval($_GET['month']) : null;
+        
+        // Get available years and months for filters
+        $available_years = $bank_analytics->get_available_years();
+        if (!$available_years) {
+            $available_years = array();
+        }
+        
+        $available_months = $selected_year ? $bank_analytics->get_available_months($selected_year) : array();
+        if (!$available_months) {
+            $available_months = array();
+        }
+        
+        $date_range = $bank_analytics->get_transaction_date_range();
+        if (!$date_range) {
+            $date_range = array('start_date' => null, 'end_date' => null);
+        }
+        
+        // Get analytics data - all data by default, or filtered by year/month
+        if ($selected_year && $selected_month) {
+            // Specific month
+            $start_date = sprintf('%04d-%02d-01', $selected_year, $selected_month);
+            $end_date = date('Y-m-t', strtotime($start_date));
+            $trend_data = $bank_analytics->get_bank_trend_data(null, $start_date, $end_date);
+            $balance_trends = $bank_analytics->get_account_balance_trends(null, $start_date, $end_date);
+            $transaction_summary = $bank_analytics->get_bank_transaction_summary($selected_year, $selected_month);
+            $account_summary = $bank_analytics->get_account_transaction_summary($selected_year, $selected_month);
+            $monthly_summary = $bank_analytics->get_monthly_summary($selected_year, $selected_month);
+        } elseif ($selected_year) {
+            // Specific year
+            $start_date = sprintf('%04d-01-01', $selected_year);
+            $end_date = sprintf('%04d-12-31', $selected_year);
+            $trend_data = $bank_analytics->get_bank_trend_data(null, $start_date, $end_date);
+            $balance_trends = $bank_analytics->get_account_balance_trends(null, $start_date, $end_date);
+            $transaction_summary = $bank_analytics->get_bank_transaction_summary($selected_year);
+            $account_summary = $bank_analytics->get_account_transaction_summary($selected_year);
+            $monthly_summary = $bank_analytics->get_monthly_summary($selected_year, date('n'));
+        } else {
+            // All data from beginning to current
+            $trend_data = $bank_analytics->get_bank_trend_data();
+            $balance_trends = $bank_analytics->get_account_balance_trends();
+            $transaction_summary = $bank_analytics->get_bank_transaction_summary();
+            $account_summary = $bank_analytics->get_account_transaction_summary();
+            $monthly_summary = $bank_analytics->get_monthly_summary();
+        }
+        
+        // Ensure all variables are properly initialized
+        if (!isset($trend_data) || !$trend_data) {
+            $trend_data = array('months' => array(), 'data' => array());
+        }
+        if (!isset($transaction_summary) || !$transaction_summary) {
+            $transaction_summary = array();
+        }
+        if (!isset($account_summary) || !$account_summary) {
+            $account_summary = array();
+        }
+        if (!isset($balance_trends) || !$balance_trends) {
+            $balance_trends = array('months' => array(), 'accounts' => array());
+        }
+        if (!isset($monthly_summary) || !$monthly_summary) {
+            $monthly_summary = array(
+                'deposits' => 0, 'withdrawals' => 0, 'phone_pay' => 0,
+                'transfers_in' => 0, 'transfers_out' => 0, 'net_flow' => 0, 'total_transactions' => 0
+            );
+        }
+        
+        include HISAB_PLUGIN_PATH . 'admin/views/bank-analytics.php';
+    }
 }

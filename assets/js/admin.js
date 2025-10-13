@@ -1586,9 +1586,184 @@ jQuery(document).ready(function($) {
         }
     }
     
+    // Bank Analytics Charts Functionality
+    function initBankAnalyticsCharts() {
+        // Bank transaction trend chart
+        const bankTrendCtx = document.getElementById('hisab-bank-trend-chart');
+        if (bankTrendCtx) {
+            const trendData = $('#hisab-bank-trend-chart').data('trend-data') || {};
+            
+            const months = trendData.months || [];
+            const data = trendData.data || {};
+            
+            const depositData = [];
+            const withdrawalData = [];
+            const phonePayData = [];
+            const transferInData = [];
+            const transferOutData = [];
+            
+            months.forEach(month => {
+                const monthKey = month.split(' ')[0] + ' ' + month.split(' ')[1];
+                const monthData = data[monthKey] || {};
+                
+                depositData.push(monthData.deposit || 0);
+                withdrawalData.push(monthData.withdrawal || 0);
+                phonePayData.push(monthData.phone_pay || 0);
+                transferInData.push(monthData.transfer_in || 0);
+                transferOutData.push(monthData.transfer_out || 0);
+            });
+            
+            new Chart(bankTrendCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Deposits',
+                        data: depositData,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Withdrawals',
+                        data: withdrawalData,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Phone Pay',
+                        data: phonePayData,
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Transfers In',
+                        data: transferInData,
+                        borderColor: '#17a2b8',
+                        backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Transfers Out',
+                        data: transferOutData,
+                        borderColor: '#6f42c1',
+                        backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Transaction types pie chart
+        const transactionTypesCtx = document.getElementById('hisab-transaction-types');
+        if (transactionTypesCtx) {
+            const transactionTypes = $('#hisab-transaction-types').data('transaction-types') || [];
+            
+            const labels = transactionTypes.map(item => item.label);
+            const amounts = transactionTypes.map(item => item.amount);
+            const colors = transactionTypes.map(item => item.color);
+            
+            new Chart(transactionTypesCtx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: amounts,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Account activity pie chart
+        const accountActivityCtx = document.getElementById('hisab-account-activity');
+        if (accountActivityCtx) {
+            const accountActivity = $('#hisab-account-activity').data('account-activity') || [];
+            
+            const labels = accountActivity.map(item => item.account_name);
+            const amounts = accountActivity.map(item => Math.abs(item.net_amount));
+            const colors = accountActivity.map(item => item.color);
+            
+            new Chart(accountActivityCtx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: amounts,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Account balance trends chart
+        const balanceTrendCtx = document.getElementById('hisab-balance-trend-chart');
+        if (balanceTrendCtx) {
+            const balanceTrends = $('#hisab-balance-trend-chart').data('balance-trends') || {};
+            
+            const months = balanceTrends.months || [];
+            const accounts = balanceTrends.accounts || [];
+            
+            const datasets = accounts.map(account => ({
+                label: account.account_name + ' (' + account.currency + ')',
+                data: account.balances,
+                borderColor: account.color || '#0073aa',
+                backgroundColor: 'rgba(0, 115, 170, 0.1)',
+                tension: 0.4
+            }));
+            
+            new Chart(balanceTrendCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
     // Initialize analytics charts if on the analytics page
     if ($('#hisab-yearly-chart').length || $('#hisab-income-categories').length || $('#hisab-expense-categories').length) {
         initAnalyticsCharts();
+    }
+    
+    // Initialize bank analytics charts if on the bank analytics page
+    if ($('#hisab-bank-trend-chart').length || $('#hisab-transaction-types').length || $('#hisab-account-activity').length || $('#hisab-balance-trend-chart').length) {
+        initBankAnalyticsCharts();
     }
     
     // Categories Management Functionality
