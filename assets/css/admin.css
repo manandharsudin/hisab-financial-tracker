@@ -1930,3 +1930,133 @@ input[type="color"] {
     margin-top: 2px;
     font-style: italic;
 }
+
+/* Bank Analytics Styles */
+.hisab-analytics-filters {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.hisab-analytics-filters form {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.hisab-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hisab-filter-group label {
+    font-weight: 600;
+    color: #333;
+}
+
+.hisab-filter-group select {
+    min-width: 120px;
+}
+
+.hisab-date-range-info {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.hisab-date-range-info p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.hisab-analytics-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.hisab-monthly-stats,
+.hisab-yearly-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.hisab-stat-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    border-left: 4px solid #0073aa;
+}
+
+.hisab-stat-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.hisab-stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    display: block;
+}
+
+.hisab-stat-value.positive {
+    color: #28a745;
+}
+
+.hisab-stat-value.negative {
+    color: #dc3545;
+}
+
+.hisab-trend-chart,
+.hisab-balance-chart {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.hisab-category-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.hisab-category-section {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.hisab-category-section h3 {
+    margin-top: 0;
+    text-align: center;
+    color: #333;
+}
+
+.hisab-category-chart {
+    text-align: center;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .hisab-category-breakdown {
+        grid-template-columns: 1fr;
+    }
+    
+    .hisab-monthly-stats,
+    .hisab-yearly-stats {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+}

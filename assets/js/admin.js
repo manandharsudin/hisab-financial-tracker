@@ -1603,7 +1603,17 @@ jQuery(document).ready(function($) {
             const transferOutData = [];
             
             months.forEach(month => {
-                const monthKey = month.split(' ')[0] + ' ' + month.split(' ')[1];
+                // Convert month label back to Y-m format for data lookup
+                const monthParts = month.split(' ');
+                const monthName = monthParts[0];
+                const year = monthParts[1];
+                
+                // Convert month name to number
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const monthNum = monthNames.indexOf(monthName) + 1;
+                const monthKey = year + '-' + String(monthNum).padStart(2, '0');
+                
                 const monthData = data[monthKey] || {};
                 
                 depositData.push(monthData.deposit || 0);
@@ -1730,11 +1740,17 @@ jQuery(document).ready(function($) {
             const months = balanceTrends.months || [];
             const accounts = balanceTrends.accounts || [];
             
-            const datasets = accounts.map(account => ({
+            // Define a simple color palette for bank accounts
+            const colors = [
+                '#0073aa', '#dc3232', '#00a32a', '#ffb900', '#826eb4',
+                '#f56e28', '#00a0d2', '#d63638', '#ff6900', '#8b5cf6'
+            ];
+            
+            const datasets = accounts.map((account, index) => ({
                 label: account.account_name + ' (' + account.currency + ')',
                 data: account.balances,
-                borderColor: account.color || '#0073aa',
-                backgroundColor: 'rgba(0, 115, 170, 0.1)',
+                borderColor: colors[index % colors.length],
+                backgroundColor: colors[index % colors.length] + '20', // Add transparency
                 tension: 0.4
             }));
             

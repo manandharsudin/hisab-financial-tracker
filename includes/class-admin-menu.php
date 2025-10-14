@@ -289,7 +289,9 @@ class HisabAdminMenu {
             echo '<div class="wrap"><h1>Error</h1><p>Admin class not available. Please check if all plugin files are properly uploaded.</p></div>';
             return;
         }
-        include HISAB_PLUGIN_PATH . 'admin/views/bank-analytics.php';
+        
+        $admin = new HisabAdmin();
+        $admin->render_bank_analytics();
     }
     
     public function admin_analytics_page() {
