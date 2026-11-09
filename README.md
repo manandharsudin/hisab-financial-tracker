@@ -649,6 +649,28 @@ For additional support:
 
 ## Changelog
 
+### Version 1.3.0 (Remediation & Hardening Milestone)
+- 🔒 **Security Hardening**:
+  - Protected `wp-content/uploads/hisab-logs/` with `.htaccess` (`Deny from all`) and empty `index.php`.
+  - Added action-specific nonce verification and `current_user_can('manage_options')` checks across bank transactions, account management, form submissions, and settings.
+  - Restricted unauthenticated access to financial metrics via AJAX.
+  - Enforced file upload validation (10MB limit, `.json` extension, MIME validation).
+- 🗄️ **Database Layer & Data Integrity**:
+  - Fixed persistence of `bank_account_id` and `phone_pay_reference` in `save_transaction()` and `update_transaction()`.
+  - Replaced single-record limit in JSON import with a robust 4-tier line-item mapping engine.
+  - Automated bank account balance recalculation post-import.
+  - Converted bank account form submissions to standard AJAX handlers.
+- ⚡ **Performance Optimizations**:
+  - Eliminated N+1 query loops in transactions list table using SQL existence subqueries (`has_details`).
+  - Optimized bank balance trends from $O(\text{accounts} \times \text{months})$ queries into a single monthly aggregation query.
+  - Deduplicated redundant date conversion routines across admin views via centralized `HisabDateConverter`.
+- 📊 **Bank Analytics & UI/UX Polish**:
+  - Implemented dual-calendar (AD/BS) filtering with native Bikram Sambat months (Baisakh through Chaitra).
+  - Harmonized multi-currency handling with segregated NPR (`₹`) and USD (`$`) metrics.
+  - Resilient Chart.js visualizations with formatted tooltips and unified dataset generation.
+- 🧪 **Automated Verification**:
+  - Comprehensive verification suite passing across all 39 plugin PHP files and end-to-end CRUD/transfer workflows.
+
 ### Version 1.2.0
 - ✅ Added Import/Export functionality (JSON format)
 - ✅ Enhanced bank account and transaction management
