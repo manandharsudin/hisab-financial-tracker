@@ -162,4 +162,62 @@ The plugin manages 6 custom tables via `HisabDatabase::create_tables()`:
   - Never run `git commit`, `git push`, or `git merge` without explicit user instruction.
   - Do not append `Co-Authored-By` or AI attribution trailers to commit messages.
 - **Current Status / In Progress**:
-  - Bank Analytics (`admin/views/bank-analytics.php` and `includes/class-bank-analytics.php`) is actively being worked on (refactoring filters, trend charts, and CSS consolidation).
+  - Full codebase audit completed.
+  - In-progress feature: Bank Analytics (`admin/views/bank-analytics.php` and `includes/class-bank-analytics.php`) awaiting filter synchronization, trend charts, and CSS/JS consolidation.
+  - Remediation Roadmap prepared (Phases 1–5 below).
+
+---
+
+## Codebase Audit & Architectural Review (Nov 2026)
+
+### 1. Critical Security Vulnerabilities Identified
+1. **Public Audit Log Exposure**: Log files in `wp-content/uploads/hisab-logs/hisab-YYYY-MM-DD.log` lack `.htaccess` / `index.php` protection. Sensitive financial transactions, usernames, and IP addresses can be read via direct URL.
+2. **CSRF in Bank Operations**: `delete_transaction`, `delete_account`, and `toggle_status` in `admin/views/bank-transactions.php` and `admin/views/bank-accounts.php` process `$_POST` without nonce verification or capability checks.
+3. **Missing Capability Checks**: `HisabAdminMenu::handle_bank_account_submission()` and `HisabAdmin::save_settings()` lack `current_user_can('manage_options')`.
+4. **Unauthenticated Financial Metrics Leak**: `wp_ajax_nopriv_hisab_get_public_data` in `includes/class-ajax-handlers.php` exposes monthly totals to unauthenticated visitors.
+5. **Unvalidated File Upload in JSON Import**: `ajax_import_data()` parses `$_FILES['import_file']['tmp_name']` without verifying MIME type or size limits prior to reading.
+
+### 2. Bugs & Data Integrity Flaws
+1. **Frontend Chart Crash (Duplicate `uniqid()`)**: `HisabFrontend::render_income_chart()` and `render_expense_chart()` call `uniqid()` twice, resulting in mismatched canvas and script element IDs and causing JavaScript fatal errors.
+2. **Corrupted Transaction Detail Mapping in JSON Import**: `HisabImportExport::find_transaction_id()` uses `LIMIT 1` matching only `type` and `date`. Multiple transactions on the same date cause all line items to attach to a single record.
+3. **Stale Bank Balances Post-Import**: Direct SQL inserts in `HisabImportExport::import_bank_transactions()` bypass `HisabBankAccount::update_balance()`.
+4. **Field Omission in `save_transaction()`**: `HisabDatabase::save_transaction()` omits `bank_account_id` and `phone_pay_reference`.
+
+### 3. Performance Bottlenecks
+1. **N+1 Queries in Transactions List**: `admin/views/transactions.php` queries details individually for every transaction row inside the loop (`new HisabDatabase()->get_transaction_details($t->id)`).
+2. **Nested Loop Query Explosion in Bank Balance Trends**: `HisabBankAnalytics::get_account_balance_trends()` runs `O(accounts * months)` individual SQL queries.
+3. **Monolithic Asset**: `assets/js/admin.js` is 117KB (2,808 lines) containing redundant date conversion routines and event handlers.
+
+---
+
+## Phased Remediation Roadmap
+
+When resuming work, follow these sequential phases:
+
+* **Phase 1: Critical Security Hardening & Bug Fixes**
+  - Add `.htaccess` (`Deny from all`) and empty `index.php` to `wp-content/uploads/hisab-logs/`.
+  - Add nonces and capability checks to `bank-transactions.php`, `bank-accounts.php`, `handle_bank_account_submission()`, and `save_settings()`.
+  - Fix frontend chart canvas IDs in `includes/class-frontend.php`.
+  - Restrict `wp_ajax_nopriv_hisab_get_public_data`.
+  - Add file upload MIME/size validation to JSON import.
+
+* **Phase 2: Database Layer & Data Integrity Consolidation**
+  - Fix `HisabDatabase::save_transaction()` to accept and persist `bank_account_id` and `phone_pay_reference`.
+  - Fix `HisabImportExport::find_transaction_id()` line-item mapping logic.
+  - Automatically recalculate bank account balances after JSON import.
+  - Retire synchronous form processing in `class-admin-menu.php` in favor of standard AJAX handlers.
+
+* **Phase 3: Performance Optimization & Query Consolidation**
+  - Eliminate the N+1 query loop in `admin/views/transactions.php` (e.g. `has_details` flag in paginated query).
+  - Flatten nested query loop in `HisabBankAnalytics::get_account_balance_trends()` into a single monthly aggregation query.
+  - Deduplicate redundant conversion routines in `assets/js/admin.js`.
+
+* **Phase 4: Complete Bank Analytics & Polish UI/UX**
+  - Finish filter controls and dual-calendar (AD/BS) switching in `admin/views/bank-analytics.php`.
+  - Verify and polish Chart.js balance and flow trends.
+  - Harmonize multi-currency display (NPR / USD).
+
+* **Phase 5: Automated Verification & Documentation**
+  - Run `php -l` on all PHP files.
+  - Conduct end-to-end browser verification of forms, transfers, and charts.
+  - Update `README.md` and user documentation.
