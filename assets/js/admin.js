@@ -1583,42 +1583,78 @@ jQuery(document).ready(function($) {
         }
     }
     
-    // Bank Analytics Charts Functionality
+    // Bank Analytics Charts & Filtering Functionality
     function initBankAnalyticsCharts() {
-        // Bank transaction trend chart
+        // Setup filter form events
+        const $filterForm = $('#hisab-bank-analytics-filter-form');
+        if ($filterForm.length) {
+            $('#hisab-calendar-type-filter').on('change', function() {
+                $('#year-filter').val('');
+                $('#month-filter').val('').prop('disabled', true);
+                $filterForm.submit();
+            });
+
+            $('#year-filter').on('change', function() {
+                const hasYear = $(this).val() !== '';
+                $('#month-filter').prop('disabled', !hasYear);
+                if (!hasYear) {
+                    $('#month-filter').val('');
+                }
+            });
+        }
+
+        // Helper currency / number formatter
+        function formatMetric(val) {
+            return Number(val || 0).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // 1. Bank transaction trend chart
         const bankTrendCtx = document.getElementById('hisab-bank-trend-chart');
         if (bankTrendCtx) {
             const trendData = $('#hisab-bank-trend-chart').data('trend-data') || {};
-            
             const months = trendData.months || [];
             const data = trendData.data || {};
             
-            const depositData = [];
-            const withdrawalData = [];
-            const phonePayData = [];
-            const transferInData = [];
-            const transferOutData = [];
+            let depositData = [];
+            let withdrawalData = [];
+            let phonePayData = [];
+            let transferInData = [];
+            let transferOutData = [];
             
-            months.forEach(month => {
-                // Convert month label back to Y-m format for data lookup
-                const monthParts = month.split(' ');
-                const monthName = monthParts[0];
-                const year = monthParts[1];
-                
-                // Convert month name to number
-                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const monthNum = monthNames.indexOf(monthName) + 1;
-                const monthKey = year + '-' + String(monthNum).padStart(2, '0');
-                
-                const monthData = data[monthKey] || {};
-                
-                depositData.push(monthData.deposit || 0);
-                withdrawalData.push(monthData.withdrawal || 0);
-                phonePayData.push(monthData.phone_pay || 0);
-                transferInData.push(monthData.transfer_in || 0);
-                transferOutData.push(monthData.transfer_out || 0);
-            });
+            if (trendData.datasets) {
+                depositData = trendData.datasets.deposit || [];
+                withdrawalData = trendData.datasets.withdrawal || [];
+                phonePayData = trendData.datasets.phone_pay || [];
+                transferInData = trendData.datasets.transfer_in || [];
+                transferOutData = trendData.datasets.transfer_out || [];
+            } else if (trendData.keys && trendData.keys.length > 0) {
+                trendData.keys.forEach(k => {
+                    const row = data[k] || {};
+                    depositData.push(row.deposit || 0);
+                    withdrawalData.push(row.withdrawal || 0);
+                    phonePayData.push(row.phone_pay || 0);
+                    transferInData.push(row.transfer_in || 0);
+                    transferOutData.push(row.transfer_out || 0);
+                });
+            } else {
+                months.forEach(month => {
+                    const monthParts = month.split(' ');
+                    const monthName = monthParts[0];
+                    const year = monthParts[1];
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const monthNum = monthNames.indexOf(monthName) + 1;
+                    const monthKey = year + '-' + String(monthNum).padStart(2, '0');
+                    const monthData = data[monthKey] || {};
+                    depositData.push(monthData.deposit || 0);
+                    withdrawalData.push(monthData.withdrawal || 0);
+                    phonePayData.push(monthData.phone_pay || 0);
+                    transferInData.push(monthData.transfer_in || 0);
+                    transferOutData.push(monthData.transfer_out || 0);
+                });
+            }
             
             new Chart(bankTrendCtx.getContext('2d'), {
                 type: 'line',
@@ -1629,35 +1665,52 @@ jQuery(document).ready(function($) {
                         data: depositData,
                         borderColor: '#28a745',
                         backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        tension: 0.4
+                        tension: 0.3,
+                        fill: false
                     }, {
                         label: 'Withdrawals',
                         data: withdrawalData,
                         borderColor: '#dc3545',
                         backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                        tension: 0.4
+                        tension: 0.3,
+                        fill: false
                     }, {
                         label: 'Phone Pay',
                         data: phonePayData,
                         borderColor: '#ffc107',
                         backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                        tension: 0.4
+                        tension: 0.3,
+                        fill: false
                     }, {
                         label: 'Transfers In',
                         data: transferInData,
                         borderColor: '#17a2b8',
                         backgroundColor: 'rgba(23, 162, 184, 0.1)',
-                        tension: 0.4
+                        tension: 0.3,
+                        fill: false
                     }, {
                         label: 'Transfers Out',
                         data: transferOutData,
                         borderColor: '#6f42c1',
                         backgroundColor: 'rgba(111, 66, 193, 0.1)',
-                        tension: 0.4
+                        tension: 0.3,
+                        fill: false
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const val = (context.parsed && context.parsed.y !== undefined) ? context.parsed.y : context.raw;
+                                    return label + ': ' + formatMetric(val);
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         y: {
                             beginAtZero: true
@@ -1667,11 +1720,10 @@ jQuery(document).ready(function($) {
             });
         }
         
-        // Transaction types pie chart
+        // 2. Transaction types pie chart
         const transactionTypesCtx = document.getElementById('hisab-transaction-types');
         if (transactionTypesCtx) {
             const transactionTypes = $('#hisab-transaction-types').data('transaction-types') || [];
-            
             const labels = transactionTypes.map(item => item.label);
             const amounts = transactionTypes.map(item => item.amount);
             const colors = transactionTypes.map(item => item.color);
@@ -1692,18 +1744,26 @@ jQuery(document).ready(function($) {
                     plugins: {
                         legend: {
                             position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const val = (context.parsed !== undefined) ? context.parsed : context.raw;
+                                    return label + ': ' + formatMetric(val);
+                                }
+                            }
                         }
                     }
                 }
             });
         }
         
-        // Account activity pie chart
+        // 3. Account activity pie chart
         const accountActivityCtx = document.getElementById('hisab-account-activity');
         if (accountActivityCtx) {
             const accountActivity = $('#hisab-account-activity').data('account-activity') || [];
-            
-            const labels = accountActivity.map(item => item.account_name);
+            const labels = accountActivity.map(item => item.account_name + ' (' + item.currency + ')');
             const amounts = accountActivity.map(item => Math.abs(item.net_amount));
             const colors = accountActivity.map(item => item.color);
             
@@ -1723,21 +1783,28 @@ jQuery(document).ready(function($) {
                     plugins: {
                         legend: {
                             position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const val = (context.parsed !== undefined) ? context.parsed : context.raw;
+                                    return label + ': ' + formatMetric(val);
+                                }
+                            }
                         }
                     }
                 }
             });
         }
         
-        // Account balance trends chart
+        // 4. Account balance trends chart
         const balanceTrendCtx = document.getElementById('hisab-balance-trend-chart');
         if (balanceTrendCtx) {
             const balanceTrends = $('#hisab-balance-trend-chart').data('balance-trends') || {};
-            
             const months = balanceTrends.months || [];
             const accounts = balanceTrends.accounts || [];
             
-            // Define a simple color palette for bank accounts
             const colors = [
                 '#0073aa', '#dc3232', '#00a32a', '#ffb900', '#826eb4',
                 '#f56e28', '#00a0d2', '#d63638', '#ff6900', '#8b5cf6'
@@ -1747,8 +1814,9 @@ jQuery(document).ready(function($) {
                 label: account.account_name + ' (' + account.currency + ')',
                 data: account.balances,
                 borderColor: colors[index % colors.length],
-                backgroundColor: colors[index % colors.length] + '20', // Add transparency
-                tension: 0.4
+                backgroundColor: colors[index % colors.length] + '20',
+                tension: 0.3,
+                fill: false
             }));
             
             new Chart(balanceTrendCtx.getContext('2d'), {
@@ -1759,9 +1827,21 @@ jQuery(document).ready(function($) {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const val = (context.parsed && context.parsed.y !== undefined) ? context.parsed.y : context.raw;
+                                    return label + ': ' + formatMetric(val);
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: false
                         }
                     }
                 }

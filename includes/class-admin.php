@@ -153,56 +153,47 @@ class HisabAdmin {
         $bank_analytics = new HisabBankAnalytics();
         
         // Get filter parameters
-        $selected_year = isset($_GET['year']) ? intval($_GET['year']) : null;
-        $selected_month = isset($_GET['month']) ? intval($_GET['month']) : null;
+        $calendar_type = isset($_GET['calendar_type']) && in_array($_GET['calendar_type'], array('ad', 'bs'))
+            ? sanitize_text_field($_GET['calendar_type'])
+            : get_option('hisab_default_calendar', 'ad');
+            
+        $selected_year = (isset($_GET['year']) && $_GET['year'] !== '') ? intval($_GET['year']) : null;
+        $selected_month = (isset($_GET['month']) && $_GET['month'] !== '') ? intval($_GET['month']) : null;
+        $selected_account_id = (isset($_GET['account_id']) && $_GET['account_id'] !== '') ? intval($_GET['account_id']) : null;
+        $selected_currency = (isset($_GET['currency']) && in_array($_GET['currency'], array('NPR', 'USD')))
+            ? sanitize_text_field($_GET['currency'])
+            : null;
         
         // Get available years and months for filters
-        $available_years = $bank_analytics->get_available_years();
+        $available_years = $bank_analytics->get_available_years($calendar_type);
         if (!$available_years) {
             $available_years = array();
         }
         
-        $available_months = $selected_year ? $bank_analytics->get_available_months($selected_year) : array();
+        $available_months = $bank_analytics->get_available_months($selected_year, $calendar_type);
         if (!$available_months) {
             $available_months = array();
         }
         
-        $date_range = $bank_analytics->get_transaction_date_range();
+        $date_range = $bank_analytics->get_transaction_date_range($calendar_type);
         if (!$date_range) {
             $date_range = array('start_date' => null, 'end_date' => null);
         }
         
-        // Get analytics data - all data by default, or filtered by year/month
-        if ($selected_year && $selected_month) {
-            // Specific month
-            $start_date = sprintf('%04d-%02d-01', $selected_year, $selected_month);
-            $end_date = date('Y-m-t', strtotime($start_date));
-            $trend_data = $bank_analytics->get_bank_trend_data(null, $start_date, $end_date);
-            $balance_trends = $bank_analytics->get_account_balance_trends(null, $start_date, $end_date);
-            $transaction_summary = $bank_analytics->get_bank_transaction_summary($selected_year, $selected_month);
-            $account_summary = $bank_analytics->get_account_transaction_summary($selected_year, $selected_month);
-            $monthly_summary = $bank_analytics->get_monthly_summary($selected_year, $selected_month);
-        } elseif ($selected_year) {
-            // Specific year
-            $start_date = sprintf('%04d-01-01', $selected_year);
-            $end_date = sprintf('%04d-12-31', $selected_year);
-            $trend_data = $bank_analytics->get_bank_trend_data(null, $start_date, $end_date);
-            $balance_trends = $bank_analytics->get_account_balance_trends(null, $start_date, $end_date);
-            $transaction_summary = $bank_analytics->get_bank_transaction_summary($selected_year);
-            $account_summary = $bank_analytics->get_account_transaction_summary($selected_year);
-            $monthly_summary = $bank_analytics->get_monthly_summary($selected_year, date('n'));
-        } else {
-            // All data from beginning to current
-            $trend_data = $bank_analytics->get_bank_trend_data();
-            $balance_trends = $bank_analytics->get_account_balance_trends();
-            $transaction_summary = $bank_analytics->get_bank_transaction_summary();
-            $account_summary = $bank_analytics->get_account_transaction_summary();
-            $monthly_summary = $bank_analytics->get_monthly_summary();
-        }
+        // Get bank accounts for filter dropdown
+        $bank_account_obj = class_exists('HisabBankAccount') ? new HisabBankAccount() : null;
+        $available_accounts = $bank_account_obj ? $bank_account_obj->get_all_accounts(array('is_active' => 1)) : array();
+        
+        // Get analytics data using unified parameters
+        $trend_data = $bank_analytics->get_bank_trend_data(null, null, null, $selected_account_id, $selected_currency, $calendar_type, $selected_year, $selected_month);
+        $balance_trends = $bank_analytics->get_account_balance_trends(null, null, null, $selected_account_id, $selected_currency, $calendar_type, $selected_year, $selected_month);
+        $transaction_summary = $bank_analytics->get_bank_transaction_summary($selected_year, $selected_month, $selected_account_id, $selected_currency, $calendar_type);
+        $account_summary = $bank_analytics->get_account_transaction_summary($selected_year, $selected_month, $selected_account_id, $selected_currency, $calendar_type);
+        $monthly_summary = $bank_analytics->get_monthly_summary($selected_year, $selected_month, $selected_account_id, $selected_currency, $calendar_type);
         
         // Ensure all variables are properly initialized
         if (!isset($trend_data) || !$trend_data) {
-            $trend_data = array('months' => array(), 'data' => array());
+            $trend_data = array('months' => array(), 'data' => array(), 'datasets' => array());
         }
         if (!isset($transaction_summary) || !$transaction_summary) {
             $transaction_summary = array();
@@ -216,7 +207,8 @@ class HisabAdmin {
         if (!isset($monthly_summary) || !$monthly_summary) {
             $monthly_summary = array(
                 'deposits' => 0, 'withdrawals' => 0, 'phone_pay' => 0,
-                'transfers_in' => 0, 'transfers_out' => 0, 'net_flow' => 0, 'total_transactions' => 0
+                'transfers_in' => 0, 'transfers_out' => 0, 'net_flow' => 0, 'total_transactions' => 0,
+                'by_currency' => array()
             );
         }
         

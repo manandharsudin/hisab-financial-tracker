@@ -2050,6 +2050,28 @@ input[type="color"] {
     margin-top: 20px;
 }
 
+.hisab-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f0f0f1;
+    color: #1d2327;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.hisab-filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.hisab-trend-chart canvas,
+.hisab-balance-chart canvas {
+    max-height: 400px;
+    width: 100% !important;
+}
+
 @media (max-width: 768px) {
     .hisab-category-breakdown {
         grid-template-columns: 1fr;

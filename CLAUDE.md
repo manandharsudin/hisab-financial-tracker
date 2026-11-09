@@ -165,7 +165,8 @@ The plugin manages 6 custom tables via `HisabDatabase::create_tables()`:
   - Phase 1 (Critical Security Hardening & Bug Fixes) COMPLETED.
   - Phase 2 (Database Layer & Data Integrity Consolidation) COMPLETED.
   - Phase 3 (Performance Optimization & Query Consolidation) COMPLETED.
-  - Next: Phase 4 (Complete Bank Analytics & Polish UI/UX).
+  - Phase 4 (Complete Bank Analytics & Polish UI/UX) COMPLETED.
+  - Next: Phase 5 (Automated Verification & Documentation).
 
 ---
 
@@ -213,10 +214,11 @@ When resuming work, follow these sequential phases:
   - [x] Flatten nested query loop in `HisabBankAnalytics::get_account_balance_trends()` into a single monthly aggregation query.
   - [x] Deduplicate redundant conversion routines in `assets/js/admin.js` via `HisabDateConverter`.
 
-* **Phase 4: Complete Bank Analytics & Polish UI/UX**
-  - Finish filter controls and dual-calendar (AD/BS) switching in `admin/views/bank-analytics.php`.
-  - Verify and polish Chart.js balance and flow trends.
-  - Harmonize multi-currency display (NPR / USD).
+* **Phase 4: Complete Bank Analytics & Polish UI/UX [COMPLETED]**
+  - [x] Finish filter controls and dual-calendar (AD/BS) switching in `admin/views/bank-analytics.php`.
+  - [x] Verify and polish Chart.js balance and flow trends with resilient datasets and tooltip formatters.
+  - [x] Harmonize multi-currency display (NPR / USD) with clear per-currency breakdown and currency symbols.
+  - [x] Consolidate inline JavaScript/CSS and eliminate duplicate, buggy stat loops.
 
 * **Phase 5: Automated Verification & Documentation**
   - Run `php -l` on all PHP files.
