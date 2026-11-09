@@ -38,8 +38,8 @@ class HisabAjaxHandlers {
         add_action('wp_ajax_hisab_export_data', array($this, 'ajax_export_data'));
         add_action('wp_ajax_hisab_import_data', array($this, 'ajax_import_data'));
         
-        // Frontend AJAX handlers (for non-logged in users)
-        add_action('wp_ajax_nopriv_hisab_get_public_data', array($this, 'ajax_get_public_data'));
+        // Frontend AJAX handlers
+        add_action('wp_ajax_hisab_get_public_data', array($this, 'ajax_get_public_data'));
         
         // Category AJAX handlers
         add_action('wp_ajax_hisab_save_category', array($this, 'ajax_save_category'));
@@ -377,6 +377,43 @@ class HisabAjaxHandlers {
         }
         
         $file = $_FILES['import_file'];
+
+        // Validate uploaded file authenticity
+        if (!is_uploaded_file($file['tmp_name'])) {
+            wp_send_json(array('success' => false, 'message' => 'Invalid file upload source'));
+        }
+
+        // Limit maximum file size (10 MB or wp_max_upload_size())
+        $max_size = min(10 * 1024 * 1024, wp_max_upload_size());
+        if ($file['size'] > $max_size) {
+            wp_send_json(array('success' => false, 'message' => sprintf('File size exceeds the maximum limit of %s.', size_format($max_size))));
+        }
+
+        // Validate file extension
+        $file_name = sanitize_file_name($file['name']);
+        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        if ($file_extension !== 'json') {
+            wp_send_json(array('success' => false, 'message' => 'Only JSON files (.json) are allowed.'));
+        }
+
+        // Validate MIME type
+        $allowed_mimes = array('application/json', 'text/plain', 'text/json', 'application/octet-stream');
+        $mime_type = '';
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo) {
+                $mime_type = finfo_file($finfo, $file['tmp_name']);
+                finfo_close($finfo);
+            }
+        }
+        if (empty($mime_type) && function_exists('mime_content_type')) {
+            $mime_type = mime_content_type($file['tmp_name']);
+        }
+
+        if (!empty($mime_type) && !in_array($mime_type, $allowed_mimes, true)) {
+            wp_send_json(array('success' => false, 'message' => 'Invalid file type. Please upload a valid JSON file.'));
+        }
+        
         $file_content = file_get_contents($file['tmp_name']);
         
         if (!$file_content) {
@@ -436,9 +473,14 @@ class HisabAjaxHandlers {
         }
     }
     
-    // Public AJAX Handlers (for frontend)
+    // Public AJAX Handlers (restricted to authorized users)
     public function ajax_get_public_data() {
-        // This can be used for public-facing shortcodes that don't require authentication
+        check_ajax_referer('hisab_transaction', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+
         if (!class_exists('HisabDatabase')) {
             wp_send_json(array('success' => false, 'message' => 'Database class not available'));
         }

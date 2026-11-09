@@ -371,6 +371,10 @@ class HisabAdminMenu {
      * Handle bank account form submission
      */
     private function handle_bank_account_submission() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'hisab-financial-tracker'));
+        }
+
         if (!class_exists('HisabBankAccount')) {
             return;
         }
@@ -420,6 +424,10 @@ class HisabAdminMenu {
      * NOTE: This method is no longer used - bank transactions now use AJAX submission
      */
     private function handle_bank_transaction_submission() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'hisab-financial-tracker'));
+        }
+
         // Debug: Log that the handler is being called
         error_log('Bank transaction form submission handler called');
         

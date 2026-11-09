@@ -7,6 +7,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+if (!current_user_can('manage_options')) {
+    wp_die(__('You do not have sufficient permissions to access this page.', 'hisab-financial-tracker'));
+}
+
 // Initialize classes
 $bank_account = new HisabBankAccount();
 $bank_transaction = new HisabBankTransaction();
@@ -41,6 +45,7 @@ if (isset($_POST['action']) && $account) {
     
     switch ($action) {
         case 'delete_transaction':
+            check_admin_referer('hisab_delete_bank_transaction_' . $transaction_id);
             if ($transaction_id > 0) {
                 $result = $bank_transaction->delete_transaction($transaction_id);
                 if (is_wp_error($result)) {
@@ -346,6 +351,7 @@ if ($account) {
                                         <?php _e('Edit', 'hisab-financial-tracker'); ?>
                                     </a>
                                     <form method="post" style="display: inline-block;" onsubmit="return confirm('<?php _e('Are you sure you want to delete this transaction?', 'hisab-financial-tracker'); ?>');">
+                                        <?php wp_nonce_field('hisab_delete_bank_transaction_' . $transaction->id); ?>
                                         <input type="hidden" name="action" value="delete_transaction">
                                         <input type="hidden" name="transaction_id" value="<?php echo $transaction->id; ?>">
                                         <button type="submit" class="button button-small button-link-delete">

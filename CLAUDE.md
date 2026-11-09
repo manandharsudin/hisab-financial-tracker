@@ -162,23 +162,23 @@ The plugin manages 6 custom tables via `HisabDatabase::create_tables()`:
   - Never run `git commit`, `git push`, or `git merge` without explicit user instruction.
   - Do not append `Co-Authored-By` or AI attribution trailers to commit messages.
 - **Current Status / In Progress**:
-  - Full codebase audit completed.
-  - In-progress feature: Bank Analytics (`admin/views/bank-analytics.php` and `includes/class-bank-analytics.php`) awaiting filter synchronization, trend charts, and CSS/JS consolidation.
-  - Remediation Roadmap prepared (Phases 1–5 below).
+  - Phase 1 (Critical Security Hardening & Bug Fixes) COMPLETED.
+  - Ready for Phase 2 (Database Layer & Data Integrity Consolidation).
+  - In-progress feature: Bank Analytics (`admin/views/bank-analytics.php` and `includes/class-bank-analytics.php`) awaiting filter synchronization, trend charts, and CSS/JS consolidation (Phase 4).
 
 ---
 
 ## Codebase Audit & Architectural Review (Nov 2026)
 
 ### 1. Critical Security Vulnerabilities Identified
-1. **Public Audit Log Exposure**: Log files in `wp-content/uploads/hisab-logs/hisab-YYYY-MM-DD.log` lack `.htaccess` / `index.php` protection. Sensitive financial transactions, usernames, and IP addresses can be read via direct URL.
-2. **CSRF in Bank Operations**: `delete_transaction`, `delete_account`, and `toggle_status` in `admin/views/bank-transactions.php` and `admin/views/bank-accounts.php` process `$_POST` without nonce verification or capability checks.
-3. **Missing Capability Checks**: `HisabAdminMenu::handle_bank_account_submission()` and `HisabAdmin::save_settings()` lack `current_user_can('manage_options')`.
-4. **Unauthenticated Financial Metrics Leak**: `wp_ajax_nopriv_hisab_get_public_data` in `includes/class-ajax-handlers.php` exposes monthly totals to unauthenticated visitors.
-5. **Unvalidated File Upload in JSON Import**: `ajax_import_data()` parses `$_FILES['import_file']['tmp_name']` without verifying MIME type or size limits prior to reading.
+1. **Public Audit Log Exposure**: [FIXED in Phase 1] Added `.htaccess` (`Deny from all`) and empty `index.php` protection in `HisabLogger` and plugin activation.
+2. **CSRF in Bank Operations**: [FIXED in Phase 1] Added action-specific nonce verification and `current_user_can('manage_options')` checks to bank transactions/accounts deletion and status toggles.
+3. **Missing Capability Checks**: [FIXED in Phase 1] Added `current_user_can('manage_options')` checks to `HisabAdminMenu::handle_bank_account_submission()`, `handle_bank_transaction_submission()`, and `HisabAdmin::save_settings()`.
+4. **Unauthenticated Financial Metrics Leak**: [FIXED in Phase 1] Restricted `ajax_get_public_data` to authenticated administrators with valid nonce.
+5. **Unvalidated File Upload in JSON Import**: [FIXED in Phase 1] Added upload source check, 10MB size limit, `.json` extension check, and MIME type validation in `ajax_import_data()`.
 
 ### 2. Bugs & Data Integrity Flaws
-1. **Frontend Chart Crash (Duplicate `uniqid()`)**: `HisabFrontend::render_income_chart()` and `render_expense_chart()` call `uniqid()` twice, resulting in mismatched canvas and script element IDs and causing JavaScript fatal errors.
+1. **Frontend Chart Crash (Duplicate `uniqid()`)**: [FIXED in Phase 1] Unified canvas element ID and JavaScript variable in `HisabFrontend::render_income_chart()` and `render_expense_chart()`.
 2. **Corrupted Transaction Detail Mapping in JSON Import**: `HisabImportExport::find_transaction_id()` uses `LIMIT 1` matching only `type` and `date`. Multiple transactions on the same date cause all line items to attach to a single record.
 3. **Stale Bank Balances Post-Import**: Direct SQL inserts in `HisabImportExport::import_bank_transactions()` bypass `HisabBankAccount::update_balance()`.
 4. **Field Omission in `save_transaction()`**: `HisabDatabase::save_transaction()` omits `bank_account_id` and `phone_pay_reference`.
@@ -194,12 +194,12 @@ The plugin manages 6 custom tables via `HisabDatabase::create_tables()`:
 
 When resuming work, follow these sequential phases:
 
-* **Phase 1: Critical Security Hardening & Bug Fixes**
-  - Add `.htaccess` (`Deny from all`) and empty `index.php` to `wp-content/uploads/hisab-logs/`.
-  - Add nonces and capability checks to `bank-transactions.php`, `bank-accounts.php`, `handle_bank_account_submission()`, and `save_settings()`.
-  - Fix frontend chart canvas IDs in `includes/class-frontend.php`.
-  - Restrict `wp_ajax_nopriv_hisab_get_public_data`.
-  - Add file upload MIME/size validation to JSON import.
+* **Phase 1: Critical Security Hardening & Bug Fixes [COMPLETED]**
+  - [x] Add `.htaccess` (`Deny from all`) and empty `index.php` to `wp-content/uploads/hisab-logs/`.
+  - [x] Add nonces and capability checks to `bank-transactions.php`, `bank-accounts.php`, `handle_bank_account_submission()`, and `save_settings()`.
+  - [x] Fix frontend chart canvas IDs in `includes/class-frontend.php`.
+  - [x] Restrict `wp_ajax_nopriv_hisab_get_public_data`.
+  - [x] Add file upload MIME/size validation to JSON import.
 
 * **Phase 2: Database Layer & Data Integrity Consolidation**
   - Fix `HisabDatabase::save_transaction()` to accept and persist `bank_account_id` and `phone_pay_reference`.

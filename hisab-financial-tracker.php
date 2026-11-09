@@ -97,6 +97,11 @@ class HisabFinancialTracker {
         // Create database tables
         $database = new HisabDatabase();
         $database->create_tables();
+
+        // Ensure logger directory and protection files exist
+        if (class_exists('HisabLogger')) {
+            new HisabLogger();
+        }
         
         // Set default options
         add_option('hisab_version', HISAB_VERSION);

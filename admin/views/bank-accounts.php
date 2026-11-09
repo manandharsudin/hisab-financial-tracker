@@ -7,6 +7,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+if (!current_user_can('manage_options')) {
+    wp_die(__('You do not have sufficient permissions to access this page.', 'hisab-financial-tracker'));
+}
+
 // Initialize bank account class
 $bank_account = new HisabBankAccount();
 
@@ -26,6 +30,7 @@ if (isset($_POST['action'])) {
     
     switch ($action) {
         case 'delete_account':
+            check_admin_referer('hisab_delete_bank_account_' . $account_id);
             if ($account_id > 0) {
                 $result = $bank_account->delete_account($account_id);
                 if (is_wp_error($result)) {
@@ -37,6 +42,7 @@ if (isset($_POST['action'])) {
             break;
             
         case 'toggle_status':
+            check_admin_referer('hisab_toggle_bank_account_' . $account_id);
             if ($account_id > 0) {
                 $account = $bank_account->get_account($account_id);
                 if ($account) {
@@ -233,6 +239,7 @@ foreach ($accounts as $account) {
                                     <?php _e('Transactions', 'hisab-financial-tracker'); ?>
                                 </a>
                                 <form method="post" style="display: inline-block;" onsubmit="return confirm('<?php _e('Are you sure you want to change the status of this account?', 'hisab-financial-tracker'); ?>');">
+                                    <?php wp_nonce_field('hisab_toggle_bank_account_' . $account->id); ?>
                                     <input type="hidden" name="action" value="toggle_status">
                                     <input type="hidden" name="account_id" value="<?php echo $account->id; ?>">
                                     <button type="submit" class="button button-small">
@@ -240,6 +247,7 @@ foreach ($accounts as $account) {
                                     </button>
                                 </form>
                                 <form method="post" style="display: inline-block;" onsubmit="return confirm('<?php _e('Are you sure you want to delete this account? This action cannot be undone.', 'hisab-financial-tracker'); ?>');">
+                                    <?php wp_nonce_field('hisab_delete_bank_account_' . $account->id); ?>
                                     <input type="hidden" name="action" value="delete_account">
                                     <input type="hidden" name="account_id" value="<?php echo $account->id; ?>">
                                     <button type="submit" class="button button-small button-link-delete">

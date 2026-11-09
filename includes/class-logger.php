@@ -51,6 +51,36 @@ class HisabLogger {
         if (!file_exists($this->log_dir)) {
             wp_mkdir_p($this->log_dir);
         }
+
+        // Ensure directory is secured from direct public access
+        $this->protect_log_dir();
+    }
+
+    /**
+     * Protect log directory with .htaccess and empty index.php
+     */
+    public function protect_log_dir() {
+        if (!file_exists($this->log_dir)) {
+            wp_mkdir_p($this->log_dir);
+        }
+
+        $htaccess_file = $this->log_dir . '.htaccess';
+        if (!file_exists($htaccess_file)) {
+            $rules = "# Deny direct access to Hisab log files\n" .
+                     "<IfModule !mod_authz_core.c>\n" .
+                     "    Order deny,allow\n" .
+                     "    Deny from all\n" .
+                     "</IfModule>\n" .
+                     "<IfModule mod_authz_core.c>\n" .
+                     "    Require all denied\n" .
+                     "</IfModule>\n";
+            file_put_contents($htaccess_file, $rules);
+        }
+
+        $index_file = $this->log_dir . 'index.php';
+        if (!file_exists($index_file)) {
+            file_put_contents($index_file, "<?php\n// Silence is golden.\n");
+        }
     }
     
     /**

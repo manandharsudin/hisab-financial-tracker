@@ -94,8 +94,12 @@ class HisabAdmin {
     }
     
     private function save_settings() {
-        if (!wp_verify_nonce($_POST['_wpnonce'], 'hisab_settings')) {
-            wp_die('Security check failed');
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'hisab-financial-tracker'));
+        }
+
+        if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'hisab_settings')) {
+            wp_die(__('Security check failed', 'hisab-financial-tracker'));
         }
         
         // Save basic settings

@@ -94,16 +94,17 @@ class HisabFrontend {
         ), $atts);
         
         $trend_data = $this->database->get_trend_data('income', $atts['months']);
+        $chart_id = 'hisab-income-chart-' . uniqid();
         
         ob_start();
         ?>
         <div class="hisab-chart-container">
-            <canvas id="hisab-income-chart-<?php echo uniqid(); ?>" width="400" height="<?php echo $atts['height']; ?>"></canvas>
+            <canvas id="<?php echo esc_attr($chart_id); ?>" width="400" height="<?php echo esc_attr($atts['height']); ?>"></canvas>
         </div>
         
         <script>
         jQuery(document).ready(function($) {
-            const chartId = 'hisab-income-chart-<?php echo uniqid(); ?>';
+            const chartId = '<?php echo esc_js($chart_id); ?>';
             const data = <?php echo json_encode($trend_data); ?>;
             const label = '<?php _e('Income', 'hisab-financial-tracker'); ?>';
             const color = '#28a745';
@@ -123,16 +124,17 @@ class HisabFrontend {
         ), $atts);
         
         $trend_data = $this->database->get_trend_data('expense', $atts['months']);
+        $chart_id = 'hisab-expense-chart-' . uniqid();
         
         ob_start();
         ?>
         <div class="hisab-chart-container">
-            <canvas id="hisab-expense-chart-<?php echo uniqid(); ?>" width="400" height="<?php echo $atts['height']; ?>"></canvas>
+            <canvas id="<?php echo esc_attr($chart_id); ?>" width="400" height="<?php echo esc_attr($atts['height']); ?>"></canvas>
         </div>
         
         <script>
         jQuery(document).ready(function($) {
-            const chartId = 'hisab-expense-chart-<?php echo uniqid(); ?>';
+            const chartId = '<?php echo esc_js($chart_id); ?>';
             const data = <?php echo json_encode($trend_data); ?>;
             const label = '<?php _e('Expenses', 'hisab-financial-tracker'); ?>';
             const color = '#dc3545';
