@@ -180,7 +180,7 @@ class HisabBankAnalytics {
         
         // Get all active accounts
         $accounts = $wpdb->get_results("
-            SELECT id, account_name, currency
+            SELECT id, account_name, currency, initial_balance
             FROM {$this->table_bank_accounts}
             WHERE is_active = 1
             ORDER BY account_name ASC
@@ -188,45 +188,62 @@ class HisabBankAnalytics {
         
         $trend_data = array();
         $months_list = array();
+        $month_keys = array();
         
         // Generate month labels from start_date to end_date
         $current = new DateTime($start_date);
         $end = new DateTime($end_date);
+        $max_month_end = $end->format('Y-m-t');
         
         while ($current <= $end) {
+            $month_keys[] = $current->format('Y-m');
             $months_list[] = $current->format('M Y');
             $current->add(new DateInterval('P1M'));
         }
+
+        if (empty($accounts)) {
+            return array(
+                'months' => $months_list,
+                'accounts' => array()
+            );
+        }
+
+        // Single monthly aggregation query for all accounts and months
+        $aggregated_sql = $wpdb->prepare("
+            SELECT 
+                account_id,
+                CASE 
+                    WHEN transaction_date < %s THEN 'prior'
+                    ELSE DATE_FORMAT(transaction_date, '%Y-%m')
+                END as period,
+                COALESCE(SUM(
+                    CASE 
+                        WHEN transaction_type IN ('deposit', 'transfer_in') THEN amount
+                        WHEN transaction_type IN ('withdrawal', 'phone_pay', 'transfer_out') THEN -amount
+                        ELSE 0
+                    END
+                ), 0) as net_change
+            FROM {$this->table_bank_transactions}
+            WHERE transaction_date <= %s
+            GROUP BY account_id, period
+        ", $start_date, $max_month_end);
+
+        $results = $wpdb->get_results($aggregated_sql);
+        $net_changes = array();
+        foreach ($results as $row) {
+            $net_changes[intval($row->account_id)][$row->period] = floatval($row->net_change);
+        }
         
         foreach ($accounts as $account) {
+            $account_id = intval($account->id);
+            $running_balance = floatval($account->initial_balance) + (isset($net_changes[$account_id]['prior']) ? $net_changes[$account_id]['prior'] : 0.0);
             $account_trends = array();
             
-            // Get balance at the end of each month
-            $current = new DateTime($start_date);
-            $end = new DateTime($end_date);
-            
-            while ($current <= $end) {
-                $month_end = $current->format('Y-m-t');
-                
-                // Calculate balance at end of month
-                $balance_sql = $wpdb->prepare("
-                    SELECT 
-                        (SELECT initial_balance FROM {$this->table_bank_accounts} WHERE id = %d) +
-                        COALESCE(SUM(
-                            CASE 
-                                WHEN transaction_type IN ('deposit', 'transfer_in') THEN amount
-                                WHEN transaction_type IN ('withdrawal', 'phone_pay', 'transfer_out') THEN -amount
-                                ELSE 0
-                            END
-                        ), 0) as balance
-                    FROM {$this->table_bank_transactions}
-                    WHERE account_id = %d 
-                    AND transaction_date <= %s
-                ", $account->id, $account->id, $month_end);
-                
-                $balance_result = $wpdb->get_var($balance_sql);
-                $account_trends[] = floatval($balance_result);
-                $current->add(new DateInterval('P1M'));
+            foreach ($month_keys as $ym) {
+                if (isset($net_changes[$account_id][$ym])) {
+                    $running_balance += $net_changes[$account_id][$ym];
+                }
+                $account_trends[] = round($running_balance, 2);
             }
             
             $trend_data[] = array(

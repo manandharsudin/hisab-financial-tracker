@@ -164,8 +164,8 @@ The plugin manages 6 custom tables via `HisabDatabase::create_tables()`:
 - **Current Status / In Progress**:
   - Phase 1 (Critical Security Hardening & Bug Fixes) COMPLETED.
   - Phase 2 (Database Layer & Data Integrity Consolidation) COMPLETED.
-  - Ready for Phase 3 (Performance Optimization & Query Consolidation).
-  - In-progress feature: Bank Analytics (`admin/views/bank-analytics.php` and `includes/class-bank-analytics.php`) awaiting filter synchronization, trend charts, and CSS/JS consolidation (Phase 4).
+  - Phase 3 (Performance Optimization & Query Consolidation) COMPLETED.
+  - Next: Phase 4 (Complete Bank Analytics & Polish UI/UX).
 
 ---
 
@@ -208,10 +208,10 @@ When resuming work, follow these sequential phases:
   - [x] Automatically recalculate bank account balances after JSON import.
   - [x] Retire synchronous form processing in `class-admin-menu.php` in favor of standard AJAX handlers (`hisab_save_bank_account`).
 
-* **Phase 3: Performance Optimization & Query Consolidation**
-  - Eliminate the N+1 query loop in `admin/views/transactions.php` (e.g. `has_details` flag in paginated query).
-  - Flatten nested query loop in `HisabBankAnalytics::get_account_balance_trends()` into a single monthly aggregation query.
-  - Deduplicate redundant conversion routines in `assets/js/admin.js`.
+* **Phase 3: Performance Optimization & Query Consolidation [COMPLETED]**
+  - [x] Eliminate the N+1 query loop in `admin/views/transactions.php` (e.g. `has_details` flag in paginated query).
+  - [x] Flatten nested query loop in `HisabBankAnalytics::get_account_balance_trends()` into a single monthly aggregation query.
+  - [x] Deduplicate redundant conversion routines in `assets/js/admin.js` via `HisabDateConverter`.
 
 * **Phase 4: Complete Bank Analytics & Polish UI/UX**
   - Finish filter controls and dual-calendar (AD/BS) switching in `admin/views/bank-analytics.php`.

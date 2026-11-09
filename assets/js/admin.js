@@ -34,6 +34,34 @@ jQuery(document).ready(function($) {
             }
         });
     }
+
+    // Centralized Date Conversion Service
+    const HisabDateConverter = {
+        adToBs: function(adDate, successCallback, errorCallback) {
+            makeAjaxCall('hisab_convert_ad_to_bs', { ad_date: adDate }, function(data) {
+                const normalized = {
+                    year: data.bs_year || data.year,
+                    month: data.bs_month || data.month,
+                    day: data.bs_day || data.day,
+                    formatted: data.formatted || ''
+                };
+                normalized.bs_year = normalized.year;
+                normalized.bs_month = normalized.month;
+                normalized.bs_day = normalized.day;
+                if (successCallback) successCallback(normalized);
+            }, errorCallback);
+        },
+        bsToAd: function(bsYear, bsMonth, bsDay, successCallback, errorCallback) {
+            makeAjaxCall('hisab_convert_bs_to_ad', {
+                bs_year: bsYear,
+                bs_month: bsMonth,
+                bs_day: bsDay
+            }, function(data) {
+                if (successCallback) successCallback(data);
+            }, errorCallback);
+        }
+    };
+    window.HisabDateConverter = HisabDateConverter;
     
     // Centralized message display
     function showMessage(container, type, message, autoHide = true) {
@@ -633,24 +661,10 @@ jQuery(document).ready(function($) {
                 // Converting from AD to BS
                 const adDate = adDateInput.val();
                 if (adDate) {
-                    $.ajax({
-                        url: hisab_ajax.ajax_url,
-                        type: 'POST',
-                        data: {
-                            action: 'hisab_convert_ad_to_bs',
-                            ad_date: adDate,
-                            nonce: hisab_ajax.nonce
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                bsYearSelect.val(response.data.bs_year);
-                                bsMonthSelect.val(response.data.bs_month);
-                                bsDaySelect.val(response.data.bs_day);
-                            }
-                        },
-                        error: function() {
-                            console.log('Date conversion failed');
-                        }
+                    HisabDateConverter.adToBs(adDate, function(data) {
+                        bsYearSelect.val(data.bs_year);
+                        bsMonthSelect.val(data.bs_month);
+                        bsDaySelect.val(data.bs_day);
                     });
                 }
             } else {
@@ -660,24 +674,8 @@ jQuery(document).ready(function($) {
                 const bsDay = bsDaySelect.val();
                 
                 if (bsYear && bsMonth && bsDay) {
-                    $.ajax({
-                        url: hisab_ajax.ajax_url,
-                        type: 'POST',
-                        data: {
-                            action: 'hisab_convert_bs_to_ad',
-                            bs_year: bsYear,
-                            bs_month: bsMonth,
-                            bs_day: bsDay,
-                            nonce: hisab_ajax.nonce
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                adDateInput.val(response.data.ad_date);
-                            }
-                        },
-                        error: function() {
-                            console.log('Date conversion failed');
-                        }
+                    HisabDateConverter.bsToAd(bsYear, bsMonth, bsDay, function(data) {
+                        adDateInput.val(data.ad_date);
                     });
                 }
             }
@@ -758,29 +756,12 @@ jQuery(document).ready(function($) {
                     return;
                 }
                 
-                // Convert BS to AD via AJAX
-                $.ajax({
-                    url: hisab_ajax.ajax_url,
-                    type: 'POST',
-                    data: {
-                        action: 'hisab_convert_bs_to_ad',
-                        bs_year: bsYear,
-                        bs_month: bsMonth,
-                        bs_day: bsDay,
-                        nonce: hisab_ajax.nonce
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            // Set the AD date and submit form
-                            $('#transaction_date').val(response.data.ad_date);
-                            submitBankTransactionForm();
-                        } else {
-                            messagesDiv.html('<div class="notice notice-error"><p>Date conversion failed. Please try again.</p></div>');
-                        }
-                    },
-                    error: function() {
-                        messagesDiv.html('<div class="notice notice-error"><p>Date conversion failed. Please try again.</p></div>');
-                    }
+                // Convert BS to AD via shared converter
+                HisabDateConverter.bsToAd(bsYear, bsMonth, bsDay, function(data) {
+                    $('#transaction_date').val(data.ad_date);
+                    submitBankTransactionForm();
+                }, function() {
+                    messagesDiv.html('<div class="notice notice-error"><p>Date conversion failed. Please try again.</p></div>');
                 });
             } else {
                 // AD calendar selected, submit directly
@@ -981,24 +962,10 @@ jQuery(document).ready(function($) {
                 // Converting from AD to BS
                 const adDate = adDateInput.val();
                 if (adDate) {
-                    $.ajax({
-                        url: hisab_ajax.ajax_url,
-                        type: 'POST',
-                        data: {
-                            action: 'hisab_convert_ad_to_bs',
-                            ad_date: adDate,
-                            nonce: hisab_ajax.nonce
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                bsYearSelect.val(response.data.year);
-                                bsMonthSelect.val(response.data.month);
-                                bsDaySelect.val(response.data.day);
-                            }
-                        },
-                        error: function() {
-                            console.log('Date conversion failed');
-                        }
+                    HisabDateConverter.adToBs(adDate, function(data) {
+                        bsYearSelect.val(data.year);
+                        bsMonthSelect.val(data.month);
+                        bsDaySelect.val(data.day);
                     });
                 }
             } else {
@@ -1008,24 +975,8 @@ jQuery(document).ready(function($) {
                 const bsDay = bsDaySelect.val();
                 
                 if (bsYear && bsMonth && bsDay) {
-                    $.ajax({
-                        url: hisab_ajax.ajax_url,
-                        type: 'POST',
-                        data: {
-                            action: 'hisab_convert_bs_to_ad',
-                            bs_year: bsYear,
-                            bs_month: bsMonth,
-                            bs_day: bsDay,
-                            nonce: hisab_ajax.nonce
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                adDateInput.val(response.data.ad_date);
-                            }
-                        },
-                        error: function() {
-                            console.log('Date conversion failed');
-                        }
+                    HisabDateConverter.bsToAd(bsYear, bsMonth, bsDay, function(data) {
+                        adDateInput.val(data.ad_date);
                     });
                 }
             }
@@ -2667,24 +2618,10 @@ jQuery(document).ready(function($) {
     function convertADToBSTransfer() {
         const adDate = $('#transaction_date').val();
         if (adDate) {
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_convert_ad_to_bs',
-                    ad_date: adDate,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#transfer-bs-year').val(response.data.year);
-                        $('#transfer-bs-month').val(response.data.month);
-                        $('#transfer-bs-day').val(response.data.day);
-                    }
-                },
-                error: function() {
-                    console.log('Failed to convert AD to BS date');
-                }
+            HisabDateConverter.adToBs(adDate, function(data) {
+                $('#transfer-bs-year').val(data.year);
+                $('#transfer-bs-month').val(data.month);
+                $('#transfer-bs-day').val(data.day);
             });
         }
     }
@@ -2695,24 +2632,8 @@ jQuery(document).ready(function($) {
         const bsDay = $('#transfer-bs-day').val();
         
         if (bsYear && bsMonth && bsDay) {
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_convert_bs_to_ad',
-                    bs_year: bsYear,
-                    bs_month: bsMonth,
-                    bs_day: bsDay,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#transaction_date').val(response.data.ad_date);
-                    }
-                },
-                error: function() {
-                    console.log('Failed to convert BS to AD date');
-                }
+            HisabDateConverter.bsToAd(bsYear, bsMonth, bsDay, function(data) {
+                $('#transaction_date').val(data.ad_date);
             });
         }
     }
@@ -2759,21 +2680,10 @@ jQuery(document).ready(function($) {
     function convertADToBSBank() {
         const adDate = $('#transaction_date').val();
         if (adDate) {
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_convert_ad_to_bs',
-                    ad_date: adDate,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#bs-year').val(response.data.year);
-                        $('#bs-month').val(response.data.month);
-                        $('#bs-day').val(response.data.day);
-                    }
-                }
+            HisabDateConverter.adToBs(adDate, function(data) {
+                $('#bs-year').val(data.year);
+                $('#bs-month').val(data.month);
+                $('#bs-day').val(data.day);
             });
         }
     }
@@ -2784,21 +2694,8 @@ jQuery(document).ready(function($) {
         const bsDay = $('#bs-day').val();
         
         if (bsYear && bsMonth && bsDay) {
-            $.ajax({
-                url: hisab_ajax.ajax_url,
-                type: 'POST',
-                data: {
-                    action: 'hisab_convert_bs_to_ad',
-                    bs_year: bsYear,
-                    bs_month: bsMonth,
-                    bs_day: bsDay,
-                    nonce: hisab_ajax.nonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        $('#transaction_date').val(response.data.ad_date);
-                    }
-                }
+            HisabDateConverter.bsToAd(bsYear, bsMonth, bsDay, function(data) {
+                $('#transaction_date').val(data.ad_date);
             });
         }
     }

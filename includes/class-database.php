@@ -464,7 +464,8 @@ class HisabDatabase {
         if (empty($where_values)) {
             $sql = "
                 SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color,
-                       bi.guid as bill_image_url, bi.post_title as bill_image_title
+                       bi.guid as bill_image_url, bi.post_title as bill_image_title,
+                       EXISTS(SELECT 1 FROM {$this->table_transaction_details} td WHERE td.transaction_id = t.id) as has_details
                 FROM {$this->table_transactions} t
                 LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
                 LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id
@@ -475,7 +476,8 @@ class HisabDatabase {
         } else {
             $sql = $wpdb->prepare("
                 SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color,
-                       bi.guid as bill_image_url, bi.post_title as bill_image_title
+                       bi.guid as bill_image_url, bi.post_title as bill_image_title,
+                       EXISTS(SELECT 1 FROM {$this->table_transaction_details} td WHERE td.transaction_id = t.id) as has_details
                 FROM {$this->table_transactions} t
                 LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
                 LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id
@@ -904,7 +906,8 @@ class HisabDatabase {
         // Get transactions
         $sql = "
             SELECT t.*, c.name as category_name, c.color as category_color, o.name as owner_name, o.color as owner_color,
-                   p.guid as bill_image_url, p.post_title as bill_image_title
+                   p.guid as bill_image_url, p.post_title as bill_image_title,
+                   EXISTS(SELECT 1 FROM {$this->table_transaction_details} td WHERE td.transaction_id = t.id) as has_details
             FROM {$this->table_transactions} t
             LEFT JOIN {$this->table_categories} c ON t.category_id = c.id
             LEFT JOIN {$this->table_owners} o ON t.owner_id = o.id

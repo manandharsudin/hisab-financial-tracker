@@ -229,12 +229,7 @@ $owners = $database->get_owners();
                                     <button type="button" class="button button-small button-link-delete hisab-delete-transaction" data-transaction-id="<?php echo $transaction->id; ?>">
                                         <?php _e('Delete', 'hisab-financial-tracker'); ?>
                                     </button>
-                                    <?php 
-                                    // Check if transaction has details
-                                    $database = new HisabDatabase();
-                                    $transaction_details = $database->get_transaction_details($transaction->id);
-                                    if (!empty($transaction_details)): 
-                                    ?>
+                                    <?php if (!empty($transaction->has_details)): ?>
                                     <button type="button" class="button button-small hisab-view-details" data-transaction-id="<?php echo $transaction->id; ?>">
                                         <?php _e('Details', 'hisab-financial-tracker'); ?>
                                     </button>
