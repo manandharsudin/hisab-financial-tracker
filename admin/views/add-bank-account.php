@@ -57,6 +57,8 @@ if ($edit_account) {
 <div class="wrap">
     <h1><?php echo $is_edit ? __('Edit Bank Account', 'hisab-financial-tracker') : __('Add New Bank Account', 'hisab-financial-tracker'); ?></h1>
     
+    <div id="hisab-bank-account-form-messages"></div>
+
     <?php if (isset($success_message)): ?>
         <div class="notice notice-success is-dismissible">
             <p><?php echo esc_html($success_message); ?></p>
@@ -69,8 +71,11 @@ if ($edit_account) {
         </div>
     <?php endif; ?>
     
-    <form method="post" class="hisab-form">
-        <?php wp_nonce_field('hisab_bank_account', '_wpnonce'); ?>
+    <form id="hisab-bank-account-form" method="post" class="hisab-form">
+        <?php wp_nonce_field('hisab_bank_account', 'nonce'); ?>
+        <?php if ($is_edit): ?>
+            <input type="hidden" name="account_id" id="edit-bank-account-id" value="<?php echo esc_attr($edit_account->id); ?>">
+        <?php endif; ?>
         
         <div class="hisab-form-row">
             <div class="hisab-form-group">

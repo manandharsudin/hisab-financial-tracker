@@ -163,7 +163,8 @@ The plugin manages 6 custom tables via `HisabDatabase::create_tables()`:
   - Do not append `Co-Authored-By` or AI attribution trailers to commit messages.
 - **Current Status / In Progress**:
   - Phase 1 (Critical Security Hardening & Bug Fixes) COMPLETED.
-  - Ready for Phase 2 (Database Layer & Data Integrity Consolidation).
+  - Phase 2 (Database Layer & Data Integrity Consolidation) COMPLETED.
+  - Ready for Phase 3 (Performance Optimization & Query Consolidation).
   - In-progress feature: Bank Analytics (`admin/views/bank-analytics.php` and `includes/class-bank-analytics.php`) awaiting filter synchronization, trend charts, and CSS/JS consolidation (Phase 4).
 
 ---
@@ -179,9 +180,9 @@ The plugin manages 6 custom tables via `HisabDatabase::create_tables()`:
 
 ### 2. Bugs & Data Integrity Flaws
 1. **Frontend Chart Crash (Duplicate `uniqid()`)**: [FIXED in Phase 1] Unified canvas element ID and JavaScript variable in `HisabFrontend::render_income_chart()` and `render_expense_chart()`.
-2. **Corrupted Transaction Detail Mapping in JSON Import**: `HisabImportExport::find_transaction_id()` uses `LIMIT 1` matching only `type` and `date`. Multiple transactions on the same date cause all line items to attach to a single record.
-3. **Stale Bank Balances Post-Import**: Direct SQL inserts in `HisabImportExport::import_bank_transactions()` bypass `HisabBankAccount::update_balance()`.
-4. **Field Omission in `save_transaction()`**: `HisabDatabase::save_transaction()` omits `bank_account_id` and `phone_pay_reference`.
+2. **Corrupted Transaction Detail Mapping in JSON Import**: [FIXED in Phase 2] Multi-tiered mapping strategy (session ID map, signature map, date-verified ID map) replacing `LIMIT 1` query in `HisabImportExport::find_transaction_id()`.
+3. **Stale Bank Balances Post-Import**: [FIXED in Phase 2] Automatic bank balance recalculation in `HisabImportExport::import_bank_transactions()` and `import_from_json()`.
+4. **Field Omission in `save_transaction()`**: [FIXED in Phase 2] `HisabDatabase::save_transaction()` and `update_transaction()` now persist `bank_account_id` and `phone_pay_reference`.
 
 ### 3. Performance Bottlenecks
 1. **N+1 Queries in Transactions List**: `admin/views/transactions.php` queries details individually for every transaction row inside the loop (`new HisabDatabase()->get_transaction_details($t->id)`).
@@ -201,11 +202,11 @@ When resuming work, follow these sequential phases:
   - [x] Restrict `wp_ajax_nopriv_hisab_get_public_data`.
   - [x] Add file upload MIME/size validation to JSON import.
 
-* **Phase 2: Database Layer & Data Integrity Consolidation**
-  - Fix `HisabDatabase::save_transaction()` to accept and persist `bank_account_id` and `phone_pay_reference`.
-  - Fix `HisabImportExport::find_transaction_id()` line-item mapping logic.
-  - Automatically recalculate bank account balances after JSON import.
-  - Retire synchronous form processing in `class-admin-menu.php` in favor of standard AJAX handlers.
+* **Phase 2: Database Layer & Data Integrity Consolidation [COMPLETED]**
+  - [x] Fix `HisabDatabase::save_transaction()` and `update_transaction()` to accept and persist `bank_account_id` and `phone_pay_reference`.
+  - [x] Fix `HisabImportExport::find_transaction_id()` line-item mapping logic.
+  - [x] Automatically recalculate bank account balances after JSON import.
+  - [x] Retire synchronous form processing in `class-admin-menu.php` in favor of standard AJAX handlers (`hisab_save_bank_account`).
 
 * **Phase 3: Performance Optimization & Query Consolidation**
   - Eliminate the N+1 query loop in `admin/views/transactions.php` (e.g. `has_details` flag in paginated query).

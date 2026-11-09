@@ -837,6 +837,8 @@ class HisabAjaxHandlers {
         if (is_wp_error($result)) {
             wp_send_json(array('success' => false, 'message' => $result->get_error_message()));
         }
+
+        $saved_account_id = $account_id > 0 ? $account_id : $result;
         
         // Log bank account creation/update
         if (class_exists('HisabLogger')) {
@@ -845,7 +847,7 @@ class HisabAjaxHandlers {
                 HisabLogger::ACTION_BANK_ACCOUNT_UPDATE : HisabLogger::ACTION_BANK_ACCOUNT_CREATE;
             
             $logger->info($action, 'Bank account saved successfully', array(
-                'account_id' => $result,
+                'account_id' => $saved_account_id,
                 'account_name' => $data['account_name'],
                 'bank_name' => $data['bank_name'],
                 'account_type' => $data['account_type'],
@@ -853,7 +855,7 @@ class HisabAjaxHandlers {
             ));
         }
         
-        wp_send_json(array('success' => true, 'message' => 'Bank account saved successfully', 'account_id' => $result));
+        wp_send_json(array('success' => true, 'message' => 'Bank account saved successfully', 'account_id' => $saved_account_id));
     }
     
     public function ajax_delete_bank_account() {

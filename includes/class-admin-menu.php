@@ -359,8 +359,8 @@ class HisabAdminMenu {
             return;
         }
         
-        // Handle bank account form submission
-        if (isset($_POST['submit_bank_account']) && $_GET['page'] === 'hisab-add-bank-account') {
+        // Bank account form submission is now handled via AJAX (fallback retained for non-JS)
+        if (isset($_POST['submit_bank_account']) && !wp_doing_ajax() && isset($_GET['page']) && $_GET['page'] === 'hisab-add-bank-account') {
             $this->handle_bank_account_submission();
         }
         
@@ -381,7 +381,7 @@ class HisabAdminMenu {
         
         $bank_account = new HisabBankAccount();
         
-        $nonce = sanitize_text_field($_POST['_wpnonce']);
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field($_POST['nonce']) : (isset($_POST['_wpnonce']) ? sanitize_text_field($_POST['_wpnonce']) : '');
         if (!wp_verify_nonce($nonce, 'hisab_bank_account')) {
             wp_redirect(admin_url('admin.php?page=hisab-add-bank-account&error=security'));
             exit;

@@ -12,6 +12,7 @@ class HisabImportExport {
     private $database;
     private $bank_account;
     private $bank_transaction;
+    private $transaction_id_map = array();
     
     public function __construct() {
         $this->database = new HisabDatabase();
@@ -86,6 +87,9 @@ class HisabImportExport {
             'skipped' => array(),
             'errors' => array()
         );
+
+        // Reset transaction ID map for this import session
+        $this->transaction_id_map = array();
         
         try {
             // Import categories first
@@ -134,6 +138,16 @@ class HisabImportExport {
                 $results['imported']['transaction_details'] = $details_results['imported'];
                 $results['skipped']['transaction_details'] = $details_results['skipped'];
                 $results['errors']['transaction_details'] = $details_results['errors'];
+            }
+
+            // Recalculate bank balances if bank accounts or bank transactions were imported
+            if ($options['import_bank_accounts'] || $options['import_bank_transactions']) {
+                $accounts = $this->bank_account->get_all_accounts();
+                if (!empty($accounts)) {
+                    foreach ($accounts as $acc) {
+                        $this->bank_account->update_balance($acc->id);
+                    }
+                }
             }
             
         } catch (Exception $e) {
@@ -220,7 +234,11 @@ class HisabImportExport {
         global $wpdb;
         
         $sql = "
-            SELECT td.*, t.type as transaction_type, t.transaction_date
+            SELECT td.*, 
+                   t.type as transaction_type, 
+                   t.transaction_date,
+                   t.description as transaction_description,
+                   t.amount as transaction_amount
             FROM {$wpdb->prefix}hisab_transaction_details td
             LEFT JOIN {$wpdb->prefix}hisab_transactions t ON td.transaction_id = t.id
             ORDER BY t.transaction_date DESC, td.id
@@ -502,6 +520,9 @@ class HisabImportExport {
                     
                     if ($result !== false) {
                         $results['imported']++;
+                        if (!empty($transaction['id'])) {
+                            $this->transaction_id_map[intval($transaction['id'])] = intval($existing_transaction['id']);
+                        }
                     } else {
                         $results['errors'][] = 'Failed to update transaction: ' . $transaction['description'] . ' - ' . $wpdb->last_error;
                     }
@@ -517,6 +538,9 @@ class HisabImportExport {
                     
                     if ($result !== false) {
                         $results['imported']++;
+                        if (!empty($transaction['id'])) {
+                            $this->transaction_id_map[intval($transaction['id'])] = intval($wpdb->insert_id);
+                        }
                     } else {
                         $results['errors'][] = 'Failed to import transaction: ' . $transaction['description'] . ' - ' . $wpdb->last_error;
                     }
@@ -539,6 +563,7 @@ class HisabImportExport {
         $results = array('imported' => 0, 'skipped' => 0, 'errors' => array());
         $existing_bank_transactions = $this->get_existing_bank_transactions();
         $bank_account_map = $this->get_bank_account_map();
+        $affected_account_ids = array();
         
         foreach ($bank_transactions as $transaction) {
             try {
@@ -582,6 +607,7 @@ class HisabImportExport {
                     
                     if ($result !== false) {
                         $results['imported']++;
+                        $affected_account_ids[$account_id] = true;
                     } else {
                         $results['errors'][] = 'Failed to update bank transaction: ' . $transaction['description'] . ' - ' . $wpdb->last_error;
                     }
@@ -597,6 +623,7 @@ class HisabImportExport {
                     
                     if ($result !== false) {
                         $results['imported']++;
+                        $affected_account_ids[$account_id] = true;
                     } else {
                         $results['errors'][] = 'Failed to import bank transaction: ' . $transaction['description'] . ' - ' . $wpdb->last_error;
                     }
@@ -605,6 +632,11 @@ class HisabImportExport {
             } catch (Exception $e) {
                 $results['errors'][] = 'Error importing bank transaction: ' . $e->getMessage();
             }
+        }
+        
+        // Recalculate balances for all affected bank accounts
+        foreach (array_keys($affected_account_ids) as $acc_id) {
+            $this->bank_account->update_balance($acc_id);
         }
         
         return $results;
@@ -874,25 +906,47 @@ class HisabImportExport {
     }
     
     private function find_transaction_id($detail, $map) {
-        // Check if the detail has the required fields for mapping
-        if (!isset($detail['transaction_type']) || !isset($detail['transaction_date'])) {
-            return null;
+        // 1. Direct session ID mapping (when transactions were imported in the same JSON import session)
+        if (!empty($detail['transaction_id']) && isset($this->transaction_id_map[intval($detail['transaction_id'])])) {
+            return $this->transaction_id_map[intval($detail['transaction_id'])];
         }
-        
-        // For transaction details, we need to find the transaction by type and date
-        // Since transaction details don't have description and amount, we'll use a different approach
-        // We'll look for transactions that match the type and date
+
+        // 2. Map by description, amount, and date if available in detail
+        if (!empty($detail['transaction_description']) && isset($detail['transaction_amount']) && !empty($detail['transaction_date'])) {
+            $key = $detail['transaction_description'] . '|' . $detail['transaction_amount'] . '|' . $detail['transaction_date'];
+            if (isset($map[$key])) {
+                return intval($map[$key]);
+            }
+        }
+
         global $wpdb;
-        
-        $sql = $wpdb->prepare("
-            SELECT id FROM {$wpdb->prefix}hisab_transactions 
-            WHERE type = %s AND transaction_date = %s 
-            ORDER BY id DESC 
-            LIMIT 1
-        ", $detail['transaction_type'], $detail['transaction_date']);
-        
-        $transaction_id = $wpdb->get_var($sql);
-        return $transaction_id ? intval($transaction_id) : null;
+
+        // 3. Fallback: check if the original transaction_id exists in the database with matching date
+        if (!empty($detail['transaction_id']) && !empty($detail['transaction_date'])) {
+            $existing = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}hisab_transactions WHERE id = %d AND transaction_date = %s",
+                intval($detail['transaction_id']),
+                $detail['transaction_date']
+            ));
+            if ($existing) {
+                return intval($existing);
+            }
+        }
+
+        // 4. If detail only has transaction_type and transaction_date:
+        // Only return if there is exactly ONE transaction matching to prevent corrupt multi-attachment
+        if (!empty($detail['transaction_type']) && !empty($detail['transaction_date'])) {
+            $matching_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}hisab_transactions WHERE type = %s AND transaction_date = %s",
+                $detail['transaction_type'],
+                $detail['transaction_date']
+            ));
+            if (count($matching_ids) === 1) {
+                return intval($matching_ids[0]);
+            }
+        }
+
+        return null;
     }
 }
 

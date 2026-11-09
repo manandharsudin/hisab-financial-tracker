@@ -830,6 +830,52 @@ jQuery(document).ready(function($) {
     if ($('#transaction_type').length && $('#amount').length) {
         initBankTransactionForm();
     }
+
+    // Bank Account Form AJAX Submission
+    function initBankAccountForm() {
+        $('#hisab-bank-account-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const messagesDiv = $('#hisab-bank-account-form-messages');
+            const $form = $(this);
+            const submitBtn = $form.find('input[type="submit"]');
+            
+            messagesDiv.empty();
+            
+            const formData = new FormData($form[0]);
+            formData.append('action', 'hisab_save_bank_account');
+            
+            submitBtn.prop('disabled', true);
+            
+            $.ajax({
+                url: hisab_ajax.ajax_url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        messagesDiv.html('<div class="notice notice-success"><p>' + (response.message || 'Bank account saved successfully!') + '</p></div>');
+                        setTimeout(function() {
+                            const isEdit = $('#edit-bank-account-id').length > 0;
+                            window.location.href = hisab_ajax.admin_url + 'admin.php?page=hisab-bank-accounts&' + (isEdit ? 'updated=1' : 'created=1');
+                        }, 1000);
+                    } else {
+                        messagesDiv.html('<div class="notice notice-error"><p>' + (response.message || 'An error occurred.') + '</p></div>');
+                        submitBtn.prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    messagesDiv.html('<div class="notice notice-error"><p>' + (error || 'Error saving bank account. Please try again.') + '</p></div>');
+                    submitBtn.prop('disabled', false);
+                }
+            });
+        });
+    }
+
+    if ($('#hisab-bank-account-form').length) {
+        initBankAccountForm();
+    }
     
     // Bank Transactions Page Functionality
     function initBankTransactionsPage() {

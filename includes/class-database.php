@@ -282,6 +282,8 @@ class HisabDatabase {
             'category_id' => intval($data['category_id']),
             'owner_id' => isset($data['owner_id']) && !empty($data['owner_id']) ? intval($data['owner_id']) : null,
             'payment_method' => isset($data['payment_method']) && !empty($data['payment_method']) ? sanitize_text_field($data['payment_method']) : null,
+            'bank_account_id' => isset($data['bank_account_id']) && !empty($data['bank_account_id']) ? intval($data['bank_account_id']) : null,
+            'phone_pay_reference' => isset($data['phone_pay_reference']) && !empty($data['phone_pay_reference']) ? sanitize_text_field($data['phone_pay_reference']) : null,
             'bill_image_id' => null, // Will be set later if file uploaded
             'transaction_tax' => isset($data['transaction_tax']) && !empty($data['transaction_tax']) ? floatval($data['transaction_tax']) : null,
             'transaction_discount' => isset($data['transaction_discount']) && !empty($data['transaction_discount']) ? floatval($data['transaction_discount']) : null,
@@ -316,11 +318,33 @@ class HisabDatabase {
             }
         }
         
-        
+        $field_formats = array(
+            'type' => '%s',
+            'amount' => '%f',
+            'description' => '%s',
+            'category_id' => '%d',
+            'owner_id' => '%d',
+            'payment_method' => '%s',
+            'bank_account_id' => '%d',
+            'phone_pay_reference' => '%s',
+            'bill_image_id' => '%d',
+            'transaction_tax' => '%f',
+            'transaction_discount' => '%f',
+            'transaction_date' => '%s',
+            'bs_year' => '%d',
+            'bs_month' => '%d',
+            'bs_day' => '%d',
+            'user_id' => '%d',
+        );
+        $formats = array();
+        foreach (array_keys($transaction_data) as $field) {
+            $formats[] = isset($field_formats[$field]) ? $field_formats[$field] : '%s';
+        }
+
         $result = $wpdb->insert(
             $this->table_transactions,
             $transaction_data,
-            array('%s', '%f', '%s', '%d', '%d', '%s', '%d', '%f', '%f', '%s', '%d', '%d', '%d', '%d')
+            $formats
         );
         
         if ($result === false) {
@@ -339,8 +363,10 @@ class HisabDatabase {
             'description' => sanitize_textarea_field($data['description']),
             'category_id' => intval($data['category_id']),
             'owner_id' => !empty($data['owner_id']) ? intval($data['owner_id']) : null,
-            'transaction_date' => sanitize_text_field($data['transaction_date']),
             'payment_method' => !empty($data['payment_method']) ? sanitize_text_field($data['payment_method']) : null,
+            'bank_account_id' => !empty($data['bank_account_id']) ? intval($data['bank_account_id']) : null,
+            'phone_pay_reference' => !empty($data['phone_pay_reference']) ? sanitize_text_field($data['phone_pay_reference']) : null,
+            'transaction_date' => sanitize_text_field($data['transaction_date']),
             'bill_image_id' => !empty($data['bill_image_id']) ? intval($data['bill_image_id']) : null,
             'transaction_tax' => !empty($data['transaction_tax']) ? floatval($data['transaction_tax']) : null,
             'transaction_discount' => !empty($data['transaction_discount']) ? floatval($data['transaction_discount']) : null,
@@ -369,11 +395,34 @@ class HisabDatabase {
             }
         }
         
+        $field_formats = array(
+            'type' => '%s',
+            'amount' => '%f',
+            'description' => '%s',
+            'category_id' => '%d',
+            'owner_id' => '%d',
+            'payment_method' => '%s',
+            'bank_account_id' => '%d',
+            'phone_pay_reference' => '%s',
+            'transaction_date' => '%s',
+            'bill_image_id' => '%d',
+            'transaction_tax' => '%f',
+            'transaction_discount' => '%f',
+            'updated_at' => '%s',
+            'bs_year' => '%d',
+            'bs_month' => '%d',
+            'bs_day' => '%d',
+        );
+        $formats = array();
+        foreach (array_keys($transaction_data) as $field) {
+            $formats[] = isset($field_formats[$field]) ? $field_formats[$field] : '%s';
+        }
+
         $result = $wpdb->update(
             $this->table_transactions,
             $transaction_data,
             array('id' => $transaction_id),
-            array('%s', '%f', '%s', '%d', '%d', '%s', '%s', '%d', '%f', '%f', '%s', '%d', '%d', '%d'),
+            $formats,
             array('%d')
         );
         
